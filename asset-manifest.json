@@ -1,15 +1,15 @@
 {
   "files": {
-    "main.css": "/inTACTICS/static/css/main.5a342493.css",
-    "main.js": "/inTACTICS/static/js/main.ff587174.js",
+    "main.css": "/inTACTICS/static/css/main.ebb7311b.css",
+    "main.js": "/inTACTICS/static/js/main.708cea02.js",
     "static/js/453.bf253f97.chunk.js": "/inTACTICS/static/js/453.bf253f97.chunk.js",
     "index.html": "/inTACTICS/index.html",
-    "main.5a342493.css.map": "/inTACTICS/static/css/main.5a342493.css.map",
-    "main.ff587174.js.map": "/inTACTICS/static/js/main.ff587174.js.map",
+    "main.ebb7311b.css.map": "/inTACTICS/static/css/main.ebb7311b.css.map",
+    "main.708cea02.js.map": "/inTACTICS/static/js/main.708cea02.js.map",
     "453.bf253f97.chunk.js.map": "/inTACTICS/static/js/453.bf253f97.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.5a342493.css",
-    "static/js/main.ff587174.js"
+    "static/css/main.ebb7311b.css",
+    "static/js/main.708cea02.js"
   ]
 }
