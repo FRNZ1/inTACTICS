@@ -14,6 +14,7 @@ const RON_MAPS = [
     image: 'https://images.unsplash.com/photo-1501166222995-ff41349c5945?auto=format&fit=crop&q=80&w=800',
     situation: 'Ein Durchsuchungsbefehl wird bei einem vermuteten Meth-Labor in einem heruntergekommenen Vorort vollstreckt.',
     suspects: 'Unberechenbar, oft unter Drogeneinfluss. Bewaffnet mit Handfeuerwaffen.',
+    tacticalMap: 'https://images.unsplash.com/photo-1584985223403-d6cbfec25ba7?auto=format&fit=crop&q=80&w=800', // Placeholder Blueprint
     screenshots: ['https://images.unsplash.com/photo-1605810230434-7631ac76ec81?auto=format&fit=crop&q=80&w=800']
   },
   {
@@ -25,6 +26,7 @@ const RON_MAPS = [
     image: 'https://images.unsplash.com/photo-1566665797739-1674de7a421a?auto=format&fit=crop&q=80&w=800',
     situation: 'Geiselnahme im obersten Stockwerk eines Luxushotels. Mehrere VIPs sind betroffen.',
     suspects: 'Hochgradig organisiert, gut gepanzert und mit automatischen Waffen ausgestattet.',
+    tacticalMap: 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&q=80&w=800',
     screenshots: ['https://images.unsplash.com/photo-1582719478250-c8940062db08?auto=format&fit=crop&q=80&w=800']
   },
   {
@@ -36,6 +38,7 @@ const RON_MAPS = [
     image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&q=80&w=800',
     situation: 'Bewaffneter Einbruch in ein wohlhabendes Anwesen nach einem verheerenden Sturm.',
     suspects: 'Skrupellose Plünderer, teilweise mit gestohlenen Waffen.',
+    tacticalMap: 'https://images.unsplash.com/photo-1588880331179-bc9b93a8cb65?auto=format&fit=crop&q=80&w=800',
     screenshots: ['https://images.unsplash.com/photo-1580587771525-78b9dba3b914?auto=format&fit=crop&q=80&w=800']
   },
   {
@@ -47,6 +50,7 @@ const RON_MAPS = [
     image: 'https://images.unsplash.com/photo-1494412651409-8963ce7935a7?auto=format&fit=crop&q=80&w=800',
     situation: 'Razzia auf einer geheimen Anlage nahe der Docks. Verdacht auf schweren Schmuggel.',
     suspects: 'Hochprofessionelle Söldner mit Nachtsichtgeräten und schweren Waffen.',
+    tacticalMap: 'https://images.unsplash.com/photo-1600566753086-00f18efc2291?auto=format&fit=crop&q=80&w=800',
     screenshots: ['https://images.unsplash.com/photo-1505705694340-019e1e335916?auto=format&fit=crop&q=80&w=800']
   }
 ];
@@ -83,6 +87,11 @@ const springTransition = {
   stiffness: 450,
   damping: 35
 };
+
+// --- CONSTANTS ---
+const SESSION_TIMEOUT = 10 * 60 * 1000; // 10 minutes in milliseconds
+const STORAGE_KEY_STATE = 'inTactics_app_state';
+const STORAGE_KEY_TIME = 'inTactics_last_active';
 
 // --- COMPONENTS ---
 
@@ -124,12 +133,109 @@ export default function App() {
   const [activeDlc, setActiveDlc] = useState('base');
   const [selectedMap, setSelectedMap] = useState(null);
 
+  const [isRestored, setIsRestored] = useState(false);
+
+  // --- STATE PERSISTENCE LOGIC ---
+  useEffect(() => {
+    // 1. Load state on initial mount
+    const lastActive = localStorage.getItem(STORAGE_KEY_TIME);
+    const now = Date.now();
+
+    if (lastActive && (now - parseInt(lastActive)) < SESSION_TIMEOUT) {
+      try {
+        const savedState = JSON.parse(localStorage.getItem(STORAGE_KEY_STATE));
+        if (savedState) {
+          setActiveTab(savedState.activeTab || 'home');
+          setRonSubTab(savedState.ronSubTab || 'maps');
+          setActiveDlc(savedState.activeDlc || 'base');
+
+          if (savedState.selectedMapId) {
+            const allMaps = [...RON_MAPS, ...PUBG_MAPS];
+            const mapToSelect = allMaps.find(m => m.id === savedState.selectedMapId);
+            setSelectedMap(mapToSelect || null);
+          }
+
+          // Restore scroll position after a short delay to ensure rendering is done
+          if (savedState.scrollPosition) {
+            setTimeout(() => {
+              window.scrollTo(0, savedState.scrollPosition);
+            }, 150);
+          }
+        }
+      } catch (e) {
+        console.error("Failed to parse saved state", e);
+      }
+    } else {
+      // Clear expired session data
+      localStorage.removeItem(STORAGE_KEY_STATE);
+      localStorage.removeItem(STORAGE_KEY_TIME);
+    }
+
+    setIsRestored(true);
+  }, []);
+
+  // 2. Save state whenever relevant dependencies change
+  useEffect(() => {
+    if (!isRestored) return; // Wait until initial load is complete
+
+    const stateToSave = {
+      activeTab,
+      ronSubTab,
+      activeDlc,
+      selectedMapId: selectedMap?.id || null,
+      scrollPosition: window.scrollY // initial save of current scroll
+    };
+
+    localStorage.setItem(STORAGE_KEY_STATE, JSON.stringify(stateToSave));
+    localStorage.setItem(STORAGE_KEY_TIME, Date.now().toString());
+  }, [activeTab, ronSubTab, activeDlc, selectedMap, isRestored]);
+
+  // 3. Track scroll position dynamically (throttled to save performance)
+  useEffect(() => {
+    if (!isRestored) return;
+
+    let timeoutId = null;
+    const handleScroll = () => {
+      if (!timeoutId) {
+        timeoutId = setTimeout(() => {
+          try {
+            const currentState = JSON.parse(localStorage.getItem(STORAGE_KEY_STATE) || '{}');
+            currentState.scrollPosition = window.scrollY;
+            localStorage.setItem(STORAGE_KEY_STATE, JSON.stringify(currentState));
+            localStorage.setItem(STORAGE_KEY_TIME, Date.now().toString()); // Reset timeout on activity
+          } catch (e) {
+            // Ignore parsing errors on rapid scroll
+          }
+          timeoutId = null;
+        }, 300); // 300ms throttle
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+
+    // Also update timestamp on clicks to prevent timeout while actively navigating
+    const handleClick = () => localStorage.setItem(STORAGE_KEY_TIME, Date.now().toString());
+    window.addEventListener('click', handleClick);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('click', handleClick);
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [isRestored]);
+
+  // --- RENDER FUNCTIONS ---
+
   const renderHome = () => (
     <motion.div {...pageTransition} className="pt-20 md:pt-28 pb-32 md:pb-20 space-y-8 md:space-y-12">
       <div className="flex flex-col items-center text-center space-y-4 mb-8 md:mb-16">
         <h1 className="text-6xl sm:text-7xl md:text-[10rem] font-black tracking-tighter text-white select-none italic leading-none">
           in<span className="text-blue-500">TACTICS</span>
         </h1>
+        <div className="flex items-center gap-3 bg-white/5 px-4 md:px-6 py-2 rounded-full border border-white/10 backdrop-blur-xl">
+          <Activity size={12} className="text-green-500 animate-pulse" />
+          <span className="text-[8px] md:text-[10px] font-black tracking-[0.2em] md:tracking-[0.3em] uppercase text-white/60">System Online • Ready for Deployment</span>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
@@ -228,6 +334,8 @@ export default function App() {
           <ChevronLeft size={18} /> Zurück zur Auswahl
         </motion.button>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-10">
+
+          {/* Left Column: Cover & Information */}
           <div className="lg:col-span-2 space-y-6 md:space-y-8">
             <div className="relative h-[40vh] md:h-[50vh] rounded-[2rem] md:rounded-[3rem] overflow-hidden border border-white/20 shadow-2xl bg-black">
               <img src={selectedMap.image} className="w-full h-full object-cover" alt={selectedMap.name} />
@@ -237,6 +345,7 @@ export default function App() {
                 <h1 className="text-4xl md:text-8xl font-black text-white italic uppercase tracking-tighter leading-tight md:leading-none">{selectedMap.name}</h1>
               </div>
             </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
               <GlassCard className="p-6 md:p-10">
                 <h3 className="text-red-500 font-black uppercase text-[10px] tracking-widest mb-3 md:mb-4">Missionsprofil</h3>
@@ -248,13 +357,37 @@ export default function App() {
               </GlassCard>
             </div>
           </div>
-          <div className="space-y-4 md:space-y-6">
-            <h3 className="text-xl md:text-2xl font-black uppercase italic tracking-tighter border-l-4 border-red-600 pl-4">Intel Footage</h3>
-            {(selectedMap.screenshots || []).map((img, i) => (
-              <GlassCard key={i} className="aspect-video">
-                <img src={img} className="w-full h-full object-cover" alt="Intel" />
-              </GlassCard>
-            ))}
+
+          {/* Right Column: Map Blueprint & Intel Footage */}
+          <div className="space-y-6 md:space-y-8">
+
+            {/* Tactical Map (Blueprint) Section */}
+            {selectedMap.tacticalMap && (
+              <div className="space-y-4">
+                <h3 className="text-xl md:text-2xl font-black uppercase italic tracking-tighter border-l-4 border-red-600 pl-4">Tactical Blueprint</h3>
+                <GlassCard className="aspect-square md:aspect-[4/3] bg-black/50 p-4 border-red-500/20">
+                  <div className="relative w-full h-full bg-white/5 rounded-xl border border-white/10 overflow-hidden flex items-center justify-center">
+                    {/* Invert filter is applied to make bright architecture maps look like dark tactical blueprints */}
+                    <img src={selectedMap.tacticalMap} className="w-full h-full object-cover opacity-70 contrast-125 grayscale" alt="Blueprint" style={{ filter: 'invert(1) hue-rotate(180deg)' }} />
+                    <div className="absolute top-3 right-3 flex gap-2">
+                      <span className="bg-red-600/80 text-white text-[8px] px-2 py-1 rounded font-mono uppercase tracking-widest animate-pulse">Top Secret</span>
+                    </div>
+                  </div>
+                </GlassCard>
+              </div>
+            )}
+
+            {/* Screenshots Section */}
+            <div className="space-y-4">
+              <h3 className="text-xl md:text-2xl font-black uppercase italic tracking-tighter border-l-4 border-red-600 pl-4 mt-4 md:mt-0">Intel Footage</h3>
+              {(selectedMap.screenshots || []).map((img, i) => (
+                <GlassCard key={i} className="aspect-video relative overflow-hidden group">
+                  <img src={img} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="Intel" />
+                  <div className="absolute inset-0 border-[2px] border-white/0 group-hover:border-red-500/50 transition-colors pointer-events-none rounded-[1.5rem] md:rounded-[2rem]"></div>
+                </GlassCard>
+              ))}
+            </div>
+
           </div>
         </div>
       </motion.div>
@@ -266,7 +399,6 @@ export default function App() {
       <motion.div {...pageTransition} key="ron-main" className="space-y-8 md:space-y-12 pt-20 md:pt-28 pb-32 md:pb-20">
         <div className="flex flex-col items-center gap-6 md:gap-12">
 
-          {/* Dynamically Sized Sub-Navigation (Operations / Armory) */}
           <div className="w-fit mx-auto">
             <div className="flex p-[3px] md:p-1 bg-black/60 backdrop-blur-3xl border border-white/10 rounded-full relative shadow-2xl overflow-hidden">
               {['maps', 'weapons'].map((tab) => (
@@ -442,11 +574,14 @@ export default function App() {
 
         <main className="flex-1 w-full max-w-7xl mx-auto px-4 md:px-6">
           <AnimatePresence mode="wait">
-            <motion.div key={activeTab + (selectedMap?.id || 'list')} className="w-full">
-              {activeTab === 'home' && renderHome()}
-              {activeTab === 'ron' && renderReadyOrNot()}
-              {activeTab === 'pubg' && renderPubg()}
-            </motion.div>
+            {/* We only render the content once 'isRestored' is true to prevent layout jumping */}
+            {isRestored && (
+              <motion.div key={activeTab + (selectedMap?.id || 'list')} className="w-full">
+                {activeTab === 'home' && renderHome()}
+                {activeTab === 'ron' && renderReadyOrNot()}
+                {activeTab === 'pubg' && renderPubg()}
+              </motion.div>
+            )}
           </AnimatePresence>
         </main>
 
