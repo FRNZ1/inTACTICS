@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Home, Crosshair, Map as MapIcon, Shield, Eye, EyeOff, ChevronLeft, Target, Settings, Info, Lock, Menu, X, Activity, Zap, Clock } from 'lucide-react';
+import { Home, Crosshair, Map as MapIcon, Shield, Eye, EyeOff, ChevronLeft, Target, Settings, Info, Lock, Menu, X, Activity, Zap, Clock, FileText, ExternalLink, AlertTriangle } from 'lucide-react';
 
 // --- DATA MOCKS ---
 
@@ -14,7 +14,7 @@ const RON_MAPS = [
     image: 'https://images.unsplash.com/photo-1501166222995-ff41349c5945?auto=format&fit=crop&q=80&w=800',
     situation: 'Ein Durchsuchungsbefehl wird bei einem vermuteten Meth-Labor in einem heruntergekommenen Vorort vollstreckt.',
     suspects: 'Unberechenbar, oft unter Drogeneinfluss. Bewaffnet mit Handfeuerwaffen.',
-    tacticalMap: 'https://images.unsplash.com/photo-1584985223403-d6cbfec25ba7?auto=format&fit=crop&q=80&w=800', // Placeholder Blueprint
+    tacticalMap: 'https://images.unsplash.com/photo-1584985223403-d6cbfec25ba7?auto=format&fit=crop&q=80&w=800',
     screenshots: ['https://images.unsplash.com/photo-1605810230434-7631ac76ec81?auto=format&fit=crop&q=80&w=800']
   },
   {
@@ -30,6 +30,114 @@ const RON_MAPS = [
     screenshots: ['https://images.unsplash.com/photo-1582719478250-c8940062db08?auto=format&fit=crop&q=80&w=800']
   },
   {
+    id: 'ron_gas_station',
+    game: 'ron',
+    dlc: 'base',
+    name: '4U Gas Station',
+    codename: 'Thank You, Come Again',
+    image: 'https://images.unsplash.com/photo-1558904541-efa843a96f0f?auto=format&fit=crop&q=80&w=800',
+    situation: 'Ein lokaler Drogenring überfällt eine Tankstelle. Zivilisten in Gefahr.',
+    suspects: 'Desorganisierte Kriminelle, meist bewaffnet mit Pistolen und Schrotflinten.',
+    tacticalMap: 'https://images.unsplash.com/photo-1628155930542-3c7a64e2c833?auto=format&fit=crop&q=80&w=800',
+    screenshots: []
+  },
+  {
+    id: 'ron_mindjot',
+    game: 'ron',
+    dlc: 'base',
+    name: 'Mindjot Data Center',
+    codename: 'The Spider',
+    image: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&q=80&w=800',
+    situation: 'Razzia in einem illegal operierenden Rechenzentrum.',
+    suspects: 'Bewaffnete private Sicherheitskräfte. Taktisches Vorgehen erforderlich.',
+    tacticalMap: 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&q=80&w=800',
+    screenshots: []
+  },
+  {
+    id: 'ron_brisa',
+    game: 'ron',
+    dlc: 'base',
+    name: 'Brisa Cove',
+    codename: 'Ides of March',
+    image: 'https://images.unsplash.com/photo-1542314831-c6a4d27ce66b?auto=format&fit=crop&q=80&w=800',
+    situation: 'Schwer bewaffnete Veteranen haben sich in einem Apartmentkomplex verschanzt.',
+    suspects: 'Ex-Militärs. Extrem gefährlich, mit Körperpanzerung und Sprengfallen ausgestattet.',
+    tacticalMap: 'https://images.unsplash.com/photo-1588880331179-bc9b93a8cb65?auto=format&fit=crop&q=80&w=800',
+    screenshots: []
+  },
+  {
+    id: 'ron_neon',
+    game: 'ron',
+    dlc: 'base',
+    name: 'Neon Nightclub',
+    codename: 'Neon Tomb',
+    image: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&q=80&w=800',
+    situation: 'Aktiver Schütze in einem überfüllten Nachtclub.',
+    suspects: 'Terrormiliz, zielt auf maximale zivile Verluste ab. Sprengstoffwesten wahrscheinlich.',
+    tacticalMap: 'https://images.unsplash.com/photo-1598368195835-91e67f80c9d7?auto=format&fit=crop&q=80&w=800',
+    screenshots: []
+  },
+  {
+    id: 'ron_voll',
+    game: 'ron',
+    dlc: 'base',
+    name: 'Voll Health House',
+    codename: 'Valley of the Dolls',
+    image: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&q=80&w=800',
+    situation: 'Zugriff auf die Luxusvilla eines verdächtigten Ringführers für illegalen Handel.',
+    suspects: 'Private Security Forces mit schnellen Reaktionszeiten. Schweres Gerät.',
+    tacticalMap: 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&q=80&w=800',
+    screenshots: []
+  },
+  {
+    id: 'ron_postal',
+    game: 'ron',
+    dlc: 'base',
+    name: 'Los Suenos Postal Service',
+    codename: 'Greased Palms',
+    image: 'https://images.unsplash.com/photo-1586528116311-ad8ed745eb33?auto=format&fit=crop&q=80&w=800',
+    situation: 'Große Sortieranlage der Post wurde von einem Kartell infiltriert.',
+    suspects: 'Stark bewaffnete Kartellmitglieder. Große, offene Areale mit vielen Sichtlinien.',
+    tacticalMap: 'https://images.unsplash.com/photo-1600566753086-00f18efc2291?auto=format&fit=crop&q=80&w=800',
+    screenshots: []
+  },
+  {
+    id: 'ron_college',
+    game: 'ron',
+    dlc: 'base',
+    name: 'Watt Community College',
+    codename: 'Elephant',
+    image: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&q=80&w=800',
+    situation: 'Amoklauf auf einem College-Campus. Zeitkritische Mission.',
+    suspects: 'Mehrere aktive Schützen, die Sprengfallen ausgelegt haben könnten.',
+    tacticalMap: 'https://images.unsplash.com/photo-1584985223403-d6cbfec25ba7?auto=format&fit=crop&q=80&w=800',
+    screenshots: []
+  },
+  {
+    id: 'ron_hospital',
+    game: 'ron',
+    dlc: 'base',
+    name: 'Coastal Grove Medical Center',
+    codename: 'Relapse',
+    image: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&q=80&w=800',
+    situation: 'Terroristen haben ein Krankenhaus gestürmt. Ärzte und Patienten sind Geiseln.',
+    suspects: 'Gut ausgebildete Extremisten mit automatischen Waffen.',
+    tacticalMap: 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&q=80&w=800',
+    screenshots: []
+  },
+  {
+    id: 'ron_farm',
+    game: 'ron',
+    dlc: 'base',
+    name: 'Cherryessa Farm',
+    codename: 'Carriers of the Vine',
+    image: 'https://images.unsplash.com/photo-1500076656116-558758c991c1?auto=format&fit=crop&q=80&w=800',
+    situation: 'Razzia bei einem gefährlichen Kult auf einer abgelegenen Farm.',
+    suspects: 'Fanatische Kultmitglieder, die bereit sind, bis zum Tod zu kämpfen.',
+    tacticalMap: 'https://images.unsplash.com/photo-1588880331179-bc9b93a8cb65?auto=format&fit=crop&q=80&w=800',
+    screenshots: []
+  },
+  {
     id: 'ron_redwood',
     game: 'ron',
     dlc: 'home_invasion',
@@ -40,6 +148,30 @@ const RON_MAPS = [
     suspects: 'Skrupellose Plünderer, teilweise mit gestohlenen Waffen.',
     tacticalMap: 'https://images.unsplash.com/photo-1588880331179-bc9b93a8cb65?auto=format&fit=crop&q=80&w=800',
     screenshots: ['https://images.unsplash.com/photo-1580587771525-78b9dba3b914?auto=format&fit=crop&q=80&w=800']
+  },
+  {
+    id: 'ron_dormer',
+    game: 'ron',
+    dlc: 'home_invasion',
+    name: 'Dormer',
+    codename: 'Lawmaker',
+    image: 'https://images.unsplash.com/photo-1516156008625-3a9d6067fab5?auto=format&fit=crop&q=80&w=800',
+    situation: 'Notruf wegen eines Überfalls auf ein suburbanes Haus.',
+    suspects: 'Drei bis vier bewaffnete Einbrecher mit kriminellem Hintergrund.',
+    tacticalMap: 'https://images.unsplash.com/photo-1584985223403-d6cbfec25ba7?auto=format&fit=crop&q=80&w=800',
+    screenshots: []
+  },
+  {
+    id: 'ron_narcos',
+    game: 'ron',
+    dlc: 'home_invasion',
+    name: 'Narcos',
+    codename: 'Gated Community',
+    image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&q=80&w=800',
+    situation: 'Schwere Auseinandersetzung in einer abgeschotteten Wohnanlage nach dem Hurrikan.',
+    suspects: 'Organisierte Gangmitglieder, die das Chaos ausnutzen.',
+    tacticalMap: 'https://images.unsplash.com/photo-1628155930542-3c7a64e2c833?auto=format&fit=crop&q=80&w=800',
+    screenshots: []
   },
   {
     id: 'ron_port',
@@ -73,13 +205,56 @@ const PUBG_MAPS = [
   }
 ];
 
+const NEWS_POOL = [
+  {
+    id: 'n1',
+    mapId: 'ron_213',
+    type: 'CRITICAL',
+    headline: 'Razzia in Vorort eskaliert: Kartell-Beteiligung vermutet',
+    fact: 'Die Verdächtigen in 213 Park Homes haben in den letzten 48 Stunden ein provisorisches Tunnelsystem zwischen zwei Häusern fertiggestellt.',
+    content: 'Jüngste Überwachungsdaten zeigen ungewöhnlich hohe thermische Signaturen im Bereich von 213 Park Homes. Informanten berichten, dass die lokale Gang Unterstützung von einem überregionalen Kartell erhalten hat. Das bedeutet: Bessere Bewaffnung, Sprengfallen an den Eingängen und eine extrem hohe Bereitschaft, tödliche Gewalt anzuwenden. Das SWAT-Team muss mit durchschlagender Munition und improvisierter Panzerung der Feinde rechnen.'
+  },
+  {
+    id: 'n2',
+    mapId: 'ron_hotel',
+    type: 'UPDATE',
+    headline: 'Geiselnahme Wenderly Hills: Forderungen bekannt',
+    fact: 'Die Täter im Wenderly Hills Hotel fordern 50 Millionen Dollar in einer unregulierten Kryptowährung, ansonsten droht stündlich eine Exekution.',
+    content: 'Die Situation im obersten Stockwerk des Wenderly Hills ist hochgradig volatil. Bei den Angreifern handelt es sich nicht um gewöhnliche Kriminelle, sondern um paramilitärisch ausgebildete Söldner. Sie haben C4-Sprengladungen an den tragenden Säulen des Penthouses angebracht. Ein direkter Frontalangriff durch die Aufzugsschächte gilt als Suizidkommando. Alternative Zugänge über das Dach oder Belüftungsschächte werden derzeit vom LSPD geprüft.'
+  },
+  {
+    id: 'n3',
+    mapId: 'ron_redwood',
+    type: 'INFO',
+    headline: 'Redwood-Anwesen: Plünderer hochgradig bewaffnet',
+    fact: 'Die Waffen der Plünderer stammen aus einem FEMA-Konvoi, der während des jüngsten Sturms überfallen wurde.',
+    content: 'Was als unkoordinierte Plünderung nach einem verheerenden Unwetter begann, hat sich zu einer Festungssituation entwickelt. Die Verdächtigen auf dem Redwood-Anwesen haben militärische Sturmgewehre erbeutet und Schutzwesten der Klasse III. Das unübersichtliche Gelände und die durch den Sturm verursachten Trümmer machen eine lautlose Annäherung extrem schwierig. Scharfschützen-Support ist aufgrund der dichten Bewaldung nur bedingt möglich.'
+  },
+  {
+    id: 'n4',
+    mapId: 'ron_port',
+    type: 'FLASH',
+    headline: 'Port Hokan: Militärische Sprengsätze in Container 404',
+    fact: 'Der Schmuggelring nutzt das regnerische Wetter, um thermische Drohnen des LSPD zu blenden.',
+    content: 'Operation "Versteckte Fracht" geht in die heiße Phase. Zollpapiere, die von Undercover-Agenten sichergestellt wurden, deuten darauf hin, dass illegale russische Waffentechnologie verschifft werden soll. Die Verdächtigen tragen modernste Nachtsichtgeräte. Es wird dringend empfohlen, die Stromversorgung des Docks vor dem Zugriff zu kappen und auf NVG-Ausrüstung zu setzen, um den taktischen Vorteil auf unsere Seite zu ziehen.'
+  },
+  {
+    id: 'n5',
+    mapId: 'pubg_erangel',
+    type: 'RECON',
+    headline: 'Erangel: Neue Untergrund-Bunker verifiziert',
+    fact: 'Die sowjetischen Bunkeranlagen unter Erangel wurden ursprünglich 1968 erbaut und kürzlich von Überlebenden aufgebrochen.',
+    content: 'Unsere Satellitenaufklärung hat neue Eingänge zu den Geheimkellern auf Erangel markiert. Besonders das Gebiet südlich von Yasnaya Polyana zeigt frische Reifenspuren, die im Nichts enden. Die Keller sind mit hochstufigem Loot (Level 3 Ausrüstung) gefüllt, jedoch oft von anderen Squads stark umkämpft. Wir raten zu äußerster Vorsicht bei der Annäherung: Flashbangs sind essenziell, bevor man in die engen Korridore hinabsteigt.'
+  }
+];
+
 // --- STYLES & ANIMATIONS ---
 
 const pageTransition = {
   initial: { opacity: 0, y: 20 },
   animate: { opacity: 1, y: 0 },
   exit: { opacity: 0, y: -20 },
-  transition: { duration: 0.5, ease: "easeOut" }
+  transition: { duration: 0.4, ease: "easeOut" }
 };
 
 const springTransition = {
@@ -89,7 +264,7 @@ const springTransition = {
 };
 
 // --- CONSTANTS ---
-const SESSION_TIMEOUT = 10 * 60 * 1000; // 10 minutes in milliseconds
+const SESSION_TIMEOUT = 10 * 60 * 1000;
 const STORAGE_KEY_STATE = 'inTactics_app_state';
 const STORAGE_KEY_TIME = 'inTactics_last_active';
 
@@ -97,10 +272,10 @@ const STORAGE_KEY_TIME = 'inTactics_last_active';
 
 const GlassCard = ({ children, className = '', onClick }) => (
   <motion.div
-    whileHover={onClick ? { y: -8, scale: 1.015 } : {}}
+    whileHover={onClick ? { y: -5, scale: 1.01 } : {}}
     whileTap={onClick ? { scale: 0.98 } : {}}
     onClick={onClick}
-    className={`relative group bg-white/5 backdrop-blur-[40px] border border-white/10 rounded-[1.5rem] md:rounded-[2rem] shadow-xl transition-all duration-500 overflow-hidden ${onClick ? 'cursor-pointer hover:bg-white/10 hover:border-white/20' : ''} ${className}`}
+    className={`relative group bg-white/5 backdrop-blur-[40px] border border-white/10 rounded-[1.5rem] md:rounded-[2rem] shadow-xl transition-all duration-300 overflow-hidden ${onClick ? 'cursor-pointer hover:bg-white/10 hover:border-white/20' : ''} ${className}`}
   >
     {children}
   </motion.div>
@@ -108,7 +283,6 @@ const GlassCard = ({ children, className = '', onClick }) => (
 
 const DynamicNavItem = ({ id, icon: Icon, label, activeTab, setActiveTab }) => {
   const isActive = activeTab === id;
-
   return (
     <button
       onClick={() => setActiveTab(id)}
@@ -132,12 +306,39 @@ export default function App() {
   const [ronSubTab, setRonSubTab] = useState('maps');
   const [activeDlc, setActiveDlc] = useState('base');
   const [selectedMap, setSelectedMap] = useState(null);
+  const [selectedArticle, setSelectedArticle] = useState(null);
 
   const [isRestored, setIsRestored] = useState(false);
+  const [liveFeed, setLiveFeed] = useState([]);
+
+  // --- LIVE FEED LOGIC ---
+  useEffect(() => {
+    // Initial feed (take 3 random)
+    const shuffled = [...NEWS_POOL].sort(() => 0.5 - Math.random());
+    setLiveFeed(shuffled.slice(0, 3).map(item => ({ ...item, timestamp: new Date() })));
+
+    // Update feed every 15 minutes
+    const intervalId = setInterval(() => {
+      setLiveFeed(currentFeed => {
+        // Find an item not currently in the feed
+        const currentIds = currentFeed.map(i => i.id);
+        const availablePool = NEWS_POOL.filter(i => !currentIds.includes(i.id));
+
+        if (availablePool.length === 0) return currentFeed; // Failsafe
+
+        const nextItem = availablePool[Math.floor(Math.random() * availablePool.length)];
+        const newItemWithTime = { ...nextItem, timestamp: new Date() };
+
+        // Add to top, remove oldest
+        return [newItemWithTime, ...currentFeed.slice(0, 2)];
+      });
+    }, 15 * 60 * 1000); // Geändert von 8000 (8 Sek.) zu 15 * 60 * 1000 (15 Min.)
+
+    return () => clearInterval(intervalId);
+  }, []);
 
   // --- STATE PERSISTENCE LOGIC ---
   useEffect(() => {
-    // 1. Load state on initial mount
     const lastActive = localStorage.getItem(STORAGE_KEY_TIME);
     const now = Date.now();
 
@@ -155,18 +356,19 @@ export default function App() {
             setSelectedMap(mapToSelect || null);
           }
 
-          // Restore scroll position after a short delay to ensure rendering is done
+          if (savedState.selectedArticleId) {
+            const articleToSelect = NEWS_POOL.find(n => n.id === savedState.selectedArticleId);
+            setSelectedArticle(articleToSelect || null);
+          }
+
           if (savedState.scrollPosition) {
-            setTimeout(() => {
-              window.scrollTo(0, savedState.scrollPosition);
-            }, 150);
+            setTimeout(() => window.scrollTo(0, savedState.scrollPosition), 150);
           }
         }
       } catch (e) {
         console.error("Failed to parse saved state", e);
       }
     } else {
-      // Clear expired session data
       localStorage.removeItem(STORAGE_KEY_STATE);
       localStorage.removeItem(STORAGE_KEY_TIME);
     }
@@ -174,23 +376,22 @@ export default function App() {
     setIsRestored(true);
   }, []);
 
-  // 2. Save state whenever relevant dependencies change
   useEffect(() => {
-    if (!isRestored) return; // Wait until initial load is complete
+    if (!isRestored) return;
 
     const stateToSave = {
       activeTab,
       ronSubTab,
       activeDlc,
       selectedMapId: selectedMap?.id || null,
-      scrollPosition: window.scrollY // initial save of current scroll
+      selectedArticleId: selectedArticle?.id || null,
+      scrollPosition: window.scrollY
     };
 
     localStorage.setItem(STORAGE_KEY_STATE, JSON.stringify(stateToSave));
     localStorage.setItem(STORAGE_KEY_TIME, Date.now().toString());
-  }, [activeTab, ronSubTab, activeDlc, selectedMap, isRestored]);
+  }, [activeTab, ronSubTab, activeDlc, selectedMap, selectedArticle, isRestored]);
 
-  // 3. Track scroll position dynamically (throttled to save performance)
   useEffect(() => {
     if (!isRestored) return;
 
@@ -202,18 +403,14 @@ export default function App() {
             const currentState = JSON.parse(localStorage.getItem(STORAGE_KEY_STATE) || '{}');
             currentState.scrollPosition = window.scrollY;
             localStorage.setItem(STORAGE_KEY_STATE, JSON.stringify(currentState));
-            localStorage.setItem(STORAGE_KEY_TIME, Date.now().toString()); // Reset timeout on activity
-          } catch (e) {
-            // Ignore parsing errors on rapid scroll
-          }
+            localStorage.setItem(STORAGE_KEY_TIME, Date.now().toString());
+          } catch (e) { }
           timeoutId = null;
-        }, 300); // 300ms throttle
+        }, 300);
       }
     };
 
     window.addEventListener('scroll', handleScroll);
-
-    // Also update timestamp on clicks to prevent timeout while actively navigating
     const handleClick = () => localStorage.setItem(STORAGE_KEY_TIME, Date.now().toString());
     window.addEventListener('click', handleClick);
 
@@ -224,104 +421,209 @@ export default function App() {
     };
   }, [isRestored]);
 
+  // --- ACTIONS ---
+  const handleOpenMissionFromArticle = (mapId) => {
+    const allMaps = [...RON_MAPS, ...PUBG_MAPS];
+    const map = allMaps.find(m => m.id === mapId);
+    if (map) {
+      setSelectedArticle(null);
+      setActiveTab(map.game);
+      setSelectedMap(map);
+      if (map.game === 'ron') {
+        setActiveDlc(map.dlc);
+        setRonSubTab('maps');
+      }
+    }
+  };
+
+  const getTypeColor = (type) => {
+    switch (type) {
+      case 'CRITICAL': return 'text-red-500 bg-red-500/10 border-red-500/20';
+      case 'FLASH': return 'text-orange-500 bg-orange-500/10 border-orange-500/20';
+      case 'UPDATE': return 'text-yellow-500 bg-yellow-500/10 border-yellow-500/20';
+      default: return 'text-blue-400 bg-blue-500/10 border-blue-500/20';
+    }
+  };
+
   // --- RENDER FUNCTIONS ---
 
-  const renderHome = () => (
-    <motion.div {...pageTransition} className="pt-20 md:pt-28 pb-32 md:pb-20 space-y-8 md:space-y-12">
-      <div className="flex flex-col items-center text-center space-y-4 mb-8 md:mb-16">
-        <h1 className="text-6xl sm:text-7xl md:text-[10rem] font-black tracking-tighter text-white select-none italic leading-none">
-          in<span className="text-blue-500">TACTICS</span>
-        </h1>
-        <div className="flex items-center gap-3 bg-white/5 px-4 md:px-6 py-2 rounded-full border border-white/10 backdrop-blur-xl">
-          <Activity size={12} className="text-green-500 animate-pulse" />
-          <span className="text-[8px] md:text-[10px] font-black tracking-[0.2em] md:tracking-[0.3em] uppercase text-white/60">System Online • Ready for Deployment</span>
-        </div>
-      </div>
+  const renderHome = () => {
+    if (selectedArticle) {
+      // --- INSIDER ARTICLE DOSSIER VIEW ---
+      return (
+        <motion.div {...pageTransition} className="pt-20 md:pt-24 pb-32 md:pb-20 space-y-6 md:space-y-8 max-w-4xl mx-auto">
+          <motion.button
+            whileHover={{ x: -5 }}
+            onClick={() => setSelectedArticle(null)}
+            className="flex items-center gap-2 text-white/70 hover:text-white bg-white/5 px-4 md:px-6 py-3 rounded-full backdrop-blur-xl border border-white/10 transition-all text-xs md:text-sm w-fit"
+          >
+            <ChevronLeft size={18} /> Zurück zum Feed
+          </motion.button>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
-        <div className="lg:col-span-2 space-y-6 md:space-y-8">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-8">
-            <GlassCard onClick={() => setActiveTab('ron')} className="p-6 md:p-10 border-red-500/20 bg-gradient-to-br from-red-500/5 to-transparent">
-              <Shield size={32} className="text-red-500 mb-4 md:mb-6" />
-              <h2 className="text-2xl md:text-3xl font-black text-white italic uppercase tracking-tighter">Ready or Not</h2>
-              <p className="text-white/40 text-xs md:text-sm mt-1 md:mt-2 font-medium">Tactical SWAT Simulation Data</p>
-            </GlassCard>
-            <GlassCard onClick={() => setActiveTab('pubg')} className="p-6 md:p-10 border-yellow-500/20 bg-gradient-to-br from-yellow-500/5 to-transparent">
-              <Crosshair size={32} className="text-yellow-500 mb-4 md:mb-6" />
-              <h2 className="text-2xl md:text-3xl font-black text-white italic uppercase tracking-tighter">PUBG</h2>
-              <p className="text-white/40 text-xs md:text-sm mt-1 md:mt-2 font-medium">Battle Royale Reconnaissance</p>
+          <GlassCard className="p-8 md:p-14 border-t-4 border-t-red-600 bg-gradient-to-b from-red-900/10 to-transparent">
+            <div className="flex items-center gap-4 mb-8">
+              <span className={`px-3 py-1 rounded-md text-[10px] font-black uppercase tracking-widest border ${getTypeColor(selectedArticle.type)}`}>
+                {selectedArticle.type}
+              </span>
+              <span className="text-white/40 text-xs font-mono">ID: {selectedArticle.id}-CLASS</span>
+            </div>
+
+            <h1 className="text-4xl md:text-6xl font-black italic uppercase tracking-tighter text-white mb-8 leading-tight">
+              {selectedArticle.headline}
+            </h1>
+
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-6 mb-10 flex items-start gap-4">
+              <Info className="text-blue-400 shrink-0 mt-1" size={24} />
+              <div>
+                <h4 className="text-[10px] font-black uppercase text-white/40 tracking-widest mb-2">Random Fact // Intel</h4>
+                <p className="text-blue-100 font-medium italic leading-relaxed text-sm md:text-base">
+                  "{selectedArticle.fact}"
+                </p>
+              </div>
+            </div>
+
+            <div className="prose prose-invert max-w-none">
+              <h3 className="text-red-500 font-black uppercase tracking-widest text-xs mb-4 flex items-center gap-2">
+                <FileText size={16} /> Volles Dossier
+              </h3>
+              <p className="text-gray-300 text-lg leading-relaxed font-medium">
+                {selectedArticle.content}
+              </p>
+            </div>
+
+            <div className="mt-12 pt-8 border-t border-white/10">
+              <button
+                onClick={() => handleOpenMissionFromArticle(selectedArticle.mapId)}
+                className="w-full flex items-center justify-center gap-3 py-4 md:py-5 bg-white text-black rounded-2xl font-black italic uppercase tracking-tighter hover:bg-blue-500 hover:text-white transition-all duration-300 shadow-[0_0_30px_rgba(255,255,255,0.1)] hover:shadow-[0_0_40px_rgba(59,130,246,0.4)]"
+              >
+                <Target size={20} /> Zum Taktischen Briefing
+              </button>
+            </div>
+          </GlassCard>
+        </motion.div>
+      );
+    }
+
+    // --- DEFAULT HOME VIEW ---
+    return (
+      <motion.div {...pageTransition} className="pt-20 md:pt-28 pb-32 md:pb-20 space-y-8 md:space-y-12">
+        <div className="flex flex-col items-center text-center space-y-4 mb-8 md:mb-16">
+          <h1 className="text-6xl sm:text-7xl md:text-[10rem] font-black tracking-tighter text-white select-none italic leading-none">
+            in<span className="text-blue-500">TACTICS</span>
+          </h1>
+          <div className="flex items-center gap-3 bg-white/5 px-4 md:px-6 py-2 rounded-full border border-white/10 backdrop-blur-xl">
+            <Activity size={12} className="text-green-500 animate-pulse" />
+            <span className="text-[8px] md:text-[10px] font-black tracking-[0.2em] md:tracking-[0.3em] uppercase text-white/60">System Online • Ready for Deployment</span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
+          <div className="lg:col-span-2 space-y-6 md:space-y-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-8">
+              <GlassCard onClick={() => setActiveTab('ron')} className="p-6 md:p-10 border-red-500/20 bg-gradient-to-br from-red-500/5 to-transparent">
+                <Shield size={32} className="text-red-500 mb-4 md:mb-6" />
+                <h2 className="text-2xl md:text-3xl font-black text-white italic uppercase tracking-tighter">Ready or Not</h2>
+                <p className="text-white/40 text-xs md:text-sm mt-1 md:mt-2 font-medium">Tactical SWAT Simulation Data</p>
+              </GlassCard>
+              <GlassCard onClick={() => setActiveTab('pubg')} className="p-6 md:p-10 border-yellow-500/20 bg-gradient-to-br from-yellow-500/5 to-transparent">
+                <Crosshair size={32} className="text-yellow-500 mb-4 md:mb-6" />
+                <h2 className="text-2xl md:text-3xl font-black text-white italic uppercase tracking-tighter">PUBG</h2>
+                <p className="text-white/40 text-xs md:text-sm mt-1 md:mt-2 font-medium">Battle Royale Reconnaissance</p>
+              </GlassCard>
+            </div>
+
+            {/* LIVE INTEL FEED */}
+            <GlassCard className="p-6 md:p-8 flex flex-col h-[400px]">
+              <div className="flex items-center justify-between mb-6 border-b border-white/10 pb-4">
+                <h3 className="flex items-center gap-2 md:gap-3 text-lg md:text-xl font-black italic uppercase tracking-tighter text-white">
+                  <Zap size={18} className="text-blue-400 animate-pulse" /> Live Intel Feed
+                </h3>
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
+                  <span className="text-[10px] text-white/40 font-mono tracking-widest uppercase">Syncing</span>
+                </div>
+              </div>
+
+              <div className="flex-1 overflow-hidden relative">
+                <div className="absolute inset-0 mask-image-b space-y-3 md:space-y-4">
+                  <AnimatePresence>
+                    {liveFeed.map((item, index) => (
+                      <motion.div
+                        key={item.id + item.timestamp.getTime()}
+                        initial={{ opacity: 0, y: -20, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.9 }}
+                        transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                        onClick={() => setSelectedArticle(item)}
+                        className="group flex flex-col gap-2 p-4 rounded-2xl bg-white/[0.02] border border-white/5 hover:bg-white/[0.08] hover:border-white/20 transition-all cursor-pointer shadow-lg"
+                      >
+                        <div className="flex justify-between items-start">
+                          <span className={`text-[8px] md:text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded border ${getTypeColor(item.type)}`}>
+                            {item.type}
+                          </span>
+                          <span className="text-[10px] text-white/30 font-mono">
+                            {index === 0 ? 'GERADE EBEN' : 'AKTUALISIERT'}
+                          </span>
+                        </div>
+                        <h4 className="text-sm md:text-base font-bold text-white/90 leading-tight group-hover:text-blue-400 transition-colors">
+                          {item.headline}
+                        </h4>
+                        <p className="text-xs text-white/50 italic line-clamp-1 group-hover:text-white/70">
+                          <span className="font-bold text-white/40">Fact:</span> {item.fact}
+                        </p>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                </div>
+              </div>
             </GlassCard>
           </div>
 
-          <GlassCard className="p-6 md:p-8">
-            <div className="flex items-center justify-between mb-6 md:mb-8">
-              <h3 className="flex items-center gap-2 md:gap-3 text-lg md:text-xl font-black italic uppercase tracking-tighter text-white">
-                <Zap size={18} className="text-blue-400" /> Live Intel Feed
-              </h3>
-              <span className="text-[8px] md:text-[10px] text-white/20 font-mono">ID: 992-X-TACT</span>
-            </div>
-            <div className="space-y-3 md:space-y-4">
-              {[
-                { time: 'vor 2 Min', msg: 'Neue Meth-Labor Koordinaten in Twisted Nerve verifiziert.', status: 'info' },
-                { time: 'vor 14 Min', msg: 'Erangel Geheimkeller-Update: Neue Standorte markiert.', status: 'update' },
-                { time: 'vor 1 Std', msg: 'System-Abgleich abgeschlossen. Alle Karten-Layer aktiv.', status: 'system' }
-              ].map((item, i) => (
-                <div key={i} className="flex items-start gap-3 md:gap-4 p-3 md:p-4 rounded-xl md:rounded-2xl bg-white/[0.02] border border-white/5 hover:bg-white/[0.05] transition-colors">
-                  <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5 md:mt-2 shrink-0 shadow-[0_0_8px_rgba(59,130,246,0.5)]"></div>
-                  <div>
-                    <p className="text-xs md:text-sm font-medium text-white/80 leading-snug">{item.msg}</p>
-                    <span className="text-[8px] md:text-[10px] font-black uppercase text-white/20 mt-1 block tracking-wider">{item.time}</span>
+          <div className="space-y-6 md:space-y-8">
+            <GlassCard className="p-6 md:p-8 bg-blue-600/5 border-blue-500/20">
+              <h3 className="text-[10px] md:text-sm font-black uppercase tracking-widest text-blue-400 mb-4 md:mb-6">Last Viewed Intel</h3>
+              {selectedMap ? (
+                <div className="space-y-4 md:space-y-6">
+                  <div className="aspect-video rounded-xl md:rounded-2xl overflow-hidden border border-white/10">
+                    <img src={selectedMap.image} className="w-full h-full object-cover" />
                   </div>
+                  <div>
+                    <h4 className="text-xl md:text-2xl font-black italic uppercase text-white leading-none">{selectedMap.name}</h4>
+                    <p className="text-white/40 text-[10px] mt-2 font-mono uppercase tracking-tighter">{selectedMap.game === 'ron' ? 'Operation Area' : 'Combat Zone'}</p>
+                  </div>
+                  <button
+                    onClick={() => setActiveTab(selectedMap.game)}
+                    className="w-full py-3 md:py-4 bg-white text-black font-black uppercase italic tracking-tighter text-xs md:text-sm rounded-xl hover:bg-blue-400 transition-colors"
+                  >
+                    Return to Intel
+                  </button>
                 </div>
-              ))}
-            </div>
-          </GlassCard>
-        </div>
+              ) : (
+                <div className="py-8 md:py-12 flex flex-col items-center justify-center text-center opacity-20">
+                  <Clock size={40} className="mb-4" />
+                  <p className="text-[10px] font-black uppercase tracking-widest italic">No Recent Activity</p>
+                </div>
+              )}
+            </GlassCard>
 
-        <div className="space-y-6 md:space-y-8">
-          <GlassCard className="p-6 md:p-8 bg-blue-600/5 border-blue-500/20">
-            <h3 className="text-[10px] md:text-sm font-black uppercase tracking-widest text-blue-400 mb-4 md:mb-6">Last Viewed Intel</h3>
-            {selectedMap ? (
-              <div className="space-y-4 md:space-y-6">
-                <div className="aspect-video rounded-xl md:rounded-2xl overflow-hidden border border-white/10">
-                  <img src={selectedMap.image} className="w-full h-full object-cover" />
+            <GlassCard className="p-6 md:p-8">
+              <h3 className="text-[10px] md:text-sm font-black uppercase tracking-widest text-white/40 mb-4 md:mb-6">Tactical Status</h3>
+              <div className="grid grid-cols-2 gap-3 md:gap-4">
+                <div className="p-3 md:p-4 rounded-xl md:rounded-2xl bg-white/5 border border-white/5 text-center">
+                  <p className="text-[8px] md:text-[10px] font-black text-white/20 uppercase mb-1">Maps</p>
+                  <p className="text-xl md:text-2xl font-black italic text-white">05</p>
                 </div>
-                <div>
-                  <h4 className="text-xl md:text-2xl font-black italic uppercase text-white leading-none">{selectedMap.name}</h4>
-                  <p className="text-white/40 text-[10px] mt-2 font-mono uppercase tracking-tighter">{selectedMap.game === 'ron' ? 'Operation Area' : 'Combat Zone'}</p>
+                <div className="p-3 md:p-4 rounded-xl md:rounded-2xl bg-white/5 border border-white/5 text-center">
+                  <p className="text-[8px] md:text-[10px] font-black text-white/20 uppercase mb-1">Intel</p>
+                  <p className="text-xl md:text-2xl font-black italic text-white">42</p>
                 </div>
-                <button
-                  onClick={() => setActiveTab(selectedMap.game)}
-                  className="w-full py-3 md:py-4 bg-white text-black font-black uppercase italic tracking-tighter text-xs md:text-sm rounded-xl hover:bg-blue-400 transition-colors"
-                >
-                  Return to Intel
-                </button>
               </div>
-            ) : (
-              <div className="py-8 md:py-12 flex flex-col items-center justify-center text-center opacity-20">
-                <Clock size={40} className="mb-4" />
-                <p className="text-[10px] font-black uppercase tracking-widest italic">No Recent Activity</p>
-              </div>
-            )}
-          </GlassCard>
-
-          <GlassCard className="p-6 md:p-8">
-            <h3 className="text-[10px] md:text-sm font-black uppercase tracking-widest text-white/40 mb-4 md:mb-6">Tactical Status</h3>
-            <div className="grid grid-cols-2 gap-3 md:gap-4">
-              <div className="p-3 md:p-4 rounded-xl md:rounded-2xl bg-white/5 border border-white/5 text-center">
-                <p className="text-[8px] md:text-[10px] font-black text-white/20 uppercase mb-1">Maps</p>
-                <p className="text-xl md:text-2xl font-black italic text-white">05</p>
-              </div>
-              <div className="p-3 md:p-4 rounded-xl md:rounded-2xl bg-white/5 border border-white/5 text-center">
-                <p className="text-[8px] md:text-[10px] font-black text-white/20 uppercase mb-1">Intel</p>
-                <p className="text-xl md:text-2xl font-black italic text-white">42</p>
-              </div>
-            </div>
-          </GlassCard>
+            </GlassCard>
+          </div>
         </div>
-      </div>
-    </motion.div>
-  );
+      </motion.div>
+    );
+  };
 
   const renderReadyOrNot = () => {
     if (selectedMap && selectedMap.game === 'ron') return (
@@ -334,8 +636,6 @@ export default function App() {
           <ChevronLeft size={18} /> Zurück zur Auswahl
         </motion.button>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-10">
-
-          {/* Left Column: Cover & Information */}
           <div className="lg:col-span-2 space-y-6 md:space-y-8">
             <div className="relative h-[40vh] md:h-[50vh] rounded-[2rem] md:rounded-[3rem] overflow-hidden border border-white/20 shadow-2xl bg-black">
               <img src={selectedMap.image} className="w-full h-full object-cover" alt={selectedMap.name} />
@@ -358,16 +658,12 @@ export default function App() {
             </div>
           </div>
 
-          {/* Right Column: Map Blueprint & Intel Footage */}
           <div className="space-y-6 md:space-y-8">
-
-            {/* Tactical Map (Blueprint) Section */}
             {selectedMap.tacticalMap && (
               <div className="space-y-4">
                 <h3 className="text-xl md:text-2xl font-black uppercase italic tracking-tighter border-l-4 border-red-600 pl-4">Tactical Blueprint</h3>
                 <GlassCard className="aspect-square md:aspect-[4/3] bg-black/50 p-4 border-red-500/20">
                   <div className="relative w-full h-full bg-white/5 rounded-xl border border-white/10 overflow-hidden flex items-center justify-center">
-                    {/* Invert filter is applied to make bright architecture maps look like dark tactical blueprints */}
                     <img src={selectedMap.tacticalMap} className="w-full h-full object-cover opacity-70 contrast-125 grayscale" alt="Blueprint" style={{ filter: 'invert(1) hue-rotate(180deg)' }} />
                     <div className="absolute top-3 right-3 flex gap-2">
                       <span className="bg-red-600/80 text-white text-[8px] px-2 py-1 rounded font-mono uppercase tracking-widest animate-pulse">Top Secret</span>
@@ -376,8 +672,6 @@ export default function App() {
                 </GlassCard>
               </div>
             )}
-
-            {/* Screenshots Section */}
             <div className="space-y-4">
               <h3 className="text-xl md:text-2xl font-black uppercase italic tracking-tighter border-l-4 border-red-600 pl-4 mt-4 md:mt-0">Intel Footage</h3>
               {(selectedMap.screenshots || []).map((img, i) => (
@@ -387,7 +681,6 @@ export default function App() {
                 </GlassCard>
               ))}
             </div>
-
           </div>
         </div>
       </motion.div>
@@ -398,7 +691,6 @@ export default function App() {
     return (
       <motion.div {...pageTransition} key="ron-main" className="space-y-8 md:space-y-12 pt-20 md:pt-28 pb-32 md:pb-20">
         <div className="flex flex-col items-center gap-6 md:gap-12">
-
           <div className="w-fit mx-auto">
             <div className="flex p-[3px] md:p-1 bg-black/60 backdrop-blur-3xl border border-white/10 rounded-full relative shadow-2xl overflow-hidden">
               {['maps', 'weapons'].map((tab) => (
@@ -534,7 +826,6 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#010101] font-sans text-white overflow-x-hidden selection:bg-blue-600/40">
 
-      {/* Background Ambience */}
       <div className="fixed inset-0 z-0 pointer-events-none">
         <AnimatePresence mode="wait">
           {activeTab === 'ron' ? (
@@ -557,7 +848,6 @@ export default function App() {
 
       <div className="relative z-10 flex flex-col min-h-screen">
 
-        {/* Adaptive Navigation */}
         <header className="fixed md:top-8 max-md:bottom-0 left-0 right-0 z-50 flex justify-center md:px-6 max-md:pb-0">
           <motion.nav
             initial={{ y: 50, opacity: 0 }}
@@ -574,9 +864,8 @@ export default function App() {
 
         <main className="flex-1 w-full max-w-7xl mx-auto px-4 md:px-6">
           <AnimatePresence mode="wait">
-            {/* We only render the content once 'isRestored' is true to prevent layout jumping */}
             {isRestored && (
-              <motion.div key={activeTab + (selectedMap?.id || 'list')} className="w-full">
+              <motion.div key={activeTab + (selectedMap?.id || 'list') + (selectedArticle?.id || 'no-art')} className="w-full">
                 {activeTab === 'home' && renderHome()}
                 {activeTab === 'ron' && renderReadyOrNot()}
                 {activeTab === 'pubg' && renderPubg()}
@@ -596,6 +885,7 @@ export default function App() {
         body { font-family: 'Inter', sans-serif; background: #010101; cursor: default; -webkit-font-smoothing: antialiased; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .mask-image-b { -webkit-mask-image: linear-gradient(to bottom, black 70%, transparent 100%); mask-image: linear-gradient(to bottom, black 70%, transparent 100%); }
         * { -webkit-tap-highlight-color: transparent; }
         
         @media (max-width: 768px) {
