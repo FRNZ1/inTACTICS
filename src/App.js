@@ -5,64 +5,163 @@ import { Home, Crosshair, Map as MapIcon, Shield, Eye, EyeOff, ChevronLeft, Targ
 // --- DATA MOCKS ---
 
 const RON_MAPS = [
+  // ==========================================
+  // --- BASE GAME (READY OR NOT) ---
+  // ==========================================
   {
-    id: 'ron_213',
-    game: 'ron',
-    dlc: 'base',
-    name: '213 Park Homes',
-    codename: 'Twisted Nerve',
-    image: 'https://images.unsplash.com/photo-1501166222995-ff41349c5945?auto=format&fit=crop&q=80&w=800',
-    situation: 'Ein Durchsuchungsbefehl wird bei einem vermuteten Meth-Labor in einem heruntergekommenen Vorort vollstreckt.',
-    suspects: 'Unberechenbar, oft unter Drogeneinfluss. Bewaffnet mit Handfeuerwaffen.',
-    tacticalMap: 'https://images.unsplash.com/photo-1584985223403-d6cbfec25ba7?auto=format&fit=crop&q=80&w=800',
-    screenshots: ['https://images.unsplash.com/photo-1605810230434-7631ac76ec81?auto=format&fit=crop&q=80&w=800']
-  },
-  {
-    id: 'ron_hotel',
-    game: 'ron',
-    dlc: 'base',
-    name: 'Wenderly Hills Hotel',
-    codename: 'Checkin\' In',
-    image: 'https://images.unsplash.com/photo-1566665797739-1674de7a421a?auto=format&fit=crop&q=80&w=800',
-    situation: 'Geiselnahme im obersten Stockwerk eines Luxushotels. Mehrere VIPs sind betroffen.',
-    suspects: 'Hochgradig organisiert, gut gepanzert und mit automatischen Waffen ausgestattet.',
-    tacticalMap: 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&q=80&w=800',
-    screenshots: ['https://images.unsplash.com/photo-1582719478250-c8940062db08?auto=format&fit=crop&q=80&w=800']
-  },
-  {
-    id: 'ron_gas_station',
+    id: 'ron_gas',
     game: 'ron',
     dlc: 'base',
     name: '4U Gas Station',
     codename: 'Thank You, Come Again',
-    image: 'https://images.unsplash.com/photo-1558904541-efa843a96f0f?auto=format&fit=crop&q=80&w=800',
-    situation: 'Ein lokaler Drogenring überfällt eine Tankstelle. Zivilisten in Gefahr.',
-    suspects: 'Desorganisierte Kriminelle, meist bewaffnet mit Pistolen und Schrotflinten.',
+    image: 'https://readyormaps.com/maps/1_4U_gas/4U_Gas_Station_preview.webp',
+    situation: 'Ein lokaler Drogenring überfällt eine Tankstelle und nimmt Zivilisten als Geiseln.',
+    suspects: 'Desorganisierte Kriminelle, meist bewaffnet mit Pistolen und Schrotflinten. Geringe Panzerung.',
     tacticalMap: 'https://images.unsplash.com/photo-1628155930542-3c7a64e2c833?auto=format&fit=crop&q=80&w=800',
     screenshots: []
   },
   {
-    id: 'ron_mindjot',
+    id: 'ron_23mb',
     game: 'ron',
     dlc: 'base',
-    name: 'Mindjot Data Center',
-    codename: 'The Spider',
-    image: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&q=80&w=800',
-    situation: 'Razzia in einem illegal operierenden Rechenzentrum.',
-    suspects: 'Bewaffnete private Sicherheitskräfte. Taktisches Vorgehen erforderlich.',
-    tacticalMap: 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&q=80&w=800',
+    name: 'San Uriel Condominiums',
+    codename: '23 Megabytes a Second',
+    image: 'https://readyormaps.com/maps/2_23_mb/23_Megabytes_a_Second_preview.webp',
+    situation: 'Ein angebliches Swatting bei einem Streamer entpuppt sich als illegale Server-Operation (CP).',
+    suspects: 'Private Sicherheitskräfte und bewaffnete Bewohner. Unerwartet hoher Widerstand.',
+    tacticalMap: 'https://images.unsplash.com/photo-1588880331179-bc9b93a8cb65?auto=format&fit=crop&q=80&w=800',
     screenshots: []
   },
   {
-    id: 'ron_brisa',
+    id: 'ron_twisted',
+    game: 'ron',
+    dlc: 'base',
+    name: '213 Park Homes',
+    codename: 'Twisted Nerve',
+    image: 'https://readyormaps.com/maps/3_213_park/213_Park_preview.webp',
+    situation: 'Durchsuchungsbefehl bei einem vermuteten Meth-Labor in einem heruntergekommenen Vorort.',
+    suspects: 'Junkies und Dealer. Unberechenbar, oft unter Drogeneinfluss. Gefahr durch versteckte Sprengfallen (Booby Traps).',
+    tacticalMap: 'https://images.unsplash.com/photo-1584985223403-d6cbfec25ba7?auto=format&fit=crop&q=80&w=800',
+    screenshots: []
+  },
+  {
+    id: 'ron_spider',
+    game: 'ron',
+    dlc: 'base',
+    name: 'Brixley Talent Time',
+    codename: 'The Spider',
+    image: 'https://readyormaps.com/maps/4_brixley_talent/brixley_talent_preview.webp',
+    situation: 'Razzia in einer scheinbaren Talentagentur, die in die Produktion von illegalem Material verwickelt ist.',
+    suspects: 'Bewaffnete Wachleute. Gut organisiert, nutzen die verwinkelten Räumlichkeiten zu ihrem Vorteil.',
+    tacticalMap: 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&q=80&w=800',
+    screenshots: []
+  },
+  {
+    id: 'ron_lethal',
+    game: 'ron',
+    dlc: 'base',
+    name: 'Sullivan\'s Slope',
+    codename: 'A Lethal Obsession',
+    image: 'https://readyormaps.com/maps/5_sullivans_slope/Sullivans%20slope_preview.webp',
+    situation: 'Zugriff auf das abgelegene Grundstück eines flüchtigen Regierungsgegners und Bombenbauers.',
+    suspects: 'Einsamer Wolf, aber extrem gefährlich. Das gesamte Gelände ist massiv mit tödlichen Sprengfallen präpariert.',
+    tacticalMap: 'https://images.unsplash.com/photo-1600566753086-00f18efc2291?auto=format&fit=crop&q=80&w=800',
+    screenshots: []
+  },
+  {
+    id: 'ron_ides',
     game: 'ron',
     dlc: 'base',
     name: 'Brisa Cove',
     codename: 'Ides of March',
-    image: 'https://images.unsplash.com/photo-1542314831-c6a4d27ce66b?auto=format&fit=crop&q=80&w=800',
-    situation: 'Schwer bewaffnete Veteranen haben sich in einem Apartmentkomplex verschanzt.',
-    suspects: 'Ex-Militärs. Extrem gefährlich, mit Körperpanzerung und Sprengfallen ausgestattet.',
+    image: 'https://readyormaps.com/maps/6_brisa_cove/brisa_cove_preview.webp',
+    situation: 'Eine linksradikale Veteranen-Gruppierung (The Left Behind) hat sich in Luxusapartments verschanzt.',
+    suspects: 'Militärisch ausgebildet, schwere Körperpanzerung, automatische Waffen und tödliche Sprengfallen.',
     tacticalMap: 'https://images.unsplash.com/photo-1588880331179-bc9b93a8cb65?auto=format&fit=crop&q=80&w=800',
+    screenshots: []
+  },
+  {
+    id: 'ron_sinuous',
+    game: 'ron',
+    dlc: 'base',
+    name: 'Mindjot Data Center',
+    codename: 'Sinuous Trail',
+    image: 'https://readyormaps.com/maps/7_mindjot/mindjot_preview.webp',
+    situation: 'Stürmung eines Rechenzentrums, das illegale Inhalte (CP) für ein Kartell hostet.',
+    suspects: 'Söldner der privaten Sicherheitsfirma Mindjot. Hochgradig ausgerüstet und koordiniert.',
+    tacticalMap: 'https://images.unsplash.com/photo-1628155930542-3c7a64e2c833?auto=format&fit=crop&q=80&w=800',
+    screenshots: []
+  },
+  {
+    id: 'ron_ends',
+    game: 'ron',
+    dlc: 'base',
+    name: 'Kawayu Beach',
+    codename: 'Ends of the Earth',
+    image: 'https://readyormaps.com/maps/8_kawayu_beach/kawayu_beach_preview.webp',
+    situation: 'Zugriff auf ein Strandhaus, aus dem eine Familie illegalen Waffenhandel betreibt.',
+    suspects: 'Familienmitglieder und Käufer. Unberechenbar aufgrund von Verzweiflung, teilweise unbewaffnete Zivilisten im Haus.',
+    tacticalMap: 'https://images.unsplash.com/photo-1584985223403-d6cbfec25ba7?auto=format&fit=crop&q=80&w=800',
+    screenshots: []
+  },
+  {
+    id: 'ron_greased',
+    game: 'ron',
+    dlc: 'base',
+    name: 'Los Suenos Postal Service',
+    codename: 'Greased Palms',
+    image: 'https://readyormaps.com/maps/9_los_suenos_postal/los_suenos_postal_preview.webp',
+    situation: 'Das Postverteilzentrum dient als Umschlagplatz für illegale Waffen durch korrupte FISA-Agenten.',
+    suspects: 'Abtrünnige Bundesagenten und Kartellmitglieder. Taktisch überlegen und schwer bewaffnet.',
+    tacticalMap: 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&q=80&w=800',
+    screenshots: []
+  },
+  {
+    id: 'ron_valley',
+    game: 'ron',
+    dlc: 'base',
+    name: 'Voll Health House',
+    codename: 'Valley of the Dolls',
+    image: 'https://readyormaps.com/maps/10_voll_health_house/voll_health_house_preview.webp',
+    situation: 'Infiltration der Luxusvilla von Amos Voll, dem mutmaßlichen Kopf eines gigantischen CP-Rings.',
+    suspects: 'Amos Volls private Sicherheitsfirma (Bolton Security). Sehr aufmerksam, bewaffnet mit Maschinenpistolen.',
+    tacticalMap: 'https://images.unsplash.com/photo-1588880331179-bc9b93a8cb65?auto=format&fit=crop&q=80&w=800',
+    screenshots: []
+  },
+  {
+    id: 'ron_elephant',
+    game: 'ron',
+    dlc: 'base',
+    name: 'Watt Community College',
+    codename: 'Elephant',
+    image: 'https://readyormaps.com/maps/11_watt_college/watt_college_previre.webp',
+    situation: 'Active Shooter (Amoklauf) an der örtlichen Universität. Massenpanik und tickende Sprengsätze.',
+    suspects: 'Mehrere jugendliche Täter. Keine Rüstung, aber unberechenbar und auf maximalen Schaden aus. Höchster Zeitdruck.',
+    tacticalMap: 'https://images.unsplash.com/photo-1600566753086-00f18efc2291?auto=format&fit=crop&q=80&w=800',
+    screenshots: []
+  },
+  {
+    id: 'ron_rust',
+    game: 'ron',
+    dlc: 'base',
+    name: 'Costa Vino Border Reserve',
+    codename: 'Rust Belt',
+    image: 'https://readyormaps.com/maps/12_costa_vino/costa_vino_preview.webp',
+    situation: 'Razzia in einem unterirdischen Tunnelsystem an der Grenze, genutzt für Menschen- und Drogenschmuggel.',
+    suspects: 'Kartellmitglieder in extrem unübersichtlichen, dunklen Höhlen. Nachtsicht (NVG) dringend erforderlich.',
+    tacticalMap: 'https://images.unsplash.com/photo-1628155930542-3c7a64e2c833?auto=format&fit=crop&q=80&w=800',
+    screenshots: []
+  },
+  {
+    id: 'ron_sins',
+    game: 'ron',
+    dlc: 'base',
+    name: 'Clemente Hotel',
+    codename: 'Sins Of The Father',
+    image: 'https://readyormaps.com/maps/13_clemente_hotel/clemente_hotel_preview.webp',
+    situation: 'Attentat im Gange. Das Hotel wurde von gut organisierten Angreifern gestürmt, um eine Zielperson auszuschalten.',
+    suspects: 'Schwer bewaffnete Söldner in den oberen Stockwerken. Enge Hotelkorridore erschweren den Zugriff.',
+    tacticalMap: 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&q=80&w=800',
     screenshots: []
   },
   {
@@ -71,125 +170,215 @@ const RON_MAPS = [
     dlc: 'base',
     name: 'Neon Nightclub',
     codename: 'Neon Tomb',
-    image: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&q=80&w=800',
-    situation: 'Aktiver Schütze in einem überfüllten Nachtclub.',
-    suspects: 'Terrormiliz, zielt auf maximale zivile Verluste ab. Sprengstoffwesten wahrscheinlich.',
-    tacticalMap: 'https://images.unsplash.com/photo-1598368195835-91e67f80c9d7?auto=format&fit=crop&q=80&w=800',
+    image: 'https://readyormaps.com/maps/14_neon_nightclub/neon_nightclub_preview.webp',
+    situation: 'Terroranschlag (Die Hand) in einem überfüllten Nachtclub. Katastrophale Opferzahlen.',
+    suspects: 'Terroristen mit Sturmgewehren und Sprengstoffwesten. Lärm und Stroboskoplicht behindern die Kommunikation massiv.',
+    tacticalMap: 'https://images.unsplash.com/photo-1588880331179-bc9b93a8cb65?auto=format&fit=crop&q=80&w=800',
     screenshots: []
   },
   {
-    id: 'ron_voll',
+    id: 'ron_buy',
     game: 'ron',
     dlc: 'base',
-    name: 'Voll Health House',
-    codename: 'Valley of the Dolls',
-    image: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&q=80&w=800',
-    situation: 'Zugriff auf die Luxusvilla eines verdächtigten Ringführers für illegalen Handel.',
-    suspects: 'Private Security Forces mit schnellen Reaktionszeiten. Schweres Gerät.',
-    tacticalMap: 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&q=80&w=800',
+    name: 'Ceasar\'s Cars Dealership',
+    codename: 'Buy Cheap, Buy Twice',
+    image: 'https://readyormaps.com/maps/15_ceasars_cars_dealership/ceasars_cars_dealership_preview.webp',
+    situation: 'Ein vermeintliches Autohaus fungiert als Verteilerzentrum für den illegalen Waffenhandel.',
+    suspects: 'Syndikatsmitglieder. Große, offene Ausstellungsräume mit weiten Sichtlinien (Scharfschützengefahr).',
+    tacticalMap: 'https://images.unsplash.com/photo-1584985223403-d6cbfec25ba7?auto=format&fit=crop&q=80&w=800',
     screenshots: []
   },
   {
-    id: 'ron_postal',
+    id: 'ron_carriers',
     game: 'ron',
     dlc: 'base',
-    name: 'Los Suenos Postal Service',
-    codename: 'Greased Palms',
-    image: 'https://images.unsplash.com/photo-1586528116311-ad8ed745eb33?auto=format&fit=crop&q=80&w=800',
-    situation: 'Große Sortieranlage der Post wurde von einem Kartell infiltriert.',
-    suspects: 'Stark bewaffnete Kartellmitglieder. Große, offene Areale mit vielen Sichtlinien.',
+    name: 'Cherryessa Farm',
+    codename: 'Carriers of the vine',
+    image: 'https://readyormaps.com/maps/16_cherryessa_farm/cherryessa_farm_preview.webp',
+    situation: 'Untersuchung eines abgelegenen Kult-Anwesens nach Berichten über mehrfachen Mord und illegale Bestattungen.',
+    suspects: 'Fanatische Kultmitglieder. Tragen oft unbemerkt Körperpanzerung unter ihren Roben und sind extrem feindselig.',
     tacticalMap: 'https://images.unsplash.com/photo-1600566753086-00f18efc2291?auto=format&fit=crop&q=80&w=800',
     screenshots: []
   },
   {
-    id: 'ron_college',
-    game: 'ron',
-    dlc: 'base',
-    name: 'Watt Community College',
-    codename: 'Elephant',
-    image: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&q=80&w=800',
-    situation: 'Amoklauf auf einem College-Campus. Zeitkritische Mission.',
-    suspects: 'Mehrere aktive Schützen, die Sprengfallen ausgelegt haben könnten.',
-    tacticalMap: 'https://images.unsplash.com/photo-1584985223403-d6cbfec25ba7?auto=format&fit=crop&q=80&w=800',
-    screenshots: []
-  },
-  {
-    id: 'ron_hospital',
+    id: 'ron_relapse',
     game: 'ron',
     dlc: 'base',
     name: 'Coastal Grove Medical Center',
     codename: 'Relapse',
-    image: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&q=80&w=800',
-    situation: 'Terroristen haben ein Krankenhaus gestürmt. Ärzte und Patienten sind Geiseln.',
-    suspects: 'Gut ausgebildete Extremisten mit automatischen Waffen.',
+    image: 'https://readyormaps.com/maps/17_medical_center/medical_center_preview.webp',
+    situation: 'Die Terrorgruppe "Die Hand" hat ein Krankenhaus übernommen, um einen dort behandelten Anführer zu befreien.',
+    suspects: 'Schwerst bewaffnete Terroristen in einem Gebäude voller wehrloser Patienten und Ärzte.',
+    tacticalMap: 'https://images.unsplash.com/photo-1628155930542-3c7a64e2c833?auto=format&fit=crop&q=80&w=800',
+    screenshots: []
+  },
+  {
+    id: 'ron_hide',
+    game: 'ron',
+    dlc: 'base',
+    name: 'Port Hokan',
+    codename: 'Hide And Seek',
+    image: 'https://readyormaps.com/maps/18_port/port_preview.webp',
+    situation: 'Razzia im Hafen bei strömendem Regen. Zentrum eines massiven Menschenhandelsrings.',
+    suspects: 'Organisierte Kriminalität, Wachleute zwischen Container-Labyrinthen. Hohe Gefahr für Hinterhalte im Dunkeln.',
     tacticalMap: 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&q=80&w=800',
     screenshots: []
   },
+
+  // ==========================================
+  // --- HOME INVASION DLC ---
+  // ==========================================
   {
-    id: 'ron_farm',
-    game: 'ron',
-    dlc: 'base',
-    name: 'Cherryessa Farm',
-    codename: 'Carriers of the Vine',
-    image: 'https://images.unsplash.com/photo-1500076656116-558758c991c1?auto=format&fit=crop&q=80&w=800',
-    situation: 'Razzia bei einem gefährlichen Kult auf einer abgelegenen Farm.',
-    suspects: 'Fanatische Kultmitglieder, die bereit sind, bis zum Tod zu kämpfen.',
-    tacticalMap: 'https://images.unsplash.com/photo-1588880331179-bc9b93a8cb65?auto=format&fit=crop&q=80&w=800',
-    screenshots: []
-  },
-  {
-    id: 'ron_redwood',
+    id: 'ron_dorms',
     game: 'ron',
     dlc: 'home_invasion',
-    name: 'Redwood',
-    codename: 'Zutritt verboten',
-    image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&q=80&w=800',
-    situation: 'Bewaffneter Einbruch in ein wohlhabendes Anwesen nach einem verheerenden Sturm.',
-    suspects: 'Skrupellose Plünderer, teilweise mit gestohlenen Waffen.',
+    name: 'Greenside Dormitories',
+    codename: 'Dorms',
+    image: 'https://readyormaps.com/maps/19_greenside_dormitories/greenside_dormitories_preview.webp',
+    situation: 'Razzia in Studentenwohnheimen nach Hinweisen auf illegale Drogen- und Waffenproduktion.',
+    suspects: 'Studentische Netzwerke vermischt mit lokalen Dealern. Unübersichtliche Gänge, viele Zimmertüren.',
     tacticalMap: 'https://images.unsplash.com/photo-1588880331179-bc9b93a8cb65?auto=format&fit=crop&q=80&w=800',
-    screenshots: ['https://images.unsplash.com/photo-1580587771525-78b9dba3b914?auto=format&fit=crop&q=80&w=800']
-  },
-  {
-    id: 'ron_dormer',
-    game: 'ron',
-    dlc: 'home_invasion',
-    name: 'Dormer',
-    codename: 'Lawmaker',
-    image: 'https://images.unsplash.com/photo-1516156008625-3a9d6067fab5?auto=format&fit=crop&q=80&w=800',
-    situation: 'Notruf wegen eines Überfalls auf ein suburbanes Haus.',
-    suspects: 'Drei bis vier bewaffnete Einbrecher mit kriminellem Hintergrund.',
-    tacticalMap: 'https://images.unsplash.com/photo-1584985223403-d6cbfec25ba7?auto=format&fit=crop&q=80&w=800',
     screenshots: []
   },
   {
     id: 'ron_narcos',
     game: 'ron',
     dlc: 'home_invasion',
-    name: 'Narcos',
-    codename: 'Gated Community',
-    image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&q=80&w=800',
-    situation: 'Schwere Auseinandersetzung in einer abgeschotteten Wohnanlage nach dem Hurrikan.',
-    suspects: 'Organisierte Gangmitglieder, die das Chaos ausnutzen.',
+    name: '25 Hope Street 213 Park',
+    codename: 'Narcos',
+    image: 'https://readyormaps.com/maps/20_25_hope_street/25_hope_street_preview.webp',
+    situation: 'Schwere Auseinandersetzung in einer abgeschotteten Nachbarschaft. Starkes Kartell-Aufkommen.',
+    suspects: 'Kartell-Vollstrecker. Extrem gewaltbereit, schwer bewaffnet, kennen das Gelände perfekt.',
     tacticalMap: 'https://images.unsplash.com/photo-1628155930542-3c7a64e2c833?auto=format&fit=crop&q=80&w=800',
     screenshots: []
   },
   {
-    id: 'ron_port',
+    id: 'ron_lawmaker',
+    game: 'ron',
+    dlc: 'home_invasion',
+    name: '155 Playa Vista Lane',
+    codename: 'Lawmaker',
+    image: 'https://readyormaps.com/maps/21_155_playa_vista_lane/155_playa_vista_lane_preview.webp',
+    situation: 'Einbruch und Geiselnahme in einer hochpreisigen Villa am Strand (Colina Beach).',
+    suspects: 'Professionelle Eindringlinge mit taktischer Ausrüstung. Gezielte Operation.',
+    tacticalMap: 'https://images.unsplash.com/photo-1584985223403-d6cbfec25ba7?auto=format&fit=crop&q=80&w=800',
+    screenshots: []
+  },
+
+  // ==========================================
+  // --- DARK WATERS DLC ---
+  // ==========================================
+  {
+    id: 'ron_mirage',
     game: 'ron',
     dlc: 'dark_waters',
-    name: 'Port Hokan',
-    codename: 'Versteckte Fracht',
-    image: 'https://images.unsplash.com/photo-1494412651409-8963ce7935a7?auto=format&fit=crop&q=80&w=800',
-    situation: 'Razzia auf einer geheimen Anlage nahe der Docks. Verdacht auf schweren Schmuggel.',
-    suspects: 'Hochprofessionelle Söldner mit Nachtsichtgeräten und schweren Waffen.',
+    name: 'The Seraglio',
+    codename: 'Mirage at Sea',
+    image: 'https://readyormaps.com/maps/22_Seraglio/Seraglio_preview.webp',
+    situation: 'Maritime Operation auf einem verdächtigen Frachtschiff. Verdacht auf internationalen Schmuggel.',
+    suspects: 'Internationale Söldner, extrem enge Gänge (CQB), automatische Waffen.',
+    tacticalMap: 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&q=80&w=800',
+    screenshots: []
+  },
+  {
+    id: 'ron_leviathan',
+    game: 'ron',
+    dlc: 'dark_waters',
+    name: 'HeavyWell A-101 Rig',
+    codename: 'Leviathan',
+    image: 'https://readyormaps.com/maps/23_HeavyWell_Rig/HeavyWell_A-101_Rig_preview.webp',
+    situation: 'Zugriff auf eine abgelegene Ölbohrinsel bei extremen Wetterbedingungen.',
+    suspects: 'Hochgerüstete paramilitärische Kräfte. Nutzung von Nachtsicht und schweren Westen.',
     tacticalMap: 'https://images.unsplash.com/photo-1600566753086-00f18efc2291?auto=format&fit=crop&q=80&w=800',
-    screenshots: ['https://images.unsplash.com/photo-1505705694340-019e1e335916?auto=format&fit=crop&q=80&w=800']
+    screenshots: []
+  },
+  {
+    id: 'ron_triad',
+    game: 'ron',
+    dlc: 'dark_waters',
+    name: 'The Elysian',
+    codename: '3 Letter Triad',
+    image: 'https://readyormaps.com/maps/24_elysian/elysian_preview.webp',
+    situation: 'Razzia in einem Luxuskomplex, der als Tarnung für Operationen der Triaden dient.',
+    suspects: 'Organisierte Kriminalität (Triaden). Skrupellos, Maschinenpistolen, zivile Präsenz wahrscheinlich.',
+    tacticalMap: 'https://images.unsplash.com/photo-1588880331179-bc9b93a8cb65?auto=format&fit=crop&q=80&w=800',
+    screenshots: []
+  },
+
+  // ==========================================
+  // --- LOS SUENOS STORIES DLC ---
+  // ==========================================
+  {
+    id: 'ron_hunger',
+    game: 'ron',
+    dlc: 'ls_stories',
+    name: 'Chico\'s Mexican Resturant',
+    codename: 'Hunger Strike',
+    image: 'https://readyormaps.com/maps/25_chicos_mexican_resturant/chicos_mexican_resturant_preview.webp',
+    situation: 'Eskalierende Gewalt und Schusswechsel in einem belebten Restaurant.',
+    suspects: 'Gangmitglieder. Hitziges Gefecht auf engem Raum mit vielen unbeteiligten Zivilisten.',
+    tacticalMap: 'https://images.unsplash.com/photo-1628155930542-3c7a64e2c833?auto=format&fit=crop&q=80&w=800',
+    screenshots: []
+  },
+  {
+    id: 'ron_stolen_valor',
+    game: 'ron',
+    dlc: 'ls_stories',
+    name: 'Edgeware Apartments',
+    codename: 'Stolen Valor',
+    image: 'https://readyormaps.com/maps/26_edgeware_apartments/edgeware_apartments_preview.webp',
+    situation: 'Verdächtige haben sich nach einer Verfolgungsjagd in einem Apartmentkomplex verschanzt.',
+    suspects: 'Militante Verdächtige. Gefahr von Sprengfallen (IEDs) an Türen und in Fluren.',
+    tacticalMap: 'https://images.unsplash.com/photo-1584985223403-d6cbfec25ba7?auto=format&fit=crop&q=80&w=800',
+    screenshots: []
+  },
+
+  // ==========================================
+  // --- BOILING POINT DLC ---
+  // ==========================================
+  {
+    id: 'ron_no_good',
+    game: 'ron',
+    dlc: 'boiling_point',
+    name: 'Los Suenos Pier',
+    codename: 'No Good Deed',
+    image: 'https://readyormaps.com/maps/27_pier/pier_preview.webp',
+    situation: 'Unterbrechung eines massiven Waffendeals am städtischen Pier bei Nacht.',
+    suspects: 'Schmuggler und Käufer. Weite Sichtlinien bedeuten akute Scharfschützen-Gefahr.',
+    tacticalMap: 'https://images.unsplash.com/photo-1600566753086-00f18efc2291?auto=format&fit=crop&q=80&w=800',
+    screenshots: []
+  },
+  {
+    id: 'ron_all_gods',
+    game: 'ron',
+    dlc: 'boiling_point',
+    name: 'Unitytrust Bank',
+    codename: 'All Gods Burn',
+    image: 'https://readyormaps.com/maps/28_bank/bank_preview.webp',
+    situation: 'Schwer bewaffneter Banküberfall mit laufender Geiselnahme. Der Tresorraum wird aufgeschweißt.',
+    suspects: 'Professionelle Bankräuber. Level IV Körperpanzerung, leichte Maschinengewehre (LMGs), Gasmasken.',
+    tacticalMap: 'https://images.unsplash.com/photo-1588880331179-bc9b93a8cb65?auto=format&fit=crop&q=80&w=800',
+    screenshots: []
+  },
+  {
+    id: 'ron_new_america',
+    game: 'ron',
+    dlc: 'boiling_point',
+    name: 'Los Suenos City Hall',
+    codename: 'A New America',
+    image: 'https://readyormaps.com/maps/29_city_hall/city_hall_preview.webp',
+    situation: 'Großangelegter Terroranschlag auf das Rathaus und das Archivgebäude.',
+    suspects: 'Inländische Terrorzellen. Extrem hoch motiviert, Nutzung von Sprengstoff (C4), Geiseln als Schutzschilde.',
+    tacticalMap: 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&q=80&w=800',
+    screenshots: []
   }
 ];
 
 const RON_WEAPONS = [
   { id: 'w_m4a1', name: 'M4A1', type: 'Sturmgewehr', caliber: '5.56x45mm', desc: 'Zuverlässiges, starkes Standard-Sturmgewehr.' },
-  { id: 'w_mp5', name: 'MP5A3', type: 'Maschinenpistole', caliber: '9x19mm', desc: 'Klassische MP. Ideal für enge Räume (CQB).' }
+  { id: 'w_mp5', name: 'MP5A3', type: 'Maschinenpistole', caliber: '9x19mm', desc: 'Klassische MP. Ideal für enge Räume (CQB).' },
+  { id: 'w_mcx', name: 'MCX', type: 'Sturmgewehr', caliber: '.300 Blackout', desc: 'Exzellent für Einsätze mit Schalldämpfer. Hohe Stoppwirkung.' },
+  { id: 'w_sa58', name: 'SA-58 OSW', type: 'Sturmgewehr', caliber: '7.62x51mm', desc: 'Massive Durchschlagskraft, schwerer Rückstoß. Zerstört Deckungen mühelos.' }
 ];
 
 const PUBG_MAPS = [
@@ -205,46 +394,49 @@ const PUBG_MAPS = [
   }
 ];
 
+// Erweiteter News-Pool mit den neuen Base Game Maps
 const NEWS_POOL = [
   {
-    id: 'n1',
-    mapId: 'ron_213',
-    type: 'CRITICAL',
-    headline: 'Razzia in Vorort eskaliert: Kartell-Beteiligung vermutet',
-    fact: 'Die Verdächtigen in 213 Park Homes haben in den letzten 48 Stunden ein provisorisches Tunnelsystem zwischen zwei Häusern fertiggestellt.',
-    content: 'Jüngste Überwachungsdaten zeigen ungewöhnlich hohe thermische Signaturen im Bereich von 213 Park Homes. Informanten berichten, dass die lokale Gang Unterstützung von einem überregionalen Kartell erhalten hat. Das bedeutet: Bessere Bewaffnung, Sprengfallen an den Eingängen und eine extrem hohe Bereitschaft, tödliche Gewalt anzuwenden. Das SWAT-Team muss mit durchschlagender Munition und improvisierter Panzerung der Feinde rechnen.'
+    id: 'n1', mapId: 'ron_elephant', type: 'CRITICAL',
+    headline: 'Watt Community College: Active Shooter gemeldet',
+    fact: 'Die Verdächtigen haben selbstgebaute Sprengsätze in der Bibliothek und Cafeteria platziert. Höchster Zeitdruck.',
+    content: 'Code 3! Mehrere Notrufe vom Campus des Watt Community College bestätigen einen Amoklauf ("Elephant"). Die Verdächtigen sind jung, agieren extrem aggressiv und schießen wahllos auf fliehende Studenten. Ersteingreifende Kräfte melden IEDs (Sprengsätze) mit Zeitzündern. Das SWAT-Team muss Zivilisten ignorieren und direkt auf die Bedrohung vorrücken, um weitere Opfer zu verhindern.'
   },
   {
-    id: 'n2',
-    mapId: 'ron_hotel',
-    type: 'UPDATE',
-    headline: 'Geiselnahme Wenderly Hills: Forderungen bekannt',
-    fact: 'Die Täter im Wenderly Hills Hotel fordern 50 Millionen Dollar in einer unregulierten Kryptowährung, ansonsten droht stündlich eine Exekution.',
-    content: 'Die Situation im obersten Stockwerk des Wenderly Hills ist hochgradig volatil. Bei den Angreifern handelt es sich nicht um gewöhnliche Kriminelle, sondern um paramilitärisch ausgebildete Söldner. Sie haben C4-Sprengladungen an den tragenden Säulen des Penthouses angebracht. Ein direkter Frontalangriff durch die Aufzugsschächte gilt als Suizidkommando. Alternative Zugänge über das Dach oder Belüftungsschächte werden derzeit vom LSPD geprüft.'
+    id: 'n2', mapId: 'ron_neon', type: 'FLASH',
+    headline: 'Neon Nightclub: Terroranschlag von "Die Hand"',
+    fact: 'Berichte über Selbstmordattentäter mit Sprengstoffwesten (Suicide Vests). Mindestabstand einhalten!',
+    content: 'Katastrophe im Club Neon Tomb. Die Terrororganisation "Die Hand" hat das Gebäude gestürmt. Lärmende Musik, Stroboskoplichter und hunderte Leichen erschweren die Orientierung enorm. Täter nutzen die Dunkelheit und tragen schwere Waffen. Wenn ein Verdächtiger einen Zünder in der Hand hält, ist ein sofortiger, finaler Rettungsschuss authorisiert.'
   },
   {
-    id: 'n3',
-    mapId: 'ron_redwood',
-    type: 'INFO',
-    headline: 'Redwood-Anwesen: Plünderer hochgradig bewaffnet',
-    fact: 'Die Waffen der Plünderer stammen aus einem FEMA-Konvoi, der während des jüngsten Sturms überfallen wurde.',
-    content: 'Was als unkoordinierte Plünderung nach einem verheerenden Unwetter begann, hat sich zu einer Festungssituation entwickelt. Die Verdächtigen auf dem Redwood-Anwesen haben militärische Sturmgewehre erbeutet und Schutzwesten der Klasse III. Das unübersichtliche Gelände und die durch den Sturm verursachten Trümmer machen eine lautlose Annäherung extrem schwierig. Scharfschützen-Support ist aufgrund der dichten Bewaldung nur bedingt möglich.'
+    id: 'n3', mapId: 'ron_ides', type: 'UPDATE',
+    headline: 'Brisa Cove: Schwer bewaffnete Veteranen verbarrikadiert',
+    fact: 'Die Gruppe "The Left Behind" trägt Level-IV-Panzerwesten, die Standard-Pistolenmunition komplett absorbieren.',
+    content: 'Einsatz Ides of March: Die Täter in den Brisa Cove Apartments sind ehemalige Militärs. Sie haben Stolperdrähte an fast allen Türen angebracht. Spiegeln (Mirrorgun) ist Pflicht! Frontale Feuergefechte sind tödlich, da die Feinde mit SA-58 Sturmgewehren schießen, die Wände durchschlagen. C2-Sprengladungen und schweres Tränengas (CS Gas) werden für den Zugriff empfohlen.'
   },
   {
-    id: 'n4',
-    mapId: 'ron_port',
-    type: 'FLASH',
-    headline: 'Port Hokan: Militärische Sprengsätze in Container 404',
-    fact: 'Der Schmuggelring nutzt das regnerische Wetter, um thermische Drohnen des LSPD zu blenden.',
-    content: 'Operation "Versteckte Fracht" geht in die heiße Phase. Zollpapiere, die von Undercover-Agenten sichergestellt wurden, deuten darauf hin, dass illegale russische Waffentechnologie verschifft werden soll. Die Verdächtigen tragen modernste Nachtsichtgeräte. Es wird dringend empfohlen, die Stromversorgung des Docks vor dem Zugriff zu kappen und auf NVG-Ausrüstung zu setzen, um den taktischen Vorteil auf unsere Seite zu ziehen.'
+    id: 'n4', mapId: 'ron_valley', type: 'INFO',
+    headline: 'Voll Health House: Razzia gegen Amos Voll',
+    fact: 'Bolton Security, eine private Söldnertruppe, bewacht das Anwesen und wird ohne Warnung das Feuer auf LSPD SWAT eröffnen.',
+    content: 'Die Operation Valley of the Dolls zielt auf Amos Voll, den Kopf eines gigantischen illegalen Netzwerks. Die Villa ist ein Labyrinth aus Luxusräumen, Kinosälen und versteckten Kellergewölben. Erwarten Sie bewaffneten Widerstand von hochbezahlten Sicherheitskräften. Beweissicherung von Festplatten und Laptops hat neben der Verhaftung von Voll oberste Priorität.'
   },
   {
-    id: 'n5',
-    mapId: 'pubg_erangel',
-    type: 'RECON',
-    headline: 'Erangel: Neue Untergrund-Bunker verifiziert',
-    fact: 'Die sowjetischen Bunkeranlagen unter Erangel wurden ursprünglich 1968 erbaut und kürzlich von Überlebenden aufgebrochen.',
-    content: 'Unsere Satellitenaufklärung hat neue Eingänge zu den Geheimkellern auf Erangel markiert. Besonders das Gebiet südlich von Yasnaya Polyana zeigt frische Reifenspuren, die im Nichts enden. Die Keller sind mit hochstufigem Loot (Level 3 Ausrüstung) gefüllt, jedoch oft von anderen Squads stark umkämpft. Wir raten zu äußerster Vorsicht bei der Annäherung: Flashbangs sind essenziell, bevor man in die engen Korridore hinabsteigt.'
+    id: 'n5', mapId: 'ron_carriers', type: 'CRITICAL',
+    headline: 'Cherryessa Farm: Kultisten zeigen extreme Feindseligkeit',
+    fact: 'Die weiblichen Kultmitglieder verbergen ballistische Westen und Schrotflinten unter ihren langen Roben.',
+    content: 'Was als Untersuchung illegaler Bestattungen begann ("Carriers of the vine"), ist eskaliert. Die Sekte auf der Cherryessa Farm verteidigt ihr Territorium fanatisch. Das Gelände ist weitläufig und schlecht beleuchtet. Verdächtige täuschen oft eine Aufgabe vor, nur um im letzten Moment eine Waffe zu ziehen. Absolute Wachsamkeit ist geboten.'
+  },
+  {
+    id: 'n6', mapId: 'ron_all_gods', type: 'UPDATE',
+    headline: 'Unitytrust Bank: Scharfschützen auf dem Dach gesichtet',
+    fact: 'Die Bankräuber nutzen thermische Tarnnetze, um sich vor LSPD Helikoptern zu verbergen.',
+    content: 'Die Situation an der Unitytrust Bank ("All Gods Burn") eskaliert weiter. Erste TOC-Berichte bestätigen den Einsatz von Level IV Panzerungen. Frontalzugriffe sind wirkungslos. Die Täter haben zudem Sprengladungen an den Haupteingängen angebracht. Blendgranaten sind zwingend erforderlich.'
+  },
+  {
+    id: 'n7', mapId: 'ron_lethal', type: 'CRITICAL',
+    headline: 'Sullivan\'s Slope: Höchste Sprengfallen-Warnung',
+    fact: 'Der Verdächtige hat das gesamte Haus und den Gartenbereich mit versteckten Drahtfallen (Stolperdrähten) versehen.',
+    content: 'Operation Lethal Obsession: Wir rücken gegen einen flüchtigen Bombenbauer vor. Kein Raum darf ohne vorherige Spiegelung (Mirrorgun) oder vorsichtiges Spalt-Öffnen betreten werden. Die Sprengfallen töten das gesamte Team im Umkreis von 5 Metern. Der Verdächtige ist extrem feindselig und wird durch Wände schießen.'
   }
 ];
 
@@ -265,8 +457,8 @@ const springTransition = {
 
 // --- CONSTANTS ---
 const SESSION_TIMEOUT = 10 * 60 * 1000;
-const STORAGE_KEY_STATE = 'inTactics_app_state';
-const STORAGE_KEY_TIME = 'inTactics_last_active';
+const STORAGE_KEY_STATE = 'inTactics_app_state_v3';
+const STORAGE_KEY_TIME = 'inTactics_last_active_v3';
 
 // --- COMPONENTS ---
 
@@ -317,10 +509,9 @@ export default function App() {
     const shuffled = [...NEWS_POOL].sort(() => 0.5 - Math.random());
     setLiveFeed(shuffled.slice(0, 3).map(item => ({ ...item, timestamp: new Date() })));
 
-    // Update feed every 15 minutes
+    // Update feed every 15 minutes (15 * 60 * 1000 ms)
     const intervalId = setInterval(() => {
       setLiveFeed(currentFeed => {
-        // Find an item not currently in the feed
         const currentIds = currentFeed.map(i => i.id);
         const availablePool = NEWS_POOL.filter(i => !currentIds.includes(i.id));
 
@@ -332,7 +523,7 @@ export default function App() {
         // Add to top, remove oldest
         return [newItemWithTime, ...currentFeed.slice(0, 2)];
       });
-    }, 15 * 60 * 1000); // Geändert von 8000 (8 Sek.) zu 15 * 60 * 1000 (15 Min.)
+    }, 15 * 60 * 1000);
 
     return () => clearInterval(intervalId);
   }, []);
@@ -449,7 +640,6 @@ export default function App() {
 
   const renderHome = () => {
     if (selectedArticle) {
-      // --- INSIDER ARTICLE DOSSIER VIEW ---
       return (
         <motion.div {...pageTransition} className="pt-20 md:pt-24 pb-32 md:pb-20 space-y-6 md:space-y-8 max-w-4xl mx-auto">
           <motion.button
@@ -504,7 +694,6 @@ export default function App() {
       );
     }
 
-    // --- DEFAULT HOME VIEW ---
     return (
       <motion.div {...pageTransition} className="pt-20 md:pt-28 pb-32 md:pb-20 space-y-8 md:space-y-12">
         <div className="flex flex-col items-center text-center space-y-4 mb-8 md:mb-16">
@@ -532,7 +721,6 @@ export default function App() {
               </GlassCard>
             </div>
 
-            {/* LIVE INTEL FEED */}
             <GlassCard className="p-6 md:p-8 flex flex-col h-[400px]">
               <div className="flex items-center justify-between mb-6 border-b border-white/10 pb-4">
                 <h3 className="flex items-center gap-2 md:gap-3 text-lg md:text-xl font-black italic uppercase tracking-tighter text-white">
@@ -611,11 +799,11 @@ export default function App() {
               <div className="grid grid-cols-2 gap-3 md:gap-4">
                 <div className="p-3 md:p-4 rounded-xl md:rounded-2xl bg-white/5 border border-white/5 text-center">
                   <p className="text-[8px] md:text-[10px] font-black text-white/20 uppercase mb-1">Maps</p>
-                  <p className="text-xl md:text-2xl font-black italic text-white">05</p>
+                  <p className="text-xl md:text-2xl font-black italic text-white">{RON_MAPS.length + PUBG_MAPS.length}</p>
                 </div>
                 <div className="p-3 md:p-4 rounded-xl md:rounded-2xl bg-white/5 border border-white/5 text-center">
                   <p className="text-[8px] md:text-[10px] font-black text-white/20 uppercase mb-1">Intel</p>
-                  <p className="text-xl md:text-2xl font-black italic text-white">42</p>
+                  <p className="text-xl md:text-2xl font-black italic text-white">{NEWS_POOL.length}</p>
                 </div>
               </div>
             </GlassCard>
@@ -642,7 +830,7 @@ export default function App() {
               <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent"></div>
               <div className="absolute bottom-6 md:bottom-12 left-6 md:left-12 pr-6">
                 <span className="bg-red-600 text-white font-black px-3 md:px-4 py-1 rounded-md text-[8px] md:text-xs uppercase tracking-widest mb-2 md:mb-4 inline-block shadow-lg shadow-red-600/20">Tactical Analysis</span>
-                <h1 className="text-4xl md:text-8xl font-black text-white italic uppercase tracking-tighter leading-tight md:leading-none">{selectedMap.name}</h1>
+                <h1 className="text-4xl md:text-6xl lg:text-8xl font-black text-white italic uppercase tracking-tighter leading-tight md:leading-none">{selectedMap.name}</h1>
               </div>
             </div>
 
@@ -672,15 +860,17 @@ export default function App() {
                 </GlassCard>
               </div>
             )}
-            <div className="space-y-4">
-              <h3 className="text-xl md:text-2xl font-black uppercase italic tracking-tighter border-l-4 border-red-600 pl-4 mt-4 md:mt-0">Intel Footage</h3>
-              {(selectedMap.screenshots || []).map((img, i) => (
-                <GlassCard key={i} className="aspect-video relative overflow-hidden group">
-                  <img src={img} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="Intel" />
-                  <div className="absolute inset-0 border-[2px] border-white/0 group-hover:border-red-500/50 transition-colors pointer-events-none rounded-[1.5rem] md:rounded-[2rem]"></div>
-                </GlassCard>
-              ))}
-            </div>
+            {selectedMap.screenshots && selectedMap.screenshots.length > 0 && (
+              <div className="space-y-4">
+                <h3 className="text-xl md:text-2xl font-black uppercase italic tracking-tighter border-l-4 border-red-600 pl-4 mt-4 md:mt-0">Intel Footage</h3>
+                {selectedMap.screenshots.map((img, i) => (
+                  <GlassCard key={i} className="aspect-video relative overflow-hidden group">
+                    <img src={img} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="Intel" />
+                    <div className="absolute inset-0 border-[2px] border-white/0 group-hover:border-red-500/50 transition-colors pointer-events-none rounded-[1.5rem] md:rounded-[2rem]"></div>
+                  </GlassCard>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </motion.div>
@@ -713,23 +903,27 @@ export default function App() {
           </div>
 
           {ronSubTab === 'maps' && (
-            <div className="flex items-center justify-start md:justify-center gap-6 md:gap-10 w-full overflow-x-auto no-scrollbar px-6 border-b border-white/5">
-              {[
-                { id: 'base', label: 'READY OR NOT' },
-                { id: 'home_invasion', label: 'HOME INVASION' },
-                { id: 'dark_waters', label: 'DARK WATERS' }
-              ].map(dlc => (
-                <button
-                  key={dlc.id}
-                  onClick={() => setActiveDlc(dlc.id)}
-                  className={`relative uppercase font-black italic tracking-[0.2em] md:tracking-[0.3em] text-[9px] md:text-[11px] transition-all shrink-0 py-4 md:py-5 ${activeDlc === dlc.id ? 'text-white' : 'text-white/20 hover:text-white/50'}`}
-                >
-                  {dlc.label}
-                  {activeDlc === dlc.id && (
-                    <motion.div layoutId="dlc-bar" className="absolute bottom-0 left-0 right-0 h-[2px] md:h-[3px] bg-red-600 shadow-[0_0_20px_rgba(220,38,38,0.8)]" transition={springTransition} />
-                  )}
-                </button>
-              ))}
+            <div className="w-full overflow-hidden">
+              <div className="flex items-center justify-start md:justify-center gap-4 md:gap-8 overflow-x-auto no-scrollbar px-6 md:px-0 border-b border-white/5 snap-x pb-2">
+                {[
+                  { id: 'base', label: 'READY OR NOT' },
+                  { id: 'home_invasion', label: 'HOME INVASION' },
+                  { id: 'dark_waters', label: 'DARK WATERS' },
+                  { id: 'ls_stories', label: 'LOS SUENOS STORIES' },
+                  { id: 'boiling_point', label: 'BOILING POINT' }
+                ].map(dlc => (
+                  <button
+                    key={dlc.id}
+                    onClick={() => setActiveDlc(dlc.id)}
+                    className={`relative uppercase font-black italic tracking-[0.2em] md:tracking-[0.25em] text-[9px] md:text-[10px] transition-all shrink-0 py-4 snap-start whitespace-nowrap ${activeDlc === dlc.id ? 'text-white' : 'text-white/20 hover:text-white/50'}`}
+                  >
+                    {dlc.label}
+                    {activeDlc === dlc.id && (
+                      <motion.div layoutId="dlc-bar" className="absolute bottom-0 left-0 right-0 h-[2px] md:h-[3px] bg-red-600 shadow-[0_0_20px_rgba(220,38,38,0.8)]" transition={springTransition} />
+                    )}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
         </div>
@@ -745,10 +939,10 @@ export default function App() {
             {ronSubTab === 'maps' ? currentMaps.map(map => (
               <GlassCard key={map.id} onClick={() => setSelectedMap(map)} className="h-[350px] md:h-[480px]">
                 <img src={map.image} className="absolute inset-0 w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-110 transition-all duration-[1.5s]" alt={map.name} />
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent"></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent"></div>
                 <div className="absolute bottom-0 left-0 p-6 md:p-12 w-full">
-                  <p className="text-red-600 font-mono text-[8px] md:text-[10px] font-black uppercase tracking-[0.4em] mb-2 md:mb-4">{map.codename}</p>
-                  <h3 className="text-2xl md:text-4xl font-black text-white italic uppercase leading-tight tracking-tighter">{map.name}</h3>
+                  <p className="text-red-600 font-mono text-[8px] md:text-[10px] font-black uppercase tracking-[0.4em] mb-2 md:mb-4 truncate">{map.codename}</p>
+                  <h3 className="text-2xl md:text-3xl lg:text-4xl font-black text-white italic uppercase leading-tight tracking-tighter">{map.name}</h3>
                 </div>
               </GlassCard>
             )) : RON_WEAPONS.map(w => (
@@ -875,8 +1069,48 @@ export default function App() {
         </main>
 
         <footer className="w-full py-8 md:py-10 text-center text-white/10 font-black text-[8px] md:text-[10px] tracking-[0.5em] md:tracking-[1em] uppercase mb-20 md:mb-0">
-          Tactical Repository // inTACTICS v2.9
+          Tactical Repository // inTACTICS v3.0
+
+          <div className="w-full py-8 md:py-10 text-center text-white/10 text-[8px]  copyright">
+            <h3>© Copyright</h3>
+            <p className="py-8 md:py-10">
+              Ready or Not is a trademark of{" "}
+              <a
+                href="https://voidinteractive.net/"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                VOID Interactive
+              </a>
+              . This is a fan-made project.
+            </p>
+
+            <div className="py-8 md:py-3 credits">
+              <p>Site development and design by <strong>FRNZ</strong></p>
+              {/*<p>Part blueprints development and design by <strong>Relict_UA</strong></p> 
+              <p>Part blueprints development and design by <strong>eNex and Daan</strong></p>*/}
+
+              {/*<p>
+                <a
+                  href="http://steamcommunity.com/sharedfiles/filedetails/?id=3137562299"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Ready or Not blueprints Steam Guide
+                </a>
+              </p>*/}
+
+
+              <p style={{ marginTop: "15px" }}>© 2026 Ready or Not Maps</p>
+            </div>
+
+            <p className="last-updated">
+              <strong>Last Updated:</strong> March 2026
+            </p>
+          </div>
         </footer>
+
+        
       </div>
 
       <style dangerouslySetInnerHTML={{
