@@ -14,11 +14,12 @@ const RON_MAPS = [
     dlc: 'base',
     name: '4U Gas Station',
     codename: 'Thank You, Come Again',
+    imagePosition: '45%',
     image: 'https://readyormaps.com/maps/1_4U_gas/4U_Gas_Station_preview.webp',
     situation: 'Ein lokaler Drogenring überfällt eine Tankstelle und nimmt Zivilisten als Geiseln.',
     suspects: 'Desorganisierte Kriminelle, meist bewaffnet mit Pistolen und Schrotflinten. Geringe Panzerung.',
     tacticalMap: 'https://images.unsplash.com/photo-1628155930542-3c7a64e2c833?auto=format&fit=crop&q=80&w=800',
-    screenshots: []
+    screenshots: ['https://images.steamusercontent.com/ugc/2523778827659601613/1C290698DF614012E3FCB7B8DDCB485652BE9376/']
   },
   {
     id: 'ron_23mb',
@@ -134,6 +135,7 @@ const RON_MAPS = [
     dlc: 'base',
     name: 'Watt Community College',
     codename: 'Elephant',
+    imagePosition: '82%',
     image: 'https://readyormaps.com/maps/11_watt_college/watt_college_previre.webp',
     situation: 'Active Shooter (Amoklauf) an der örtlichen Universität. Massenpanik und tickende Sprengsätze.',
     suspects: 'Mehrere jugendliche Täter. Keine Rüstung, aber unberechenbar und auf maximalen Schaden aus. Höchster Zeitdruck.',
@@ -146,6 +148,7 @@ const RON_MAPS = [
     dlc: 'base',
     name: 'Costa Vino Border Reserve',
     codename: 'Rust Belt',
+    imagePosition: 'left',
     image: 'https://readyormaps.com/maps/12_costa_vino/costa_vino_preview.webp',
     situation: 'Razzia in einem unterirdischen Tunnelsystem an der Grenze, genutzt für Menschen- und Drogenschmuggel.',
     suspects: 'Kartellmitglieder in extrem unübersichtlichen, dunklen Höhlen. Nachtsicht (NVG) dringend erforderlich.',
@@ -170,6 +173,7 @@ const RON_MAPS = [
     dlc: 'base',
     name: 'Neon Nightclub',
     codename: 'Neon Tomb',
+    imagePosition: '90%',
     image: 'https://readyormaps.com/maps/14_neon_nightclub/neon_nightclub_preview.webp',
     situation: 'Terroranschlag (Die Hand) in einem überfüllten Nachtclub. Katastrophale Opferzahlen.',
     suspects: 'Terroristen mit Sturmgewehren und Sprengstoffwesten. Lärm und Stroboskoplicht behindern die Kommunikation massiv.',
@@ -453,6 +457,13 @@ const springTransition = {
   type: "spring",
   stiffness: 450,
   damping: 35
+};
+
+const getRelativeTime = (date) => {
+  const diff = Math.floor((new Date() - date) / 1000 / 60); // in Minuten
+  if (diff < 1) return "Gerade eben";
+  if (diff < 60) return `vor ${diff} Min.`;
+  return "vor über 1 Std.";
 };
 
 // --- CONSTANTS ---
@@ -750,7 +761,7 @@ export default function App() {
                             {item.type}
                           </span>
                           <span className="text-[10px] text-white/30 font-mono">
-                            {index === 0 ? 'GERADE EBEN' : 'AKTUALISIERT'}
+                            {getRelativeTime(item.timestamp)}
                           </span>
                         </div>
                         <h4 className="text-sm md:text-base font-bold text-white/90 leading-tight group-hover:text-blue-400 transition-colors">
@@ -934,17 +945,47 @@ export default function App() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-10"
+            /* - md:grid... : PC - normales Gitter.
+               - max-md:flex... : Handy - vertikale Liste.
+               - max-md:h-[calc(100vh-160px)] : Höhenbegrenzung auf fast ganzen Bildschirm.
+               - max-md:overflow-y-scroll : Scrollen innerhalb des Containers.
+               - snap-y snap-mandatory : "Einrasten" beim Scrollen.
+            */
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6 md:gap-10 
+            max-md:flex max-md:flex-col max-md:h-[calc(100vh-160px)] max-md:overflow-y-scroll 
+            max-md:snap-y max-md:snap-mandatory no-scrollbar"
           >
+
             {ronSubTab === 'maps' ? currentMaps.map(map => (
-              <GlassCard key={map.id} onClick={() => setSelectedMap(map)} className="h-[350px] md:h-[480px]">
-                <img src={map.image} className="absolute inset-0 w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-110 transition-all duration-[1.5s]" alt={map.name} />
+              <div
+                key={map.id}
+                className="relative md:flex-1 md:hover:flex-[3] transition-all duration-700 ease-in-out overflow-hidden rounded-3xl group max-md:min-h-full max-md:snap-start"
+              >
+                <GlassCard
+                  onClick={() => setSelectedMap(map)}
+                  className="h-[350px] md:h-[480px] max-md:h-full"
+                >
+                  <img
+                    src={map.image}
+                    style={{ objectPosition: map.imagePosition || 'center' }} // Nutzt den Wert aus den Daten oder 'center' als Fallback
+                    className="absolute inset-0 w-full h-full object-cover 
+                    transition-all duration-700 scale-100 group-hover:scale-110"
+                    alt={map.name}
+                  />
+                {/* Dynamischer Blaulicht-Effekt beim Hover (nur PC) 
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none hidden md:block">
+                  <div className="absolute inset-y-0 left-0 w-1/2 bg-blue-500/10 blur-2xl" />
+                  <div className="absolute inset-y-0 right-0 w-1/2 bg-red-500/10 blur-2xl" />
+                </div>*/}
+
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent"></div>
                 <div className="absolute bottom-0 left-0 p-6 md:p-12 w-full">
                   <p className="text-red-600 font-mono text-[8px] md:text-[10px] font-black uppercase tracking-[0.4em] mb-2 md:mb-4 truncate">{map.codename}</p>
                   <h3 className="text-2xl md:text-3xl lg:text-4xl font-black text-white italic uppercase leading-tight tracking-tighter">{map.name}</h3>
+
                 </div>
               </GlassCard>
+              </div>
             )) : RON_WEAPONS.map(w => (
               <GlassCard key={w.id} className="p-8 md:p-12 border-red-500/20 bg-white/[0.03]">
                 <h4 className="text-xl md:text-3xl font-black text-white italic uppercase mb-2 tracking-tighter">{w.name}</h4>
@@ -1023,11 +1064,18 @@ export default function App() {
       <div className="fixed inset-0 z-0 pointer-events-none">
         <AnimatePresence mode="wait">
           {activeTab === 'ron' ? (
-            <motion.div key="bg-ron" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0">
+            <motion.div key="bg-ron" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 overflow-hidden">
+              {/* Linke Seite Blau */}
               <motion.div
-                animate={{ backgroundColor: ['rgba(0,0,255,0)', 'rgba(0,0,255,0.08)', 'rgba(255,0,0,0.05)', 'rgba(0,0,255,0)'] }}
-                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                className="absolute inset-0 z-10"
+                animate={{ opacity: [0.2, 0.5, 0.2] }}
+                transition={{ duration: 1.5, repeat: Infinity }}
+                className="absolute inset-y-0 left-0 w-1/3 bg-blue-600/20 blur-[120px] -translate-x-1/2"
+              />
+              {/* Rechte Seite Rot */}
+              <motion.div
+                animate={{ opacity: [0.2, 0.5, 0.2] }}
+                transition={{ duration: 1.5, repeat: Infinity, delay: 0.75 }}
+                className="absolute inset-y-0 right-0 w-1/3 bg-red-600/20 blur-[120px] translate-x-1/2"
               />
               <div className="absolute inset-0 bg-gradient-to-b from-[#010101] via-transparent to-[#010101] z-20"></div>
             </motion.div>
@@ -1125,6 +1173,23 @@ export default function App() {
         @media (max-width: 768px) {
           h1 { word-break: break-word; }
         }
+        .map-container {
+          display: flex;
+          gap: 1.5rem;
+          width: 100%;
+          transition: all 0.5s ease;
+          }
+
+      .map-card-wrapper {
+  flex: 1; /* Alle Karten sind gleich groß */
+  transition: flex 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+  min-width: 100px;
+}
+
+.map-card-wrapper:hover {
+  flex: 3; /* Die Karte unter der Maus wird 3x so breit */
+}
+
       `}} />
     </div>
   );
