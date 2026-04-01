@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Home, Crosshair, Map as MapIcon, Shield, Eye, EyeOff, ChevronLeft, Target, Settings, Info, Lock, Menu, X, Activity, Zap, Clock, FileText, ExternalLink, AlertTriangle } from 'lucide-react';
+import { Home, Crosshair, Map as MapIcon, Shield, Eye, EyeOff, ChevronLeft, Target, Settings, Info, Lock, Menu, X, Activity, Zap, Clock, FileText, ExternalLink, AlertTriangle, Search } from 'lucide-react';
 
 // --- DATA MOCKS ---
 
@@ -303,7 +303,7 @@ const RON_MAPS = [
     name: 'The Elysian',
     codename: '3 Letter Triad',
     image: 'https://readyormaps.com/maps/24_elysian/elysian_preview.webp',
-    situation: 'Razzia in einem Luxuskomplex, der als Tarnung für Operationen der Triaden dient.',
+    situation: 'Razzia in einem Luxuskomplex, der als Tarnung für Operationen der Triaden.',
     suspects: 'Organisierte Kriminalität (Triaden). Skrupellos, Maschinenpistolen, zivile Präsenz wahrscheinlich.',
     tacticalMap: 'https://images.unsplash.com/photo-1588880331179-bc9b93a8cb65?auto=format&fit=crop&q=80&w=800',
     screenshots: []
@@ -398,7 +398,6 @@ const PUBG_MAPS = [
   }
 ];
 
-// Erweiteter News-Pool mit den neuen Base Game Maps
 const NEWS_POOL = [
   {
     id: 'n1', mapId: 'ron_elephant', type: 'CRITICAL',
@@ -510,28 +509,30 @@ export default function App() {
   const [activeDlc, setActiveDlc] = useState('base');
   const [selectedMap, setSelectedMap] = useState(null);
   const [selectedArticle, setSelectedArticle] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const [isRestored, setIsRestored] = useState(false);
   const [liveFeed, setLiveFeed] = useState([]);
 
+  // Refs for tracking scroll persistence accurately (Fix für das Zurückspringen)
+  const scrollPosRef = useRef({ window: 0, ronContainer: 0 });
+  const ronListRef = useRef(null);
+
   // --- LIVE FEED LOGIC ---
   useEffect(() => {
-    // Initial feed (take 3 random)
     const shuffled = [...NEWS_POOL].sort(() => 0.5 - Math.random());
     setLiveFeed(shuffled.slice(0, 3).map(item => ({ ...item, timestamp: new Date() })));
 
-    // Update feed every 15 minutes (15 * 60 * 1000 ms)
     const intervalId = setInterval(() => {
       setLiveFeed(currentFeed => {
         const currentIds = currentFeed.map(i => i.id);
         const availablePool = NEWS_POOL.filter(i => !currentIds.includes(i.id));
 
-        if (availablePool.length === 0) return currentFeed; // Failsafe
+        if (availablePool.length === 0) return currentFeed;
 
         const nextItem = availablePool[Math.floor(Math.random() * availablePool.length)];
         const newItemWithTime = { ...nextItem, timestamp: new Date() };
 
-        // Add to top, remove oldest
         return [newItemWithTime, ...currentFeed.slice(0, 2)];
       });
     }, 15 * 60 * 1000);
@@ -623,12 +624,49 @@ export default function App() {
     };
   }, [isRestored]);
 
-  // --- ACTIONS ---
+  // --- ACTIONS & HANDLERS ---
+  const handleMapClick = (map) => {
+    // Scroll-Status speichern, BEVOR wir auf die Detailseite wechseln
+    scrollPosRef.current = {
+      window: window.scrollY,
+      ronContainer: ronListRef.current?.scrollTop || 0
+    };
+    setSelectedMap(map);
+  };
+
+  const handleBackClick = () => {
+    setSelectedMap(null);
+    // Timeout gibt dem DOM Zeit, die Liste wieder neu zu rendern, bevor wir scrollen
+    setTimeout(() => {
+      window.scrollTo(0, scrollPosRef.current.window);
+      if (ronListRef.current) {
+        ronListRef.current.scrollTop = scrollPosRef.current.ronContainer;
+      }
+    }, 50);
+  };
+
+  const handleArticleClick = (article) => {
+    scrollPosRef.current = {
+      window: window.scrollY,
+      ronContainer: ronListRef.current?.scrollTop || 0
+    };
+    setSelectedArticle(article);
+  };
+
+  const handleBackFromArticle = () => {
+    setSelectedArticle(null);
+    setTimeout(() => {
+      window.scrollTo(0, scrollPosRef.current.window);
+    }, 50);
+  };
+
   const handleOpenMissionFromArticle = (mapId) => {
     const allMaps = [...RON_MAPS, ...PUBG_MAPS];
     const map = allMaps.find(m => m.id === mapId);
     if (map) {
+      scrollPosRef.current = { window: 0, ronContainer: 0 }; // Reset
       setSelectedArticle(null);
+      setSearchQuery('');
       setActiveTab(map.game);
       setSelectedMap(map);
       if (map.game === 'ron') {
@@ -636,6 +674,16 @@ export default function App() {
         setRonSubTab('maps');
       }
     }
+  };
+
+  const handleTabSwitch = (tab) => {
+    setSearchQuery('');
+    setActiveTab(tab);
+  };
+
+  const handleRonSubTabSwitch = (tab) => {
+    setSearchQuery('');
+    setRonSubTab(tab);
   };
 
   const getTypeColor = (type) => {
@@ -647,17 +695,121 @@ export default function App() {
     }
   };
 
+  // --- SUCHLEISTE COMPONENT ---
+  const SearchBar = ({ className = "mb-8 md:mb-12" }) => (
+    <div className={`relative w-full max-w-2xl mx-auto group ${className}`}>
+      <input
+        type="text"
+        placeholder={
+          activeTab === 'home' ? "Gesamte Datenbank durchsuchen..." :
+            activeTab === 'ron' ? "Ready or Not durchsuchen..." :
+              "PUBG durchsuchen..."
+        }
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        className="w-full bg-white/10 border border-white/10 hover:border-white/20 focus:border-blue-500/50 rounded-2xl px-4 md:px-6 py-3 md:py-4 pl-12 text-white placeholder-white/40 outline-none transition-all backdrop-blur-xl shadow-xl text-sm md:text-base"
+      />
+      <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 group-focus-within:text-blue-400 transition-colors" size={18} />
+      {searchQuery && (
+        <button onClick={() => setSearchQuery('')} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-white">
+          <X size={18} />
+        </button>
+      )}
+    </div>
+  );
+
+  // --- SUCHERGEBNISSE RENDERER ---
+  const renderSearchResults = () => {
+    const query = searchQuery.toLowerCase();
+    let resultsMaps = [];
+    let resultsWeapons = [];
+    let resultsNews = [];
+
+    if (activeTab === 'home' || activeTab === 'ron') {
+      resultsMaps = [...resultsMaps, ...RON_MAPS.filter(m => m.name.toLowerCase().includes(query) || m.codename.toLowerCase().includes(query) || m.situation.toLowerCase().includes(query))];
+      resultsWeapons = [...resultsWeapons, ...RON_WEAPONS.filter(w => w.name.toLowerCase().includes(query) || w.type.toLowerCase().includes(query) || w.desc.toLowerCase().includes(query))];
+    }
+    if (activeTab === 'home' || activeTab === 'pubg') {
+      resultsMaps = [...resultsMaps, ...PUBG_MAPS.filter(m => m.name.toLowerCase().includes(query) || m.info.toLowerCase().includes(query))];
+    }
+    if (activeTab === 'home') {
+      resultsNews = NEWS_POOL.filter(n => n.headline.toLowerCase().includes(query) || n.fact.toLowerCase().includes(query) || n.content.toLowerCase().includes(query));
+    }
+
+    return (
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8 w-full max-w-7xl mx-auto pb-10">
+        {resultsNews.length > 0 && (
+          <div className="space-y-4">
+            <h3 className="text-xl font-bold text-white border-b border-white/10 pb-2">Intel / News</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {resultsNews.map(news => (
+                <GlassCard key={news.id} onClick={() => { setSearchQuery(''); handleArticleClick(news); }} className="p-4 cursor-pointer hover:bg-white/10">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded border ${getTypeColor(news.type)}`}>{news.type}</span>
+                  </div>
+                  <h4 className="font-bold text-white/90">{news.headline}</h4>
+                  <p className="text-xs text-white/50 line-clamp-2 mt-1">{news.fact}</p>
+                </GlassCard>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {resultsMaps.length > 0 && (
+          <div className="space-y-4">
+            <h3 className="text-xl font-bold text-white border-b border-white/10 pb-2">Operations / Maps</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {resultsMaps.map(map => (
+                <GlassCard key={map.id} onClick={() => { setSearchQuery(''); handleMapClick(map); }} className="h-[200px] cursor-pointer group">
+                  <img src={map.image} className="absolute inset-0 w-full h-full object-cover opacity-50 group-hover:scale-105 transition-transform duration-700" alt={map.name} />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+                  <div className="absolute bottom-4 left-4 right-4">
+                    <p className="text-[10px] text-red-500 font-bold uppercase">{map.game === 'ron' ? 'Ready or Not' : 'PUBG'}</p>
+                    <h4 className="text-xl font-black uppercase text-white truncate">{map.name}</h4>
+                  </div>
+                </GlassCard>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {resultsWeapons.length > 0 && (
+          <div className="space-y-4">
+            <h3 className="text-xl font-bold text-white border-b border-white/10 pb-2">Armory / Waffen</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {resultsWeapons.map(w => (
+                <GlassCard key={w.id} className="p-4">
+                  <div className="flex justify-between items-start mb-2">
+                    <h4 className="font-bold text-white">{w.name}</h4>
+                    <span className="text-[8px] uppercase bg-red-600/30 text-red-400 px-2 py-1 rounded">{w.type}</span>
+                  </div>
+                  <p className="text-xs text-white/50">{w.desc}</p>
+                </GlassCard>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {resultsMaps.length === 0 && resultsNews.length === 0 && resultsWeapons.length === 0 && (
+          <div className="text-center py-12">
+            <AlertTriangle size={48} className="mx-auto text-white/20 mb-4" />
+            <p className="text-white/40 font-mono uppercase tracking-widest text-sm">Keine Einträge gefunden für "{searchQuery}"</p>
+          </div>
+        )}
+      </motion.div>
+    );
+  };
+
   // --- RENDER FUNCTIONS ---
 
   const renderHome = () => {
     if (selectedArticle) {
       return (
-        <motion.div {...pageTransition} 
-        className="pt-20 md:pt-24 pb-32 md:pb-20 space-y-6 md:space-y-8 
-        max-w-4xl mx-auto">
+        <motion.div {...pageTransition}
+          className="pt-20 md:pt-24 pb-32 md:pb-20 space-y-6 md:space-y-8 max-w-4xl mx-auto">
           <motion.button
             whileHover={{ x: -5 }}
-            onClick={() => setSelectedArticle(null)}
+            onClick={handleBackFromArticle}
             className="flex items-center gap-2 text-white/70 hover:text-white bg-white/5 
             px-4 md:px-6 py-3 rounded-full backdrop-blur-xl border border-white/10 transition-all 
             text-xs md:text-sm w-fit"
@@ -665,8 +817,8 @@ export default function App() {
             <ChevronLeft size={18} /> Zurück zum Feed
           </motion.button>
 
-          <GlassCard 
-          className="p-8 md:p-14 border-t-4 border-t-red-600 bg-gradient-to-b from-red-900/10 to-transparent">
+          <GlassCard
+            className="p-8 md:p-14 border-t-4 border-t-red-600 bg-gradient-to-b from-red-900/10 to-transparent">
             <div className="flex items-center gap-4 mb-8">
               <span className={`px-3 py-1 rounded-md text-[10px] font-black uppercase tracking-widest border ${getTypeColor(selectedArticle.type)}`}>
                 {selectedArticle.type}
@@ -722,115 +874,114 @@ export default function App() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
-          <div className="lg:col-span-2 space-y-6 md:space-y-8">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-8">
-              <GlassCard onClick={() => setActiveTab('ron')} 
-              className="p-6 md:p-10 border-red-500/20 
-              bg-gradient-to-br from-red-500/5 to-transparent">
-                <Shield size={32} className="text-red-500 mb-4 md:mb-6" />
-                <h2 className="text-2xl md:text-3xl font-black text-white italic uppercase tracking-tighter">Ready or Not</h2>
-                <p className="text-white/40 text-xs md:text-sm mt-1 md:mt-2 font-medium">Tactical SWAT Simulation Data</p>
-              </GlassCard>
-              <GlassCard onClick={() => setActiveTab('pubg')} className="p-6 md:p-10 border-yellow-500/20 bg-gradient-to-br from-yellow-500/5 to-transparent">
-                <Crosshair size={32} className="text-yellow-500 mb-4 md:mb-6" />
-                <h2 className="text-2xl md:text-3xl font-black text-white italic uppercase tracking-tighter">PUBG</h2>
-                <p className="text-white/40 text-xs md:text-sm mt-1 md:mt-2 font-medium">Battle Royale Reconnaissance</p>
+        <SearchBar />
+
+        {searchQuery ? renderSearchResults() : (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
+            <div className="lg:col-span-2 space-y-6 md:space-y-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-8">
+                <GlassCard onClick={() => handleTabSwitch('ron')}
+                  className="p-6 md:p-10 border-red-500/20 bg-gradient-to-br from-red-500/5 to-transparent">
+                  <Shield size={32} className="text-red-500 mb-4 md:mb-6" />
+                  <h2 className="text-2xl md:text-3xl font-black text-white italic uppercase tracking-tighter">Ready or Not</h2>
+                  <p className="text-white/40 text-xs md:text-sm mt-1 md:mt-2 font-medium">Tactical SWAT Simulation Data</p>
+                </GlassCard>
+                <GlassCard onClick={() => handleTabSwitch('pubg')} className="p-6 md:p-10 border-yellow-500/20 bg-gradient-to-br from-yellow-500/5 to-transparent">
+                  <Crosshair size={32} className="text-yellow-500 mb-4 md:mb-6" />
+                  <h2 className="text-2xl md:text-3xl font-black text-white italic uppercase tracking-tighter">PUBG</h2>
+                  <p className="text-white/40 text-xs md:text-sm mt-1 md:mt-2 font-medium">Battle Royale Reconnaissance</p>
+                </GlassCard>
+              </div>
+
+              <GlassCard className="p-6 md:p-8 flex flex-col h-[400px]">
+                <div className="flex items-center justify-between mb-6 border-b border-white/10 pb-4">
+                  <h3 className="flex items-center gap-2 md:gap-3 text-lg md:text-xl font-black italic uppercase tracking-tighter text-white">
+                    <Zap size={18} className="text-blue-400 animate-pulse" /> Live Intel Feed
+                  </h3>
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
+                    <span className="text-[10px] text-white/40 font-mono tracking-widest uppercase">Syncing</span>
+                  </div>
+                </div>
+
+                <div className="flex-1 overflow-hidden relative">
+                  <div className="absolute inset-0 mask-image-b space-y-3 md:space-y-4">
+                    <AnimatePresence>
+                      {liveFeed.map((item, index) => (
+                        <motion.div
+                          key={item.id + item.timestamp.getTime()}
+                          initial={{ opacity: 0, y: -20, scale: 0.95 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.9 }}
+                          transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                          onClick={() => handleArticleClick(item)}
+                          className="group flex flex-col gap-2 p-4 rounded-2xl bg-white/[0.02] border border-white/5 hover:bg-white/[0.08] hover:border-white/20 transition-all cursor-pointer shadow-lg"
+                        >
+                          <div className="flex justify-between items-start">
+                            <span className={`text-[8px] md:text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded border ${getTypeColor(item.type)}`}>
+                              {item.type}
+                            </span>
+                            <span className="text-[10px] text-white/30 font-mono">
+                              {getRelativeTime(item.timestamp)}
+                            </span>
+                          </div>
+                          <h4 className="text-sm md:text-base font-bold text-white/90 leading-tight group-hover:text-blue-400 transition-colors">
+                            {item.headline}
+                          </h4>
+                          <p className="text-xs text-white/50 italic line-clamp-1 group-hover:text-white/70">
+                            <span className="font-bold text-white/40">Fact:</span> {item.fact}
+                          </p>
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
+                  </div>
+                </div>
               </GlassCard>
             </div>
 
-            <GlassCard className="p-6 md:p-8 flex flex-col h-[400px]">
-              <div className="flex items-center justify-between mb-6 border-b border-white/10 pb-4">
-                <h3 className="flex items-center gap-2 md:gap-3 text-lg md:text-xl font-black italic uppercase tracking-tighter text-white">
-                  <Zap size={18} className="text-blue-400 animate-pulse" /> Live Intel Feed
-                </h3>
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
-                  <span className="text-[10px] text-white/40 font-mono tracking-widest uppercase">Syncing</span>
-                </div>
-              </div>
-
-              <div className="flex-1 overflow-hidden relative">
-                <div className="absolute inset-0 mask-image-b space-y-3 md:space-y-4">
-                  <AnimatePresence>
-                    {liveFeed.map((item, index) => (
-                      <motion.div
-                        key={item.id + item.timestamp.getTime()}
-                        initial={{ opacity: 0, y: -20, scale: 0.95 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.9 }}
-                        transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                        onClick={() => setSelectedArticle(item)}
-                        className="group flex flex-col gap-2 p-4 rounded-2xl bg-white/[0.02] border border-white/5 hover:bg-white/[0.08] hover:border-white/20 transition-all cursor-pointer shadow-lg"
-                      >
-                        <div className="flex justify-between items-start">
-                          <span className={`text-[8px] md:text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded border ${getTypeColor(item.type)}`}>
-                            {item.type}
-                          </span>
-                          <span className="text-[10px] text-white/30 font-mono">
-                            {getRelativeTime(item.timestamp)}
-                          </span>
-                        </div>
-                        <h4 className="text-sm md:text-base font-bold text-white/90 leading-tight group-hover:text-blue-400 transition-colors">
-                          {item.headline}
-                        </h4>
-                        <p className="text-xs text-white/50 italic line-clamp-1 group-hover:text-white/70">
-                          <span className="font-bold text-white/40">Fact:</span> {item.fact}
-                        </p>
-                      </motion.div>
-                    ))}
-                  </AnimatePresence>
-                </div>
-              </div>
-            </GlassCard>
-          </div>
-
-          <div className="space-y-6 md:space-y-8">
-            <GlassCard className="p-6 md:p-8 bg-blue-600/5 border-blue-500/20">
-              <h3 className="text-[10px] md:text-sm font-black uppercase tracking-widest 
-              text-blue-400 mb-4 md:mb-6">Last Viewed Intel</h3>
-              {selectedMap ? (
-                <div className="space-y-4 md:space-y-6">
-                  <div className="aspect-video rounded-xl md:rounded-2xl overflow-hidden border border-white/10">
-                    <img src={selectedMap.image} className="w-full h-full object-cover" />
+            <div className="space-y-6 md:space-y-8">
+              <GlassCard className="p-6 md:p-8 bg-blue-600/5 border-blue-500/20">
+                <h3 className="text-[10px] md:text-sm font-black uppercase tracking-widest text-blue-400 mb-4 md:mb-6">Last Viewed Intel</h3>
+                {selectedMap ? (
+                  <div className="space-y-4 md:space-y-6">
+                    <div className="aspect-video rounded-xl md:rounded-2xl overflow-hidden border border-white/10">
+                      <img src={selectedMap.image} className="w-full h-full object-cover" />
+                    </div>
+                    <div>
+                      <h4 className="text-xl md:text-2xl font-black italic uppercase text-white leading-none">{selectedMap.name}</h4>
+                      <p className="text-white/40 text-[10px] mt-2 font-mono uppercase tracking-tighter">{selectedMap.game === 'ron' ? 'Operation Area' : 'Combat Zone'}</p>
+                    </div>
+                    <button
+                      onClick={() => handleTabSwitch(selectedMap.game)}
+                      className="w-full py-3 md:py-4 bg-white text-black font-black uppercase italic tracking-tighter text-xs md:text-sm rounded-xl hover:bg-blue-400 transition-colors"
+                    >
+                      Return to Intel
+                    </button>
                   </div>
-                  <div>
-                    <h4 className="text-xl md:text-2xl font-black italic 
-                    uppercase text-white leading-none">{selectedMap.name}</h4>
-                    <p className="text-white/40 text-[10px] mt-2 font-mono uppercase tracking-tighter">{selectedMap.game === 'ron' ? 'Operation Area' : 'Combat Zone'}</p>
+                ) : (
+                  <div className="py-8 md:py-12 flex flex-col items-center justify-center text-center opacity-20">
+                    <Clock size={40} className="mb-4" />
+                    <p className="text-[10px] font-black uppercase tracking-widest italic">No Recent Activity</p>
                   </div>
-                  <button
-                    onClick={() => setActiveTab(selectedMap.game)}
-                    className="w-full py-3 md:py-4 bg-white text-black font-black 
-                    uppercase italic tracking-tighter text-xs md:text-sm rounded-xl 
-                    hover:bg-blue-400 transition-colors"
-                  >
-                    Return to Intel
-                  </button>
-                </div>
-              ) : (
-                <div className="py-8 md:py-12 flex flex-col items-center justify-center text-center opacity-20">
-                  <Clock size={40} className="mb-4" />
-                  <p className="text-[10px] font-black uppercase tracking-widest italic">No Recent Activity</p>
-                </div>
-              )}
-            </GlassCard>
+                )}
+              </GlassCard>
 
-            <GlassCard className="p-6 md:p-8">
-              <h3 className="text-[10px] md:text-sm font-black uppercase tracking-widest text-white/40 mb-4 md:mb-6">Tactical Status</h3>
-              <div className="grid grid-cols-2 gap-3 md:gap-4">
-                <div className="p-3 md:p-4 rounded-xl md:rounded-2xl bg-white/5 border border-white/5 text-center">
-                  <p className="text-[8px] md:text-[10px] font-black text-white/20 uppercase mb-1">Maps</p>
-                  <p className="text-xl md:text-2xl font-black italic text-white">{RON_MAPS.length + PUBG_MAPS.length}</p>
+              <GlassCard className="p-6 md:p-8">
+                <h3 className="text-[10px] md:text-sm font-black uppercase tracking-widest text-white/40 mb-4 md:mb-6">Tactical Status</h3>
+                <div className="grid grid-cols-2 gap-3 md:gap-4">
+                  <div className="p-3 md:p-4 rounded-xl md:rounded-2xl bg-white/5 border border-white/5 text-center">
+                    <p className="text-[8px] md:text-[10px] font-black text-white/20 uppercase mb-1">Maps</p>
+                    <p className="text-xl md:text-2xl font-black italic text-white">{RON_MAPS.length + PUBG_MAPS.length}</p>
+                  </div>
+                  <div className="p-3 md:p-4 rounded-xl md:rounded-2xl bg-white/5 border border-white/5 text-center">
+                    <p className="text-[8px] md:text-[10px] font-black text-white/20 uppercase mb-1">Intel</p>
+                    <p className="text-xl md:text-2xl font-black italic text-white">{NEWS_POOL.length}</p>
+                  </div>
                 </div>
-                <div className="p-3 md:p-4 rounded-xl md:rounded-2xl bg-white/5 border border-white/5 text-center">
-                  <p className="text-[8px] md:text-[10px] font-black text-white/20 uppercase mb-1">Intel</p>
-                  <p className="text-xl md:text-2xl font-black italic text-white">{NEWS_POOL.length}</p>
-                </div>
-              </div>
-            </GlassCard>
+              </GlassCard>
+            </div>
           </div>
-        </div>
+        )}
       </motion.div>
     );
   };
@@ -840,7 +991,7 @@ export default function App() {
       <motion.div {...pageTransition} className="space-y-6 md:space-y-8 pt-20 md:pt-24 pb-32 md:pb-20">
         <motion.button
           whileHover={{ x: -5 }}
-          onClick={() => setSelectedMap(null)}
+          onClick={handleBackClick}
           className="flex items-center gap-2 text-white/70 hover:text-white bg-white/5 px-4 md:px-6 py-3 rounded-full backdrop-blur-xl border border-white/10 transition-all text-xs md:text-sm"
         >
           <ChevronLeft size={18} /> Zurück zur Auswahl
@@ -901,26 +1052,21 @@ export default function App() {
     const currentMaps = RON_MAPS.filter(map => map.dlc === activeDlc);
 
     return (
-      <motion.div {...pageTransition} key="ron-main" 
-      className="space-y-8 md:space-y-12 pt-20 md:pt-28 pb-32 md:pb-20">
-        <div className="flex flex-col items-center gap-6 md:gap-12">
+      <motion.div {...pageTransition} key="ron-main"
+        className="md:space-y-12 pt-0 md:pt-28 pb-32 md:pb-20 max-md:fixed max-md:inset-0 max-md:z-30 max-md:bg-[#010101] max-md:flex max-md:flex-col max-md:p-0">
+
+        {/* --- DESKTOP TOP MENU (Am Handy ausgeblendet: max-md:hidden) --- */}
+        <div className="max-md:hidden flex flex-col items-center gap-6 md:gap-8 pt-20">
           <div className="w-fit mx-auto">
-            <div className="flex p-[3px] md:p-1 bg-black/60 backdrop-blur-3xl border border-white/10 
-            rounded-full relative shadow-2xl overflow-hidden">
+            <div className="flex p-[3px] md:p-1 bg-black/60 backdrop-blur-3xl border border-white/10 rounded-full relative shadow-2xl overflow-hidden">
               {['maps', 'weapons'].map((tab) => (
                 <button
                   key={tab}
-                  onClick={() => setRonSubTab(tab)}
-                  className={`relative px-8 md:px-14 py-2 md:py-3.5 rounded-full font-black 
-                    uppercase italic tracking-tighter text-[10px] md:text-[13px] z-10 transition-colors 
-                    duration-500 ${ronSubTab === tab ? 'text-white' : 'text-white/30 hover:text-white/60'}`}
+                  onClick={() => handleRonSubTabSwitch(tab)}
+                  className={`relative px-8 md:px-14 py-2 md:py-3.5 rounded-full font-black uppercase italic tracking-tighter text-[10px] md:text-[13px] z-10 transition-colors duration-500 ${ronSubTab === tab ? 'text-white' : 'text-white/30 hover:text-white/60'}`}
                 >
                   {ronSubTab === tab && (
-                    <motion.div
-                      layoutId="ron-active-sub"
-                      className="absolute inset-0 bg-[#e31e24] rounded-full -z-10 shadow-[0_0_30px_rgba(227,30,36,0.3)]"
-                      transition={springTransition}
-                    />
+                    <motion.div layoutId="ron-active-sub" className="absolute inset-0 bg-[#e31e24] rounded-full -z-10 shadow-[0_0_30px_rgba(227,30,36,0.3)]" transition={springTransition} />
                   )}
                   {tab === 'maps' ? 'Operations' : 'Armory'}
                 </button>
@@ -930,9 +1076,7 @@ export default function App() {
 
           {ronSubTab === 'maps' && (
             <div className="w-full overflow-hidden">
-              <div 
-              className="flex items-center justify-start md:justify-center 
-              gap-4 md:gap-8 overflow-x-auto no-scrollbar px-6 md:px-0 border-b border-white/5 snap-x pb-2">
+              <div className="flex items-center justify-start md:justify-center gap-4 md:gap-8 overflow-x-auto no-scrollbar px-6 md:px-0 border-b border-white/5 snap-x pb-2">
                 {[
                   { id: 'base', label: 'READY OR NOT' },
                   { id: 'home_invasion', label: 'HOME INVASION' },
@@ -954,66 +1098,122 @@ export default function App() {
               </div>
             </div>
           )}
+
+          <div className="w-full max-w-3xl px-4">
+            <SearchBar className="mb-0" />
+          </div>
         </div>
 
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={activeDlc + ronSubTab}
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            /* - md:grid... : PC - normales Gitter.
-               - max-md:flex... : Handy - vertikale Liste.
-               - max-md:h-[calc(100vh-160px)] : Höhenbegrenzung auf fast ganzen Bildschirm.
-               - max-md:overflow-y-scroll : Scrollen innerhalb des Containers.
-               - snap-y snap-mandatory : "Einrasten" beim Scrollen.
-            */
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6 md:gap-10 
-            max-md:flex max-md:flex-col max-md:h-[calc(100vh-160px)] max-md:overflow-y-scroll 
-            max-md:snap-y max-md:snap-mandatory no-scrollbar"
-          >
-
-            {ronSubTab === 'maps' ? currentMaps.map(map => (
-              <div
-                key={map.id}
-                className="relative md:flex-1 md:hover:flex-[3] transition-all duration-700 ease-in-out overflow-hidden rounded-3xl group max-md:min-h-full max-md:snap-start"
-              >
-                <GlassCard
-                  onClick={() => setSelectedMap(map)}
-                  className="h-[350px] md:h-[480px] max-md:h-full"
-                >
-                  <img
-                    src={map.image}
-                    style={{ objectPosition: map.imagePosition || 'center' }} // Nutzt den Wert aus den Daten oder 'center' als Fallback
-                    className="absolute inset-0 w-full h-full object-cover 
-                    transition-all duration-700 scale-100 group-hover:scale-110"
-                    alt={map.name}
-                  />
-                {/* Dynamischer Blaulicht-Effekt beim Hover (nur PC) 
-                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none hidden md:block">
-                  <div className="absolute inset-y-0 left-0 w-1/2 bg-blue-500/10 blur-2xl" />
-                  <div className="absolute inset-y-0 right-0 w-1/2 bg-red-500/10 blur-2xl" />
-                </div>*/}
-
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent"></div>
-                <div className="absolute bottom-0 left-0 p-6 md:p-12 w-full">
-                  <p className="text-red-600 font-mono text-[8px] md:text-[10px] font-black uppercase tracking-[0.4em] mb-2 md:mb-4 truncate">{map.codename}</p>
-                  <h3 className="text-2xl md:text-3xl lg:text-4xl font-black text-white italic uppercase leading-tight tracking-tighter">{map.name}</h3>
-
-                </div>
-              </GlassCard>
+        {/* --- MAPS / WEAPONS BEREICH ODER SUCH-ERGEBNISSE --- */}
+        <div className={`max-md:flex-1 max-md:overflow-hidden relative z-10 ${searchQuery ? 'max-md:pt-8 max-md:px-4 max-md:overflow-y-auto' : ''}`}>
+          <AnimatePresence mode="wait">
+            {searchQuery ? (
+              <div className="w-full h-full overflow-y-auto pb-32 no-scrollbar">
+                {renderSearchResults()}
               </div>
-            )) : RON_WEAPONS.map(w => (
-              <GlassCard key={w.id} className="p-8 md:p-12 border-red-500/20 bg-white/[0.03]">
-                <h4 className="text-xl md:text-3xl font-black text-white italic uppercase mb-2 tracking-tighter">{w.name}</h4>
-                <div className="flex items-center gap-2 md:gap-3 mb-4 md:mb-6">
-                  <span className="bg-red-600/30 text-red-400 text-[8px] md:text-[10px] font-black px-2 py-1 rounded uppercase tracking-widest border border-red-500/10">{w.type}</span>
-                </div>
-                <p className="text-gray-300 text-sm md:text-base font-medium leading-relaxed">{w.desc}</p>
-              </GlassCard>
-            ))}
-          </motion.div>
-        </AnimatePresence>
+            ) : (
+              <motion.div
+                key={activeDlc + ronSubTab}
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                ref={ronListRef} // <--- REFERENZ FÜR SCROLL-POSITION ERGÄNZT
+                onScroll={(e) => {
+                  if (!selectedMap) {
+                    scrollPosRef.current.ronContainer = e.target.scrollTop;
+                  }
+                }}
+                className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6 md:gap-10 max-md:flex max-md:flex-col max-md:overflow-y-scroll no-scrollbar ${ronSubTab === 'maps'
+                    ? 'max-md:gap-0 max-md:h-full max-md:snap-y max-md:snap-mandatory'
+                    : 'max-md:gap-4 max-md:p-4 max-md:h-full max-md:pb-10'
+                  }`}
+              >
+                {ronSubTab === 'maps' ? currentMaps.map(map => (
+                  <div
+                    key={map.id}
+                    className="relative md:flex-1 md:hover:flex-[3] transition-all duration-700 ease-in-out overflow-hidden md:rounded-3xl group max-md:min-h-full max-md:w-full max-md:snap-start max-md:shrink-0"
+                  >
+                    <GlassCard
+                      onClick={() => handleMapClick(map)}
+                      className="h-[350px] md:h-[480px] max-md:h-full max-md:w-full max-md:rounded-none max-md:border-none max-md:shadow-none bg-black"
+                    >
+                      <img
+                        src={map.image}
+                        style={{ objectPosition: map.imagePosition || 'center' }}
+                        className="absolute inset-0 w-full h-full object-cover transition-all duration-700 scale-100 md:group-hover:scale-110"
+                        alt={map.name}
+                      />
+
+                      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent"></div>
+
+                      <div className="absolute max-md:bottom-8 md:bottom-0 left-0 p-6 md:p-12 w-full">
+                        <p className="text-red-600 font-mono text-[10px] md:text-[10px] font-black uppercase tracking-[0.4em] mb-2 md:mb-4 truncate">{map.codename}</p>
+                        <h3 className="text-3xl md:text-3xl lg:text-4xl font-black text-white italic uppercase leading-tight tracking-tighter drop-shadow-2xl">{map.name}</h3>
+                      </div>
+                    </GlassCard>
+                  </div>
+                )) : RON_WEAPONS.map(w => (
+                  <GlassCard key={w.id} className="p-8 md:p-12 border-red-500/20 bg-white/[0.03] max-md:shrink-0">
+                    <h4 className="text-xl md:text-3xl font-black text-white italic uppercase mb-2 tracking-tighter">{w.name}</h4>
+                    <div className="flex items-center gap-2 md:gap-3 mb-4 md:mb-6">
+                      <span className="bg-red-600/30 text-red-400 text-[8px] md:text-[10px] font-black px-2 py-1 rounded uppercase tracking-widest border border-red-500/10">{w.type}</span>
+                    </div>
+                    <p className="text-gray-300 text-sm md:text-base font-medium leading-relaxed">{w.desc}</p>
+                  </GlassCard>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* --- MOBILE BOTTOM MENU (Nur am Handy sichtbar) --- */}
+        <div className="md:hidden flex flex-col gap-3 bg-[#010101]/95 backdrop-blur-3xl border-t border-white/10 p-4 pb-24 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] z-50">
+
+          {/* Neu: Mobile Suche integriert im festen Menü unten! */}
+          <SearchBar className="mb-2" />
+
+          {/* DLC Auswahl */}
+          {!searchQuery && ronSubTab === 'maps' && (
+            <div className="flex overflow-x-auto no-scrollbar gap-2 py-1">
+              {[
+                { id: 'base', label: 'READY OR NOT' },
+                { id: 'home_invasion', label: 'HOME INVASION' },
+                { id: 'dark_waters', label: 'DARK WATERS' },
+                { id: 'ls_stories', label: 'LOS SUENOS STORIES' },
+                { id: 'boiling_point', label: 'BOILING POINT' }
+              ].map(dlc => (
+                <button
+                  key={dlc.id}
+                  onClick={() => setActiveDlc(dlc.id)}
+                  className={`px-4 py-2 rounded-full whitespace-nowrap text-[9px] font-black uppercase border transition-all shrink-0 ${activeDlc === dlc.id
+                      ? 'border-red-500 bg-red-500/20 text-white shadow-[0_0_15px_rgba(220,38,38,0.2)]'
+                      : 'border-white/10 bg-white/5 text-white/40'
+                    }`}
+                >
+                  {dlc.label}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Operations & Armory */}
+          {!searchQuery && (
+            <div className="flex gap-2">
+              {['maps', 'weapons'].map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => handleRonSubTabSwitch(tab)}
+                  className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all ${ronSubTab === tab
+                      ? 'bg-[#e31e24] text-white shadow-[0_0_20px_rgba(227,30,36,0.3)]'
+                      : 'bg-white/5 text-white/40'
+                    }`}
+                >
+                  {tab === 'maps' ? 'Operations' : 'Armory'}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </motion.div>
     );
   };
@@ -1023,7 +1223,7 @@ export default function App() {
       <motion.div {...pageTransition} className="space-y-6 md:space-y-8 pt-20 md:pt-24 pb-32 md:pb-20">
         <motion.button
           whileHover={{ x: -5 }}
-          onClick={() => setSelectedMap(null)}
+          onClick={handleBackClick}
           className="flex items-center gap-2 text-white/70 hover:text-white bg-white/5 px-4 md:px-6 py-3 rounded-full backdrop-blur-xl border border-white/10 transition-all text-xs md:text-sm"
         >
           <ChevronLeft size={18} /> Zurück zur Auswahl
@@ -1060,17 +1260,21 @@ export default function App() {
     return (
       <motion.div {...pageTransition} className="pt-20 md:pt-28 space-y-8 md:space-y-12 pb-32 md:pb-20">
         <h2 className="text-5xl md:text-7xl font-black text-white italic uppercase tracking-tighter leading-none">Battlegrounds</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-10">
-          {PUBG_MAPS.map(map => (
-            <GlassCard key={map.id} onClick={() => setSelectedMap(map)} className="h-[350px] md:h-[480px]">
-              <img src={map.image} className="absolute inset-0 w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-110 transition-all duration-[1.5s]" alt={map.name} />
-              <div className="absolute bottom-0 left-0 p-8 md:p-12 w-full bg-gradient-to-t from-black via-black/50 to-transparent">
-                <span className="bg-yellow-500 text-black font-black text-[8px] md:text-[10px] px-3 py-1 rounded uppercase tracking-[0.2em]">{map.size}</span>
-                <h3 className="text-3xl md:text-5xl font-black text-white italic uppercase mt-3 md:mt-4 tracking-tighter leading-none">{map.name}</h3>
-              </div>
-            </GlassCard>
-          ))}
-        </div>
+        <SearchBar />
+
+        {searchQuery ? renderSearchResults() : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-10">
+            {PUBG_MAPS.map(map => (
+              <GlassCard key={map.id} onClick={() => handleMapClick(map)} className="h-[350px] md:h-[480px]">
+                <img src={map.image} className="absolute inset-0 w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-110 transition-all duration-[1.5s]" alt={map.name} />
+                <div className="absolute bottom-0 left-0 p-8 md:p-12 w-full bg-gradient-to-t from-black via-black/50 to-transparent">
+                  <span className="bg-yellow-500 text-black font-black text-[8px] md:text-[10px] px-3 py-1 rounded uppercase tracking-[0.2em]">{map.size}</span>
+                  <h3 className="text-3xl md:text-5xl font-black text-white italic uppercase mt-3 md:mt-4 tracking-tighter leading-none">{map.name}</h3>
+                </div>
+              </GlassCard>
+            ))}
+          </div>
+        )}
       </motion.div>
     );
   };
@@ -1081,15 +1285,12 @@ export default function App() {
       <div className="fixed inset-0 z-0 pointer-events-none">
         <AnimatePresence mode="wait">
           {activeTab === 'ron' ? (
-            <motion.div key="bg-ron" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} 
-            className="absolute inset-0 overflow-hidden">
-              {/* Linke Seite Blau */}
+            <motion.div key="bg-ron" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 overflow-hidden">
               <motion.div
                 animate={{ opacity: [0.2, 0.8, 0.2] }}
                 transition={{ duration: 1.5, repeat: Infinity }}
                 className="absolute inset-y-0 left-0 w-1/3 bg-blue-600/20 blur-[120px] -translate-x-1/2"
               />
-              {/* Rechte Seite Rot */}
               <motion.div
                 animate={{ opacity: [0.2, 0.8, 0.2] }}
                 transition={{ duration: 1.5, repeat: Infinity, delay: 0.75 }}
@@ -1108,17 +1309,17 @@ export default function App() {
 
       <div className="relative z-10 flex flex-col min-h-screen">
 
+        {/* HAUPT-NAVIGATION - Am Handy immer GANZ unten über allem drüber (z-50) */}
         <header className="fixed md:top-8 max-md:bottom-0 left-0 right-0 z-50 flex justify-center md:px-6 max-md:pb-0">
           <motion.nav
             initial={{ y: 50, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            className="bg-black/30 md:bg-black/20 backdrop-blur-3xl border-t md:border border-white/10 
-            max-md:rounded-t-[2rem] md:rounded-full p-0 flex items-center shadow-2xl w-full md:w-auto"
+            className="bg-black/30 md:bg-black/20 backdrop-blur-3xl border-t md:border border-white/10 max-md:rounded-t-[2rem] md:rounded-full p-0 flex items-center shadow-2xl w-full md:w-auto"
           >
             <div className="flex relative w-full md:w-auto px-2 md:px-0">
-              <DynamicNavItem id="home" icon={Home} label="Home" activeTab={activeTab} setActiveTab={setActiveTab} />
-              <DynamicNavItem id="ron" icon={Shield} label="RoN" activeTab={activeTab} setActiveTab={setActiveTab} />
-              <DynamicNavItem id="pubg" icon={Crosshair} label="PUBG" activeTab={activeTab} setActiveTab={setActiveTab} />
+              <DynamicNavItem id="home" icon={Home} label="Home" activeTab={activeTab} setActiveTab={handleTabSwitch} />
+              <DynamicNavItem id="ron" icon={Shield} label="RoN" activeTab={activeTab} setActiveTab={handleTabSwitch} />
+              <DynamicNavItem id="pubg" icon={Crosshair} label="PUBG" activeTab={activeTab} setActiveTab={handleTabSwitch} />
             </div>
             <div className={`flex-1 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all`}></div>
           </motion.nav>
@@ -1137,38 +1338,17 @@ export default function App() {
         </main>
 
         <footer className="w-full py-8 md:py-10 text-center text-white/10 font-black text-[8px] md:text-[10px] tracking-[0.5em] md:tracking-[1em] uppercase mb-20 md:mb-0">
-          Tactical Repository // inTACTICS v3.0
+          Tactical Repository // inTACTICS v3.2.5
 
-          <div className="w-full py-8 md:py-10 text-center text-white/10 text-[8px]  copyright">
+          <div className="w-full py-8 md:py-10 text-center text-white/10 text-[8px] copyright">
             <h3>© Copyright</h3>
             <p className="py-8 md:py-10">
               Ready or Not is a trademark of{" "}
-              <a
-                href="https://voidinteractive.net/"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                VOID Interactive
-              </a>
-              . This is a fan-made project.
+              <a href="https://voidinteractive.net/" target="_blank" rel="noopener noreferrer">VOID Interactive</a>. This is a fan-made project.
             </p>
 
             <div className="py-8 md:py-3 credits">
               <p>Site development and design by <strong>FRNZ</strong></p>
-              {/*<p>Part blueprints development and design by <strong>Relict_UA</strong></p> 
-              <p>Part blueprints development and design by <strong>eNex and Daan</strong></p>*/}
-
-              {/*<p>
-                <a
-                  href="http://steamcommunity.com/sharedfiles/filedetails/?id=3137562299"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Ready or Not blueprints Steam Guide
-                </a>
-              </p>*/}
-
-
               <p style={{ marginTop: "15px" }}>© 2026 Ready or Not Maps</p>
             </div>
 
@@ -1177,8 +1357,6 @@ export default function App() {
             </p>
           </div>
         </footer>
-
-        
       </div>
 
       <style dangerouslySetInnerHTML={{
@@ -1192,24 +1370,13 @@ export default function App() {
         
         @media (max-width: 768px) {
           h1 { word-break: break-word; }
+          /* Optional: Wenn du echtes App-Feeling willst, verhindert das den Bounce-Effekt beim Scrollen auf iOS */
+          body { overscroll-behavior-y: none; }
         }
-        .map-container {
-          display: flex;
-          gap: 1.5rem;
-          width: 100%;
-          transition: all 0.5s ease;
-          }
 
-      .map-card-wrapper {
-  flex: 1; /* Alle Karten sind gleich groß */
-  transition: flex 0.6s cubic-bezier(0.25, 1, 0.5, 1);
-  min-width: 100px;
-}
-
-.map-card-wrapper:hover {
-  flex: 3; /* Die Karte unter der Maus wird 3x so breit */
-}
-
+        .map-container { display: flex; gap: 1.5rem; width: 100%; transition: all 0.5s ease; }
+        .map-card-wrapper { flex: 1; transition: flex 0.6s cubic-bezier(0.25, 1, 0.5, 1); min-width: 100px; }
+        .map-card-wrapper:hover { flex: 3; }
       `}} />
     </div>
   );
