@@ -489,7 +489,7 @@ const DynamicNavItem = ({ id, icon: Icon, label, activeTab, setActiveTab }) => {
   return (
     <button
       onClick={() => setActiveTab(id)}
-      className="relative flex-1 md:flex-none px-4 md:px-8 py-4 md:py-3 rounded-full flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 group outline-none z-10"
+      className="relative flex-1 md:flex-none px-4 md:px-8 py-4 md:py-3 rounded-full flex md:flex-row items-center justify-center gap-2 md:gap-2 group outline-none z-10"
     >
       {isActive && (
         <motion.div
@@ -652,16 +652,21 @@ export default function App() {
   const renderHome = () => {
     if (selectedArticle) {
       return (
-        <motion.div {...pageTransition} className="pt-20 md:pt-24 pb-32 md:pb-20 space-y-6 md:space-y-8 max-w-4xl mx-auto">
+        <motion.div {...pageTransition} 
+        className="pt-20 md:pt-24 pb-32 md:pb-20 space-y-6 md:space-y-8 
+        max-w-4xl mx-auto">
           <motion.button
             whileHover={{ x: -5 }}
             onClick={() => setSelectedArticle(null)}
-            className="flex items-center gap-2 text-white/70 hover:text-white bg-white/5 px-4 md:px-6 py-3 rounded-full backdrop-blur-xl border border-white/10 transition-all text-xs md:text-sm w-fit"
+            className="flex items-center gap-2 text-white/70 hover:text-white bg-white/5 
+            px-4 md:px-6 py-3 rounded-full backdrop-blur-xl border border-white/10 transition-all 
+            text-xs md:text-sm w-fit"
           >
             <ChevronLeft size={18} /> Zurück zum Feed
           </motion.button>
 
-          <GlassCard className="p-8 md:p-14 border-t-4 border-t-red-600 bg-gradient-to-b from-red-900/10 to-transparent">
+          <GlassCard 
+          className="p-8 md:p-14 border-t-4 border-t-red-600 bg-gradient-to-b from-red-900/10 to-transparent">
             <div className="flex items-center gap-4 mb-8">
               <span className={`px-3 py-1 rounded-md text-[10px] font-black uppercase tracking-widest border ${getTypeColor(selectedArticle.type)}`}>
                 {selectedArticle.type}
@@ -720,7 +725,9 @@ export default function App() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
           <div className="lg:col-span-2 space-y-6 md:space-y-8">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-8">
-              <GlassCard onClick={() => setActiveTab('ron')} className="p-6 md:p-10 border-red-500/20 bg-gradient-to-br from-red-500/5 to-transparent">
+              <GlassCard onClick={() => setActiveTab('ron')} 
+              className="p-6 md:p-10 border-red-500/20 
+              bg-gradient-to-br from-red-500/5 to-transparent">
                 <Shield size={32} className="text-red-500 mb-4 md:mb-6" />
                 <h2 className="text-2xl md:text-3xl font-black text-white italic uppercase tracking-tighter">Ready or Not</h2>
                 <p className="text-white/40 text-xs md:text-sm mt-1 md:mt-2 font-medium">Tactical SWAT Simulation Data</p>
@@ -780,19 +787,23 @@ export default function App() {
 
           <div className="space-y-6 md:space-y-8">
             <GlassCard className="p-6 md:p-8 bg-blue-600/5 border-blue-500/20">
-              <h3 className="text-[10px] md:text-sm font-black uppercase tracking-widest text-blue-400 mb-4 md:mb-6">Last Viewed Intel</h3>
+              <h3 className="text-[10px] md:text-sm font-black uppercase tracking-widest 
+              text-blue-400 mb-4 md:mb-6">Last Viewed Intel</h3>
               {selectedMap ? (
                 <div className="space-y-4 md:space-y-6">
                   <div className="aspect-video rounded-xl md:rounded-2xl overflow-hidden border border-white/10">
                     <img src={selectedMap.image} className="w-full h-full object-cover" />
                   </div>
                   <div>
-                    <h4 className="text-xl md:text-2xl font-black italic uppercase text-white leading-none">{selectedMap.name}</h4>
+                    <h4 className="text-xl md:text-2xl font-black italic 
+                    uppercase text-white leading-none">{selectedMap.name}</h4>
                     <p className="text-white/40 text-[10px] mt-2 font-mono uppercase tracking-tighter">{selectedMap.game === 'ron' ? 'Operation Area' : 'Combat Zone'}</p>
                   </div>
                   <button
                     onClick={() => setActiveTab(selectedMap.game)}
-                    className="w-full py-3 md:py-4 bg-white text-black font-black uppercase italic tracking-tighter text-xs md:text-sm rounded-xl hover:bg-blue-400 transition-colors"
+                    className="w-full py-3 md:py-4 bg-white text-black font-black 
+                    uppercase italic tracking-tighter text-xs md:text-sm rounded-xl 
+                    hover:bg-blue-400 transition-colors"
                   >
                     Return to Intel
                   </button>
@@ -890,15 +901,19 @@ export default function App() {
     const currentMaps = RON_MAPS.filter(map => map.dlc === activeDlc);
 
     return (
-      <motion.div {...pageTransition} key="ron-main" className="space-y-8 md:space-y-12 pt-20 md:pt-28 pb-32 md:pb-20">
+      <motion.div {...pageTransition} key="ron-main" 
+      className="space-y-8 md:space-y-12 pt-20 md:pt-28 pb-32 md:pb-20">
         <div className="flex flex-col items-center gap-6 md:gap-12">
           <div className="w-fit mx-auto">
-            <div className="flex p-[3px] md:p-1 bg-black/60 backdrop-blur-3xl border border-white/10 rounded-full relative shadow-2xl overflow-hidden">
+            <div className="flex p-[3px] md:p-1 bg-black/60 backdrop-blur-3xl border border-white/10 
+            rounded-full relative shadow-2xl overflow-hidden">
               {['maps', 'weapons'].map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setRonSubTab(tab)}
-                  className={`relative px-8 md:px-14 py-2 md:py-3.5 rounded-full font-black uppercase italic tracking-tighter text-[10px] md:text-[13px] z-10 transition-colors duration-500 ${ronSubTab === tab ? 'text-white' : 'text-white/30 hover:text-white/60'}`}
+                  className={`relative px-8 md:px-14 py-2 md:py-3.5 rounded-full font-black 
+                    uppercase italic tracking-tighter text-[10px] md:text-[13px] z-10 transition-colors 
+                    duration-500 ${ronSubTab === tab ? 'text-white' : 'text-white/30 hover:text-white/60'}`}
                 >
                   {ronSubTab === tab && (
                     <motion.div
@@ -915,7 +930,9 @@ export default function App() {
 
           {ronSubTab === 'maps' && (
             <div className="w-full overflow-hidden">
-              <div className="flex items-center justify-start md:justify-center gap-4 md:gap-8 overflow-x-auto no-scrollbar px-6 md:px-0 border-b border-white/5 snap-x pb-2">
+              <div 
+              className="flex items-center justify-start md:justify-center 
+              gap-4 md:gap-8 overflow-x-auto no-scrollbar px-6 md:px-0 border-b border-white/5 snap-x pb-2">
                 {[
                   { id: 'base', label: 'READY OR NOT' },
                   { id: 'home_invasion', label: 'HOME INVASION' },
@@ -1064,16 +1081,17 @@ export default function App() {
       <div className="fixed inset-0 z-0 pointer-events-none">
         <AnimatePresence mode="wait">
           {activeTab === 'ron' ? (
-            <motion.div key="bg-ron" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 overflow-hidden">
+            <motion.div key="bg-ron" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} 
+            className="absolute inset-0 overflow-hidden">
               {/* Linke Seite Blau */}
               <motion.div
-                animate={{ opacity: [0.2, 0.5, 0.2] }}
+                animate={{ opacity: [0.2, 0.8, 0.2] }}
                 transition={{ duration: 1.5, repeat: Infinity }}
                 className="absolute inset-y-0 left-0 w-1/3 bg-blue-600/20 blur-[120px] -translate-x-1/2"
               />
               {/* Rechte Seite Rot */}
               <motion.div
-                animate={{ opacity: [0.2, 0.5, 0.2] }}
+                animate={{ opacity: [0.2, 0.8, 0.2] }}
                 transition={{ duration: 1.5, repeat: Infinity, delay: 0.75 }}
                 className="absolute inset-y-0 right-0 w-1/3 bg-red-600/20 blur-[120px] translate-x-1/2"
               />
@@ -1094,13 +1112,15 @@ export default function App() {
           <motion.nav
             initial={{ y: 50, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            className="bg-black/60 md:bg-black/40 backdrop-blur-3xl border-t md:border border-white/10 max-md:rounded-t-[2rem] md:rounded-full p-2 flex items-center shadow-2xl w-full md:w-auto"
+            className="bg-black/30 md:bg-black/20 backdrop-blur-3xl border-t md:border border-white/10 
+            max-md:rounded-t-[2rem] md:rounded-full p-0 flex items-center shadow-2xl w-full md:w-auto"
           >
             <div className="flex relative w-full md:w-auto px-2 md:px-0">
               <DynamicNavItem id="home" icon={Home} label="Home" activeTab={activeTab} setActiveTab={setActiveTab} />
               <DynamicNavItem id="ron" icon={Shield} label="RoN" activeTab={activeTab} setActiveTab={setActiveTab} />
               <DynamicNavItem id="pubg" icon={Crosshair} label="PUBG" activeTab={activeTab} setActiveTab={setActiveTab} />
             </div>
+            <div className={`flex-1 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all`}></div>
           </motion.nav>
         </header>
 
