@@ -415,7 +415,7 @@ const NEWS_POOL = [
     id: 'n3', mapId: 'ron_ides', type: 'UPDATE',
     headline: 'Brisa Cove: Schwer bewaffnete Veteranen verbarrikadiert',
     fact: 'Die Gruppe "The Left Behind" trägt Level-IV-Panzerwesten, die Standard-Pistolenmunition komplett absorbieren.',
-    content: 'Einsatz Ides of March: Die Täter in den Brisa Cove Apartments sind ehemalige Militärs. Sie haben Stolperdrähte an fast allen Türen angebracht. Spiegeln (Mirrorgun) ist Pflicht! Frontale Feuergefechte sind tödlich, da die Feinde mit SA-58 Sturmgewehren schießen, die Wände durchschlagen. C2-Sprengladungen und schweres Tränengas (CS Gas) werden für den Zugriff empfohlen.'
+    content: 'Einsatz Ides of March: Die Täter in Brisa Cove Apartments sind ehemalige Militärs. Sie haben Stolperdrähte an fast allen Türen angebracht. Spiegeln (Mirrorgun) ist Pflicht! Frontale Feuergefechte sind tödlich, da die Feinde mit SA-58 Sturmgewehren schießen, die Wände durchschlagen. C2-Sprengladungen und schweres Tränengas (CS Gas) werden für den Zugriff empfohlen.'
   },
   {
     id: 'n4', mapId: 'ron_valley', type: 'INFO',
@@ -467,8 +467,8 @@ const getRelativeTime = (date) => {
 
 // --- CONSTANTS ---
 const SESSION_TIMEOUT = 10 * 60 * 1000;
-const STORAGE_KEY_STATE = 'inTactics_app_state_v3';
-const STORAGE_KEY_TIME = 'inTactics_last_active_v3';
+const STORAGE_KEY_STATE = 'inTactics_app_state_v4';
+const STORAGE_KEY_TIME = 'inTactics_last_active_v4';
 
 // --- COMPONENTS ---
 
@@ -503,6 +503,24 @@ const DynamicNavItem = ({ id, icon: Icon, label, activeTab, setActiveTab }) => {
   );
 };
 
+const GlobalSearchBar = ({ searchQuery, setSearchQuery, placeholder, className = "mb-8 md:mb-12" }) => (
+  <div className={`relative w-full max-w-md mx-auto group ${className}`}>
+    <input
+      type="text"
+      placeholder={placeholder}
+      value={searchQuery}
+      onChange={(e) => setSearchQuery(e.target.value)}
+      className="w-full bg-white/10 border border-white/10 hover:border-white/20 focus:border-blue-500/50 rounded-xl px-4 py-2 pl-10 text-white placeholder-white/40 outline-none transition-all backdrop-blur-xl shadow-xl text-xs md:text-sm"
+    />
+    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40 group-focus-within:text-blue-400 transition-colors" size={14} />
+    {searchQuery && (
+      <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white">
+        <X size={14} />
+      </button>
+    )}
+  </div>
+);
+
 export default function App() {
   const [activeTab, setActiveTab] = useState('home');
   const [ronSubTab, setRonSubTab] = useState('maps');
@@ -511,12 +529,16 @@ export default function App() {
   const [selectedArticle, setSelectedArticle] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
 
+  const [isRonSearchOpen, setIsRonSearchOpen] = useState(false);
+  const [isScrollingDown, setIsScrollingDown] = useState(false);
+
   const [isRestored, setIsRestored] = useState(false);
   const [liveFeed, setLiveFeed] = useState([]);
 
-  // Refs for tracking scroll persistence accurately (Fix für das Zurückspringen)
+  // Refs for precise scroll persistence
   const scrollPosRef = useRef({ window: 0, ronContainer: 0 });
   const ronListRef = useRef(null);
+  const lastScrollY = useRef(0);
 
   // --- LIVE FEED LOGIC ---
   useEffect(() => {
@@ -595,16 +617,28 @@ export default function App() {
     localStorage.setItem(STORAGE_KEY_TIME, Date.now().toString());
   }, [activeTab, ronSubTab, activeDlc, selectedMap, selectedArticle, isRestored]);
 
+  // Window scroll logic (Desktop / General Auto-Hide)
   useEffect(() => {
     if (!isRestored) return;
 
     let timeoutId = null;
     const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+
+      if (!selectedMap && !selectedArticle) {
+        if (currentScrollY > lastScrollY.current + 10) {
+          setIsScrollingDown(true);
+        } else if (currentScrollY < lastScrollY.current - 15) {
+          setIsScrollingDown(false);
+        }
+      }
+      lastScrollY.current = currentScrollY;
+
       if (!timeoutId) {
         timeoutId = setTimeout(() => {
           try {
             const currentState = JSON.parse(localStorage.getItem(STORAGE_KEY_STATE) || '{}');
-            currentState.scrollPosition = window.scrollY;
+            currentState.scrollPosition = currentScrollY;
             localStorage.setItem(STORAGE_KEY_STATE, JSON.stringify(currentState));
             localStorage.setItem(STORAGE_KEY_TIME, Date.now().toString());
           } catch (e) { }
@@ -613,7 +647,7 @@ export default function App() {
       }
     };
 
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     const handleClick = () => localStorage.setItem(STORAGE_KEY_TIME, Date.now().toString());
     window.addEventListener('click', handleClick);
 
@@ -622,27 +656,55 @@ export default function App() {
       window.removeEventListener('click', handleClick);
       if (timeoutId) clearTimeout(timeoutId);
     };
-  }, [isRestored]);
+  }, [isRestored, selectedMap, selectedArticle]);
+
+  // Mobile Container Scroll Logic (Auto-Hide auf dem Handy)
+  const handleContainerScroll = (e) => {
+    if (!selectedMap && !selectedArticle) {
+      const currentScrollY = e.target.scrollTop;
+      scrollPosRef.current.ronContainer = currentScrollY;
+
+      if (currentScrollY > lastScrollY.current + 10) {
+        setIsScrollingDown(true);
+      } else if (currentScrollY < lastScrollY.current - 15) {
+        setIsScrollingDown(false);
+      }
+      lastScrollY.current = currentScrollY;
+    }
+  };
 
   // --- ACTIONS & HANDLERS ---
   const handleMapClick = (map) => {
-    // Scroll-Status speichern, BEVOR wir auf die Detailseite wechseln
     scrollPosRef.current = {
-      window: window.scrollY,
+      window: window.scrollY || document.documentElement.scrollTop,
       ronContainer: ronListRef.current?.scrollTop || 0
     };
     setSelectedMap(map);
+    setSearchQuery('');
+    setIsRonSearchOpen(false);
+    setIsScrollingDown(false);
+    window.scrollTo({ top: 0, behavior: 'instant' });
   };
 
   const handleBackClick = () => {
     setSelectedMap(null);
-    // Timeout gibt dem DOM Zeit, die Liste wieder neu zu rendern, bevor wir scrollen
-    setTimeout(() => {
-      window.scrollTo(0, scrollPosRef.current.window);
+    setIsScrollingDown(false);
+
+    const restoreScroll = () => {
+      window.scrollTo({ top: scrollPosRef.current.window, behavior: 'instant' });
       if (ronListRef.current) {
-        ronListRef.current.scrollTop = scrollPosRef.current.ronContainer;
+        ronListRef.current.scrollTo({ top: scrollPosRef.current.ronContainer, behavior: 'instant' });
       }
-    }, 50);
+    };
+
+    // Nutze mehrere Frames, um sicherzugehen, dass das Grid im DOM ist, bevor wir scrollen. Verhindert das "zu hoch" landen.
+    requestAnimationFrame(() => {
+      restoreScroll();
+      requestAnimationFrame(() => {
+        restoreScroll();
+        setTimeout(restoreScroll, 50);
+      });
+    });
   };
 
   const handleArticleClick = (article) => {
@@ -651,38 +713,50 @@ export default function App() {
       ronContainer: ronListRef.current?.scrollTop || 0
     };
     setSelectedArticle(article);
+    setSearchQuery('');
+    setIsRonSearchOpen(false);
+    setIsScrollingDown(false);
+    window.scrollTo({ top: 0, behavior: 'instant' });
   };
 
   const handleBackFromArticle = () => {
     setSelectedArticle(null);
-    setTimeout(() => {
-      window.scrollTo(0, scrollPosRef.current.window);
-    }, 50);
+    setIsScrollingDown(false);
+    requestAnimationFrame(() => {
+      window.scrollTo({ top: scrollPosRef.current.window, behavior: 'instant' });
+      setTimeout(() => window.scrollTo({ top: scrollPosRef.current.window, behavior: 'instant' }), 50);
+    });
   };
 
   const handleOpenMissionFromArticle = (mapId) => {
     const allMaps = [...RON_MAPS, ...PUBG_MAPS];
     const map = allMaps.find(m => m.id === mapId);
     if (map) {
-      scrollPosRef.current = { window: 0, ronContainer: 0 }; // Reset
+      scrollPosRef.current = { window: 0, ronContainer: 0 };
       setSelectedArticle(null);
       setSearchQuery('');
+      setIsRonSearchOpen(false);
+      setIsScrollingDown(false);
       setActiveTab(map.game);
       setSelectedMap(map);
       if (map.game === 'ron') {
         setActiveDlc(map.dlc);
         setRonSubTab('maps');
       }
+      window.scrollTo({ top: 0, behavior: 'instant' });
     }
   };
 
   const handleTabSwitch = (tab) => {
     setSearchQuery('');
+    setIsRonSearchOpen(false);
+    setIsScrollingDown(false);
     setActiveTab(tab);
   };
 
   const handleRonSubTabSwitch = (tab) => {
     setSearchQuery('');
+    setIsRonSearchOpen(false);
     setRonSubTab(tab);
   };
 
@@ -694,29 +768,6 @@ export default function App() {
       default: return 'text-blue-400 bg-blue-500/10 border-blue-500/20';
     }
   };
-
-  // --- SUCHLEISTE COMPONENT ---
-  const SearchBar = ({ className = "mb-8 md:mb-12" }) => (
-    <div className={`relative w-full max-w-2xl mx-auto group ${className}`}>
-      <input
-        type="text"
-        placeholder={
-          activeTab === 'home' ? "Gesamte Datenbank durchsuchen..." :
-            activeTab === 'ron' ? "Ready or Not durchsuchen..." :
-              "PUBG durchsuchen..."
-        }
-        value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
-        className="w-full bg-white/10 border border-white/10 hover:border-white/20 focus:border-blue-500/50 rounded-2xl px-4 md:px-6 py-3 md:py-4 pl-12 text-white placeholder-white/40 outline-none transition-all backdrop-blur-xl shadow-xl text-sm md:text-base"
-      />
-      <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 group-focus-within:text-blue-400 transition-colors" size={18} />
-      {searchQuery && (
-        <button onClick={() => setSearchQuery('')} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-white">
-          <X size={18} />
-        </button>
-      )}
-    </div>
-  );
 
   // --- SUCHERGEBNISSE RENDERER ---
   const renderSearchResults = () => {
@@ -737,13 +788,13 @@ export default function App() {
     }
 
     return (
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8 w-full max-w-7xl mx-auto pb-10">
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8 w-full max-w-7xl mx-auto pb-10 pt-4">
         {resultsNews.length > 0 && (
           <div className="space-y-4">
             <h3 className="text-xl font-bold text-white border-b border-white/10 pb-2">Intel / News</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {resultsNews.map(news => (
-                <GlassCard key={news.id} onClick={() => { setSearchQuery(''); handleArticleClick(news); }} className="p-4 cursor-pointer hover:bg-white/10">
+                <GlassCard key={news.id} onClick={() => handleArticleClick(news)} className="p-4 cursor-pointer hover:bg-white/10">
                   <div className="flex items-center gap-2 mb-2">
                     <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded border ${getTypeColor(news.type)}`}>{news.type}</span>
                   </div>
@@ -760,7 +811,7 @@ export default function App() {
             <h3 className="text-xl font-bold text-white border-b border-white/10 pb-2">Operations / Maps</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {resultsMaps.map(map => (
-                <GlassCard key={map.id} onClick={() => { setSearchQuery(''); handleMapClick(map); }} className="h-[200px] cursor-pointer group">
+                <GlassCard key={map.id} onClick={() => handleMapClick(map)} className="h-[200px] cursor-pointer group">
                   <img src={map.image} className="absolute inset-0 w-full h-full object-cover opacity-50 group-hover:scale-105 transition-transform duration-700" alt={map.name} />
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
                   <div className="absolute bottom-4 left-4 right-4">
@@ -874,7 +925,7 @@ export default function App() {
           </div>
         </div>
 
-        <SearchBar />
+        <GlobalSearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} placeholder="Gesamte Datenbank durchsuchen..." />
 
         {searchQuery ? renderSearchResults() : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
@@ -1053,11 +1104,15 @@ export default function App() {
 
     return (
       <motion.div {...pageTransition} key="ron-main"
-        className="md:space-y-12 pt-0 md:pt-28 pb-32 md:pb-20 max-md:fixed max-md:inset-0 max-md:z-30 max-md:bg-[#010101] max-md:flex max-md:flex-col max-md:p-0">
+        className="md:space-y-12 pt-0 pb-32 md:pb-20 max-md:fixed max-md:inset-0 max-md:z-30 max-md:bg-[#010101] max-md:block max-md:p-0">
 
-        {/* --- DESKTOP TOP MENU (Am Handy ausgeblendet: max-md:hidden) --- */}
-        <div className="max-md:hidden flex flex-col items-center gap-6 md:gap-8 pt-20">
-          <div className="w-fit mx-auto">
+        {/* --- DESKTOP TOP MENU (Am Handy ausgeblendet, Sticky & Auto-Hide) --- */}
+        <motion.div
+          animate={{ y: isScrollingDown ? -200 : 0 }}
+          transition={{ duration: 0.4, ease: "easeInOut" }}
+          className="max-md:hidden fixed top-0 left-0 right-0 z-40 bg-gradient-to-b from-[#010101] via-[#010101]/90 to-transparent backdrop-blur-md border-b border-white/5 pt-[100px] pb-6 flex flex-col items-center pointer-events-auto"
+        >
+          <div className="w-fit mx-auto mb-6 md:mb-8">
             <div className="flex p-[3px] md:p-1 bg-black/60 backdrop-blur-3xl border border-white/10 rounded-full relative shadow-2xl overflow-hidden">
               {['maps', 'weapons'].map((tab) => (
                 <button
@@ -1075,8 +1130,35 @@ export default function App() {
           </div>
 
           {ronSubTab === 'maps' && (
-            <div className="w-full overflow-hidden">
-              <div className="flex items-center justify-start md:justify-center gap-4 md:gap-8 overflow-x-auto no-scrollbar px-6 md:px-0 border-b border-white/5 snap-x pb-2">
+            <div className="w-full overflow-hidden max-w-7xl mx-auto">
+              <div className="flex items-center justify-start md:justify-center gap-4 md:gap-8 overflow-x-auto no-scrollbar px-6 md:px-0 snap-x">
+
+                {/* Desktop Search Icon/Input (neben Ready or Not Button) */}
+                <div className="hidden md:flex items-center shrink-0">
+                  {isRonSearchOpen ? (
+                    <motion.div initial={{ width: 0, opacity: 0 }} animate={{ width: 140, opacity: 1 }} className="flex items-center bg-white/10 rounded-full border border-white/20 px-3 py-1.5 mr-2">
+                      <Search size={14} className="text-white/40 mr-2 shrink-0" />
+                      <input
+                        autoFocus
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Suchen..."
+                        className="bg-transparent text-white outline-none text-[10px] w-full"
+                      />
+                      <button onClick={() => { setIsRonSearchOpen(false); setSearchQuery(''); }} className="shrink-0 ml-2">
+                        <X size={14} className="text-white/40 hover:text-white" />
+                      </button>
+                    </motion.div>
+                  ) : (
+                    <button
+                      onClick={() => setIsRonSearchOpen(true)}
+                      className="p-1.5 text-white/40 hover:text-white transition-colors flex items-center justify-center mr-2"
+                    >
+                      <Search size={16} />
+                    </button>
+                  )}
+                </div>
+
                 {[
                   { id: 'base', label: 'READY OR NOT' },
                   { id: 'home_invasion', label: 'HOME INVASION' },
@@ -1087,25 +1169,24 @@ export default function App() {
                   <button
                     key={dlc.id}
                     onClick={() => setActiveDlc(dlc.id)}
-                    className={`relative uppercase font-black italic tracking-[0.2em] md:tracking-[0.25em] text-[9px] md:text-[10px] transition-all shrink-0 py-4 snap-start whitespace-nowrap ${activeDlc === dlc.id ? 'text-white' : 'text-white/20 hover:text-white/50'}`}
+                    className={`relative uppercase font-black italic tracking-[0.2em] md:tracking-[0.25em] text-[9px] md:text-[10px] transition-all shrink-0 py-2 snap-start whitespace-nowrap ${activeDlc === dlc.id ? 'text-white' : 'text-white/20 hover:text-white/50'}`}
                   >
                     {dlc.label}
                     {activeDlc === dlc.id && (
-                      <motion.div layoutId="dlc-bar" className="absolute bottom-0 left-0 right-0 h-[2px] md:h-[3px] bg-red-600 shadow-[0_0_20px_rgba(220,38,38,0.8)]" transition={springTransition} />
+                      <motion.div layoutId="dlc-bar" className="absolute -bottom-2 left-0 right-0 h-[2px] md:h-[3px] bg-red-600 shadow-[0_0_20px_rgba(220,38,38,0.8)]" transition={springTransition} />
                     )}
                   </button>
                 ))}
               </div>
             </div>
           )}
+        </motion.div>
 
-          <div className="w-full max-w-3xl px-4">
-            <SearchBar className="mb-0" />
-          </div>
-        </div>
+        {/* Spacer so the map grid starts below the fixed menu on Desktop */}
+        <div className="max-md:hidden h-[260px] w-full shrink-0 pointer-events-none" />
 
         {/* --- MAPS / WEAPONS BEREICH ODER SUCH-ERGEBNISSE --- */}
-        <div className={`max-md:flex-1 max-md:overflow-hidden relative z-10 ${searchQuery ? 'max-md:pt-8 max-md:px-4 max-md:overflow-y-auto' : ''}`}>
+        <div className={`max-md:absolute max-md:inset-0 relative z-10 ${searchQuery ? 'max-md:pt-8 max-md:px-4 max-md:overflow-y-auto' : ''}`}>
           <AnimatePresence mode="wait">
             {searchQuery ? (
               <div className="w-full h-full overflow-y-auto pb-32 no-scrollbar">
@@ -1114,24 +1195,20 @@ export default function App() {
             ) : (
               <motion.div
                 key={activeDlc + ronSubTab}
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                ref={ronListRef} // <--- REFERENZ FÜR SCROLL-POSITION ERGÄNZT
-                onScroll={(e) => {
-                  if (!selectedMap) {
-                    scrollPosRef.current.ronContainer = e.target.scrollTop;
-                  }
-                }}
+                initial={{ opacity: 0 }} // KEIN layout-shift durch animiertes Hereinfliegen
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                ref={ronListRef}
+                onScroll={handleContainerScroll}
                 className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6 md:gap-10 max-md:flex max-md:flex-col max-md:overflow-y-scroll no-scrollbar ${ronSubTab === 'maps'
-                    ? 'max-md:gap-0 max-md:h-full max-md:snap-y max-md:snap-mandatory'
-                    : 'max-md:gap-4 max-md:p-4 max-md:h-full max-md:pb-10'
+                  ? 'max-md:gap-0 max-md:h-full max-md:snap-y max-md:snap-mandatory'
+                  : 'max-md:gap-4 max-md:p-4 max-md:h-full max-md:pb-32'
                   }`}
               >
                 {ronSubTab === 'maps' ? currentMaps.map(map => (
                   <div
                     key={map.id}
-                    className="relative md:flex-1 md:hover:flex-[3] transition-all duration-700 ease-in-out overflow-hidden md:rounded-3xl group max-md:min-h-full max-md:w-full max-md:snap-start max-md:shrink-0"
+                    className="relative md:flex-1 md:hover:flex-[3] transition-all duration-700 ease-in-out overflow-hidden md:rounded-3xl group max-md:h-[100dvh] max-md:w-full max-md:snap-start max-md:shrink-0"
                   >
                     <GlassCard
                       onClick={() => handleMapClick(map)}
@@ -1146,7 +1223,7 @@ export default function App() {
 
                       <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent"></div>
 
-                      <div className="absolute max-md:bottom-8 md:bottom-0 left-0 p-6 md:p-12 w-full">
+                      <div className="absolute max-md:bottom-[150px] md:bottom-0 left-0 p-6 md:p-12 w-full">
                         <p className="text-red-600 font-mono text-[10px] md:text-[10px] font-black uppercase tracking-[0.4em] mb-2 md:mb-4 truncate">{map.codename}</p>
                         <h3 className="text-3xl md:text-3xl lg:text-4xl font-black text-white italic uppercase leading-tight tracking-tighter drop-shadow-2xl">{map.name}</h3>
                       </div>
@@ -1166,54 +1243,85 @@ export default function App() {
           </AnimatePresence>
         </div>
 
-        {/* --- MOBILE BOTTOM MENU (Nur am Handy sichtbar) --- */}
-        <div className="md:hidden flex flex-col gap-3 bg-[#010101]/95 backdrop-blur-3xl border-t border-white/10 p-4 pb-24 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] z-50">
+        {/* --- MOBILE BOTTOM MENU (Nur am Handy sichtbar / Auto-Hides on Scroll / Liegt an der MainNav an) --- */}
+        <motion.div
+          animate={{ y: isScrollingDown ? 200 : 0 }}
+          transition={{ duration: 0.3, ease: "easeInOut" }}
+          className="md:hidden fixed bottom-[68px] left-0 right-0 flex flex-col gap-2 p-3 bg-gradient-to-t from-[#010101] via-[#010101]/95 to-transparent z-40 pointer-events-none"
+        >
+          {/* Innerer Wrapper, der Klicks wieder zulässt */}
+          <div className="pointer-events-auto flex flex-col gap-2">
 
-          {/* Neu: Mobile Suche integriert im festen Menü unten! */}
-          <SearchBar className="mb-2" />
+            {/* DLC Auswahl inkl. Mobile Search GANZ LINKS */}
+            {ronSubTab === 'maps' && (
+              <div className="flex overflow-x-auto no-scrollbar gap-2 py-1 items-center">
 
-          {/* DLC Auswahl */}
-          {!searchQuery && ronSubTab === 'maps' && (
-            <div className="flex overflow-x-auto no-scrollbar gap-2 py-1">
-              {[
-                { id: 'base', label: 'READY OR NOT' },
-                { id: 'home_invasion', label: 'HOME INVASION' },
-                { id: 'dark_waters', label: 'DARK WATERS' },
-                { id: 'ls_stories', label: 'LOS SUENOS STORIES' },
-                { id: 'boiling_point', label: 'BOILING POINT' }
-              ].map(dlc => (
-                <button
-                  key={dlc.id}
-                  onClick={() => setActiveDlc(dlc.id)}
-                  className={`px-4 py-2 rounded-full whitespace-nowrap text-[9px] font-black uppercase border transition-all shrink-0 ${activeDlc === dlc.id
-                      ? 'border-red-500 bg-red-500/20 text-white shadow-[0_0_15px_rgba(220,38,38,0.2)]'
-                      : 'border-white/10 bg-white/5 text-white/40'
-                    }`}
-                >
-                  {dlc.label}
-                </button>
-              ))}
-            </div>
-          )}
+                {/* Mobile Search Icon / Field - GANZ LINKS NEBEN READY OR NOT */}
+                <div className="shrink-0 flex items-center">
+                  {isRonSearchOpen ? (
+                    <motion.div initial={{ width: 0, opacity: 0 }} animate={{ width: 100, opacity: 1 }} className="flex items-center bg-[#111111] rounded-full border border-white/20 px-2 py-1.5 mr-1">
+                      <Search size={12} className="text-white/40 mr-1.5 shrink-0" />
+                      <input
+                        autoFocus
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Suchen..."
+                        className="bg-transparent text-white outline-none text-[10px] w-full"
+                      />
+                      <button onClick={() => { setIsRonSearchOpen(false); setSearchQuery(''); }} className="shrink-0 ml-1">
+                        <X size={12} className="text-white/40 hover:text-white" />
+                      </button>
+                    </motion.div>
+                  ) : (
+                    <button
+                      onClick={() => setIsRonSearchOpen(true)}
+                      className="p-1.5 bg-[#111111] border border-transparent rounded-full text-white/50 hover:text-white transition-colors flex items-center justify-center mr-1"
+                    >
+                      <Search size={12} />
+                    </button>
+                  )}
+                </div>
 
-          {/* Operations & Armory */}
-          {!searchQuery && (
-            <div className="flex gap-2">
-              {['maps', 'weapons'].map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => handleRonSubTabSwitch(tab)}
-                  className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all ${ronSubTab === tab
-                      ? 'bg-[#e31e24] text-white shadow-[0_0_20px_rgba(227,30,36,0.3)]'
-                      : 'bg-white/5 text-white/40'
-                    }`}
-                >
-                  {tab === 'maps' ? 'Operations' : 'Armory'}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+                {!searchQuery && [
+                  { id: 'base', label: 'READY OR NOT' },
+                  { id: 'home_invasion', label: 'HOME INVASION' },
+                  { id: 'dark_waters', label: 'DARK WATERS' },
+                  { id: 'ls_stories', label: 'LOS SUENOS STORIES' },
+                  { id: 'boiling_point', label: 'BOILING POINT' }
+                ].map(dlc => (
+                  <button
+                    key={dlc.id}
+                    onClick={() => setActiveDlc(dlc.id)}
+                    className={`px-3 py-1.5 rounded-full whitespace-nowrap text-[9px] font-black uppercase border transition-all shrink-0 ${activeDlc === dlc.id
+                      ? 'border-[#e31e24] text-white bg-transparent' // Design passend zum Screenshot (Active)
+                      : 'border-transparent bg-[#111111] text-white/50' // Design passend zum Screenshot (Inactive)
+                      }`}
+                  >
+                    {dlc.label}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Operations & Armory (Werden bei offener Suche ausgeblendet um Platz zu schaffen) */}
+            {!searchQuery && (
+              <div className="flex gap-2">
+                {['maps', 'weapons'].map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => handleRonSubTabSwitch(tab)}
+                    className={`flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all border-2 ${ronSubTab === tab
+                      ? 'bg-[#e31e24] text-white border-white shadow-lg' // Rote Pille mit weißem Rand wie im Screenshot
+                      : 'bg-[#111111] text-white/50 border-transparent'
+                      }`}
+                  >
+                    {tab === 'maps' ? 'Operations' : 'Armory'}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </motion.div>
       </motion.div>
     );
   };
@@ -1260,7 +1368,7 @@ export default function App() {
     return (
       <motion.div {...pageTransition} className="pt-20 md:pt-28 space-y-8 md:space-y-12 pb-32 md:pb-20">
         <h2 className="text-5xl md:text-7xl font-black text-white italic uppercase tracking-tighter leading-none">Battlegrounds</h2>
-        <SearchBar />
+        <GlobalSearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} placeholder="PUBG durchsuchen..." />
 
         {searchQuery ? renderSearchResults() : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-10">
@@ -1309,19 +1417,19 @@ export default function App() {
 
       <div className="relative z-10 flex flex-col min-h-screen">
 
-        {/* HAUPT-NAVIGATION - Am Handy immer GANZ unten über allem drüber (z-50) */}
-        <header className="fixed md:top-8 max-md:bottom-0 left-0 right-0 z-50 flex justify-center md:px-6 max-md:pb-0">
+        {/* HAUPT-NAVIGATION - Am Handy immer GANZ unten über allem drüber (z-50) & feste Höhe für Anschluss! */}
+        <header className="fixed md:top-8 max-md:bottom-0 left-0 right-0 z-50 flex justify-center md:px-6 max-md:h-[68px] pointer-events-none">
           <motion.nav
             initial={{ y: 50, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            className="bg-black/30 md:bg-black/20 backdrop-blur-3xl border-t md:border border-white/10 max-md:rounded-t-[2rem] md:rounded-full p-0 flex items-center shadow-2xl w-full md:w-auto"
+            className="bg-[#050505] md:bg-black/20 backdrop-blur-3xl border-t md:border border-white/10 max-md:rounded-none md:rounded-full p-0 flex items-center shadow-2xl w-full md:w-auto pointer-events-auto max-md:h-full"
           >
-            <div className="flex relative w-full md:w-auto px-2 md:px-0">
+            <div className="flex relative w-full md:w-auto px-2 md:px-0 h-full">
               <DynamicNavItem id="home" icon={Home} label="Home" activeTab={activeTab} setActiveTab={handleTabSwitch} />
               <DynamicNavItem id="ron" icon={Shield} label="RoN" activeTab={activeTab} setActiveTab={handleTabSwitch} />
               <DynamicNavItem id="pubg" icon={Crosshair} label="PUBG" activeTab={activeTab} setActiveTab={handleTabSwitch} />
             </div>
-            <div className={`flex-1 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all`}></div>
+            <div className={`flex-1 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all md:hidden`}></div>
           </motion.nav>
         </header>
 
