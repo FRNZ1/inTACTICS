@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Home, Crosshair, Map as MapIcon, Shield, Eye, EyeOff, ChevronLeft, Target, Settings, Info, Lock, Menu, X, Activity, Zap, Clock, FileText, ExternalLink, AlertTriangle, Search } from 'lucide-react';
+import { Home, Crosshair, Map as MapIcon, Shield, Eye, EyeOff, ChevronLeft, Target, Settings, Info, Lock, Menu, X, Activity, Zap, Clock, FileText, ExternalLink, AlertTriangle, Search, Play, Pause, ZoomIn, ZoomOut, Layers } from 'lucide-react';
 
 // --- DATA MOCKS ---
 
@@ -18,7 +18,58 @@ const RON_MAPS = [
     image: 'https://readyormaps.com/maps/1_4U_gas/4U_Gas_Station_preview.webp',
     situation: 'Ein lokaler Drogenring überfällt eine Tankstelle und nimmt Zivilisten als Geiseln.',
     suspects: 'Desorganisierte Kriminelle, meist bewaffnet mit Pistolen und Schrotflinten. Geringe Panzerung.',
-    tacticalMap: 'https://images.unsplash.com/photo-1628155930542-3c7a64e2c833?auto=format&fit=crop&q=80&w=800',
+    objectives: [
+      'Bring Order to Chaos',
+      'Rescue all of the Civilians',
+      'Arrest 3 Suspects',
+      'Report Status to TOC'
+    ],
+    blueprints: [
+      { name: 'Ground Floor', url: 'https://static.wikia.nocookie.net/ready-or-not/images/2/28/4U_Gas_Station_Map.png/revision/latest?cb=20241012143721' },
+      { name: 'Roof', url: 'https://static.wikia.nocookie.net/ready-or-not/images/2/28/4U_Gas_Station_Map.png/revision/latest?cb=20241012143721' } // Platzhalter für 2. Etage zum Demonstrieren
+    ],
+    audioLogs: [
+      {
+        title: "Sharla's 911 Call",
+        type: '911',
+        url: 'https://static.wikia.nocookie.net/ready-or-not/images/8/86/Sharla%27s_911_Call.wav/revision/latest?cb=20241012142358',
+        transcript: "Operator: 911, what is your emergency?\nSharla: There are men with guns! Please help! They just came in shooting, my daughter is in there somewhere! Please!"
+      },
+      {
+        title: "Mudasir's 911 Call",
+        type: '911',
+        url: 'https://static.wikia.nocookie.net/ready-or-not/images/d/d9/Mudasir%27s_911_Call.wav/revision/latest?cb=20241012142413',
+        transcript: "Operator: 911, what is your emergency?\nMudasir: Yes, hello, I am the manager at the 4U Gas Station. Some men have entered the store with weapons. They are robbing us!"
+      },
+      {
+        title: "Mission Brief",
+        type: 'briefing',
+        url: 'https://static.wikia.nocookie.net/ready-or-not/images/9/9c/Gas_Briefing_01.ogg/revision/latest?cb=20250708065448',
+        transcript: "Listen up. We've got a situation at the 4U Gas Station on rust belt. Multiple armed suspects have taken hostages. They are likely local meth heads, unorganized but dangerous. Move in, secure the perimeter, and bring order to chaos. Watch your corners."
+      }
+    ],
+    poi: {
+      civilians: [
+        {
+          name: 'Sharla Leighton',
+          image: 'https://static.wikia.nocookie.net/ready-or-not/images/2/2d/Sharla_Leighton.png/revision/latest/scale-to-width-down/350?cb=20241012142512',
+          sex: 'Female', height: "5'-6\"", weight: '130lb', build: 'Small', dob: '04/11/1998',
+          desc: "Sharla was our initial point of contact inside the building before police arrived on-scene. She found a hiding place and called 911 immediately after spotting one of the gunmen.\n\nRescue of this civilian is imperative. Specifically, her eyewitness account of the events that transpired before police arrival will help put the suspects behind bars for good.\n\nSharla's child, Cristal, is also inside the building. To our knowledge they are not close to one another, proximally."
+        }
+      ],
+      suspects: [
+        {
+          name: 'Andre Williams',
+          image: 'https://static.wikia.nocookie.net/ready-or-not/images/a/a4/Andre_Williams.png/revision/latest/scale-to-width-down/350?cb=20241012142502',
+          sex: 'Male', height: "6'-3\"", weight: '165lb', build: 'Medium', dob: '05/20/2005',
+          desc: "Attends 213 Mission High School in his final year. Following an incident at the school, Andre was placed under house arrest at his grandmothers house in the Dawson Gardens Projects while an investigation took place. Charges have since been dropped.\n\nOn January 30, Andre was engaged in a gunfight between himself and a rival gang during the shooting of a rap video for an underground media organization titled \"808 SUENOS\"."
+        }
+      ]
+    },
+    media: [
+      'https://static.wikia.nocookie.net/ready-or-not/images/5/56/Onlooker_Photograph.png/revision/latest/scale-to-width-down/1000?cb=20241012150241',
+      'https://static.wikia.nocookie.net/ready-or-not/images/8/82/Media_Coverage.png/revision/latest/scale-to-width-down/1000?cb=20241012150247'
+    ],
     screenshots: ['https://images.steamusercontent.com/ugc/2523778827659601613/1C290698DF614012E3FCB7B8DDCB485652BE9376/']
   },
   {
@@ -30,8 +81,7 @@ const RON_MAPS = [
     image: 'https://readyormaps.com/maps/2_23_mb/23_Megabytes_a_Second_preview.webp',
     situation: 'Ein angebliches Swatting bei einem Streamer entpuppt sich als illegale Server-Operation (CP).',
     suspects: 'Private Sicherheitskräfte und bewaffnete Bewohner. Unerwartet hoher Widerstand.',
-    tacticalMap: 'https://images.unsplash.com/photo-1588880331179-bc9b93a8cb65?auto=format&fit=crop&q=80&w=800',
-    screenshots: []
+    blueprints: [], audioLogs: [], poi: { civilians: [], suspects: [] }, media: [], screenshots: []
   },
   {
     id: 'ron_twisted',
@@ -41,9 +91,8 @@ const RON_MAPS = [
     codename: 'Twisted Nerve',
     image: 'https://readyormaps.com/maps/3_213_park/213_Park_preview.webp',
     situation: 'Durchsuchungsbefehl bei einem vermuteten Meth-Labor in einem heruntergekommenen Vorort.',
-    suspects: 'Junkies und Dealer. Unberechenbar, oft unter Drogeneinfluss. Gefahr durch versteckte Sprengfallen (Booby Traps).',
-    tacticalMap: 'https://images.unsplash.com/photo-1584985223403-d6cbfec25ba7?auto=format&fit=crop&q=80&w=800',
-    screenshots: []
+    suspects: 'Junkies und Dealer. Unberechenbar, oft unter Drogeneinfluss. Gefahr durch versteckte Sprengfallen.',
+    blueprints: [], audioLogs: [], poi: { civilians: [], suspects: [] }, media: [], screenshots: []
   },
   {
     id: 'ron_spider',
@@ -379,63 +428,88 @@ const RON_MAPS = [
 ];
 
 const RON_WEAPONS = [
-  // Primärwaffen (Assault Rifles, SMGs, Shotguns)
+  // --- PRIMARY WEAPONS ---
   {
-    id: 'w_m4a1', category: 'primary', name: 'M4A1', type: 'Sturmgewehr', caliber: '5.56x45mm NATO', capacity: '30 Schuss',
+    id: 'w_m4a1', category: 'primary', name: 'M4A1', type: 'Assault Rifle', caliber: '5.56x45mm NATO', capacity: '30 Schuss',
     desc: 'Das M4A1 ist ein vollautomatisches Sturmgewehr, das sich durch hohe Modularität auszeichnet. Es ist der Standard für viele SWAT Einheiten.',
     tactical: 'Extrem vielseitig. Ideal für Einsätze mit gemischten Distanzen. Dank der 5.56mm Munition gute Rüstungsdurchdringung, allerdings besteht bei ungepanzerten Zielen die Gefahr von Durchschüssen (Overpenetration), was Geiseln hinter den Wänden gefährden kann.'
   },
   {
-    id: 'w_arn180', category: 'primary', name: 'ARN-180', type: 'Sturmgewehr', caliber: '.300 Blackout', capacity: '30 Schuss',
-    desc: 'Ein modernes, kompaktes Sturmgewehr, basierend auf dem AR-15 Design, aber für spezielle Ballistik optimiert.',
-    tactical: 'Die .300 Blackout Munition macht diese Waffe perfekt für Schalldämpfer-Einsätze. Hervorragende Stoppwirkung im CQB (Close Quarters Battle) ohne übermäßige Durchschlagskraft, was sie in Häusern sehr sicher macht.'
+    id: 'w_mk18', category: 'primary', name: 'MK18', type: 'Assault Rifle', caliber: '5.56x45mm NATO', capacity: '30 Schuss',
+    desc: 'Eine kompaktere Version des M4A1, entwickelt für den Nahkampf (CQB).',
+    tactical: 'Durch den kürzeren Lauf ist sie in extrem engen Umgebungen (wie Wohnungen in Brisa Cove) viel führiger als das Standard M4A1. Minimal geringere Reichweite, aber überragend in Innenräumen.'
   },
   {
-    id: 'w_sa58', category: 'primary', name: 'SA-58 OSW', type: 'Sturmgewehr', caliber: '7.62x51mm NATO', capacity: '20 Schuss',
+    id: 'w_arn180', category: 'primary', name: 'ARN-180', type: 'Assault Rifle', caliber: '.300 Blackout', capacity: '30 Schuss',
+    desc: 'Ein modernes, kompaktes Sturmgewehr für spezielle Ballistik optimiert.',
+    tactical: 'Die .300 Blackout Munition macht diese Waffe perfekt für Schalldämpfer-Einsätze. Hervorragende Stoppwirkung im CQB ohne übermäßige Durchschlagskraft, was sie in Häusern sehr sicher macht.'
+  },
+  {
+    id: 'w_sa58', category: 'primary', name: 'SA-58 OSW', type: 'Assault Rifle', caliber: '7.62x51mm NATO', capacity: '20 Schuss',
     desc: 'Eine moderne, gekürzte Version des klassischen FAL. Sehr schwer und enorm kraftvoll.',
-    tactical: 'Zerstört Holztüren und durchschlägt schwere Deckungen mit Leichtigkeit. Die absolute beste Wahl gegen Suspects mit schwerer Körperpanzerung. Achtung: Der Rückstoß ist enorm hoch, Feuerstöße sind schwer zu kontrollieren.'
+    tactical: 'Zerstört Holztüren und durchschlägt schwere Deckungen mit Leichtigkeit. Die absolut beste Wahl gegen Suspects mit schwerer Körperpanzerung. Achtung: Der Rückstoß ist enorm hoch.'
   },
   {
-    id: 'w_mp5a3', category: 'primary', name: 'MP5A3', type: 'Maschinenpistole', caliber: '9x19mm Parabellum', capacity: '30 Schuss',
+    id: 'w_g36c', category: 'primary', name: 'G36C', type: 'Assault Rifle', caliber: '5.56x45mm NATO', capacity: '30 Schuss',
+    desc: 'Kompaktes deutsches Sturmgewehr aus Polymer, sehr leicht und zuverlässig.',
+    tactical: 'Gut kontrollierbarer Rückstoß, besonders bei Feuerstößen. Eine ausgezeichnete Alternative zum M4A1 für Spieler, die ein klares Sichtbild bevorzugen.'
+  },
+  {
+    id: 'w_mp5a3', category: 'primary', name: 'MP5A3', type: 'Submachine Gun', caliber: '9x19mm Parabellum', capacity: '30 Schuss',
     desc: 'Die klassische SWAT-Maschinenpistole, berühmt für ihr Rollenverschluss-System.',
-    tactical: 'Die erste Wahl für Geiselsituationen ohne gepanzerte Feinde. Extrem geringer Rückstoß erlaubt sehr präzise Schüsse. Die geringere Durchschlagskraft minimiert Kollateralschäden.'
+    tactical: 'Die erste Wahl für Geiselsituationen ohne gepanzerte Feinde. Extrem geringer Rückstoß erlaubt sehr präzise Schüsse. Die geringere Durchschlagskraft minimiert Kollateralschäden extrem.'
   },
   {
-    id: 'w_ump45', category: 'primary', name: 'UMP-45', type: 'Maschinenpistole', caliber: '.45 ACP', capacity: '25 Schuss',
+    id: 'w_mpx', category: 'primary', name: 'MPX', type: 'Submachine Gun', caliber: '9x19mm Parabellum', capacity: '30 Schuss',
+    desc: 'Moderne Maschinenpistole mit AR-15 ähnlichen Bedienelementen.',
+    tactical: 'Sehr schnelle Feuerrate und extrem wenig Rückstoß. Ideal für schnelle Raumstürmungen, bei denen die Feinde keine Kevlar-Westen tragen.'
+  },
+  {
+    id: 'w_ump45', category: 'primary', name: 'UMP-45', type: 'Submachine Gun', caliber: '.45 ACP', capacity: '25 Schuss',
     desc: 'Eine leichte Maschinenpistole mit großem Kaliber, aber vergleichsweise langsamer Feuerrate.',
-    tactical: 'Hohe Stoppwirkung gegen ungeschützte Ziele. Gut kontrollierbar dank der langsamen Feuerrate. Etwas schwächer gegen militärische Schutzwesten, aber exzellent, um Gegner schnell niederzustrecken.'
+    tactical: 'Hohe Stoppwirkung gegen ungeschützte Ziele. Gut kontrollierbar dank der langsamen Feuerrate. Etwas schwächer gegen militärische Schutzwesten.'
   },
   {
-    id: 'w_870cqb', category: 'primary', name: '870 CQB', type: 'Schrotflinte', caliber: '12 Gauge', capacity: '7 Schuss',
+    id: 'w_p90', category: 'primary', name: 'P90', type: 'Submachine Gun', caliber: '5.7x28mm', capacity: '50 Schuss',
+    desc: 'Bullpup-Maschinenpistole mit massivem Magazin und panzerbrechender Munition.',
+    tactical: 'Das 50-Schuss Magazin erlaubt es, mehrere Gegner ohne Nachladen zu bekämpfen. Die 5.7mm Munition durchschlägt auch leichte Körperpanzerung besser als herkömmliche 9mm SMGs.'
+  },
+  {
+    id: 'w_870cqb', category: 'primary', name: '870 CQB', type: 'Shotgun', caliber: '12 Gauge', capacity: '7 Schuss',
     desc: 'Eine klassische, taktische Pump-Action Schrotflinte, optimiert für den Nahkampf.',
-    tactical: 'Verheerend auf nächste Distanz. Ideal um Türen aufzuschießen (Breaching) und ungeschützte Verdächtige sofort zu neutralisieren. Vorsicht: Nachladen dauert lange und die Feuerrate ist begrenzt.'
+    tactical: 'Verheerend auf nächste Distanz. Ideal um ungeschützte Verdächtige sofort zu neutralisieren. Vorsicht: Nachladen dauert extrem lange (einzelne Patronen).'
   },
   {
-    id: 'w_m4super90', category: 'primary', name: 'M4 Super 90', type: 'Schrotflinte', caliber: '12 Gauge', capacity: '7 Schuss',
+    id: 'w_m4super90', category: 'primary', name: 'M4 Super 90', type: 'Shotgun', caliber: '12 Gauge', capacity: '7 Schuss',
     desc: 'Eine halbautomatische Kampfflinte für schnelle Schussfolgen.',
     tactical: 'Bietet die gleiche Zerstörungskraft wie die 870 CQB, schießt jedoch deutlich schneller. Hervorragend, wenn man in einem Raum direkt auf mehrere Gegner trifft.'
   },
 
-  // Sekundärwaffen (Pistolen, Revolver)
+  // --- SECONDARY WEAPONS ---
   {
-    id: 'w_g19', category: 'secondary', name: 'G19', type: 'Pistole', caliber: '9x19mm Parabellum', capacity: '15 Schuss',
+    id: 'w_g19', category: 'secondary', name: 'G19', type: 'Pistol', caliber: '9x19mm Parabellum', capacity: '15 Schuss',
     desc: 'Eine kompakte, leichte und extrem zuverlässige Dienstpistole aus Polymer.',
     tactical: 'Die beste Allround-Seitenwaffe im Spiel. Ausreichend Munition, sehr moderater Rückstoß und schnelle Nachladezeit. Perfekt als Backup, wenn das Magazin der Primärwaffe leer ist.'
   },
   {
-    id: 'w_m45a1', category: 'secondary', name: 'M45A1', type: 'Pistole', caliber: '.45 ACP', capacity: '7 Schuss',
+    id: 'w_m45a1', category: 'secondary', name: 'M45A1', type: 'Pistol', caliber: '.45 ACP', capacity: '7 Schuss',
     desc: 'Eine moderne, taktische Variante der legendären 1911er Plattform.',
     tactical: 'Hoher Schaden pro Schuss. Ideal für präzises Einzelfeuer und stark gegen ungepanzerte Ziele, aber die sehr geringe Magazinkapazität verzeiht keine Fehler in Stresssituationen.'
   },
   {
-    id: 'w_57usg', category: 'secondary', name: '5.7 USG', type: 'Pistole', caliber: '5.7x28mm', capacity: '20 Schuss',
+    id: 'w_57usg', category: 'secondary', name: '5.7 USG', type: 'Pistol', caliber: '5.7x28mm', capacity: '20 Schuss',
     desc: 'Eine Spezialpistole, die ein sehr kleines, pfeilschnelles Kaliber verschießt, ähnlich dem von Sturmgewehren.',
-    tactical: 'Die Waffe der Wahl gegen schwer gepanzerte Ziele, wenn auf die Seitenwaffe gewechselt werden muss. Besitzt zudem das größte Magazin aller Pistolen, hat aber weniger Stoppwirkung als eine .45 ACP.'
+    tactical: 'Die Waffe der Wahl gegen schwer gepanzerte Ziele, wenn auf die Seitenwaffe gewechselt werden muss. Besitzt zudem das größte Magazin aller Pistolen.'
+  },
+  {
+    id: 'w_usp45', category: 'secondary', name: 'USP45', type: 'Pistol', caliber: '.45 ACP', capacity: '12 Schuss',
+    desc: 'Großkalibrige, deutsche Dienstpistole. Äußerst robust.',
+    tactical: 'Ein hervorragender Kompromiss aus der Stoppwirkung einer .45er und einer akzeptablen Magazinkapazität von 12 Schuss.'
   },
   {
     id: 'w_357mag', category: 'secondary', name: '.357 Magnum', type: 'Revolver', caliber: '.357 Magnum', capacity: '6 Schuss',
     desc: 'Ein klassischer Revolver, der eine immense kinetische Energie ins Ziel bringt.',
-    tactical: 'Ein Schuss, ein Treffer. Durchschlägt fast jede Deckung im Spiel. Das fehlende Magazin und das langsame Nachladen machen den Revolver jedoch zu einer Waffe für absolute Profis.'
+    tactical: 'Ein Schuss, ein Treffer. Durchschlägt fast jede Deckung im Spiel. Das langsame Nachladen machen den Revolver jedoch zu einer Waffe für absolute Profis.'
   }
 ];
 
@@ -513,7 +587,7 @@ const springTransition = {
 };
 
 const getRelativeTime = (date) => {
-  const diff = Math.floor((new Date() - date) / 1000 / 60); // in Minuten
+  const diff = Math.floor((new Date() - date) / 1000 / 60);
   if (diff < 1) return "Gerade eben";
   if (diff < 60) return `vor ${diff} Min.`;
   return "vor über 1 Std.";
@@ -521,8 +595,8 @@ const getRelativeTime = (date) => {
 
 // --- CONSTANTS ---
 const SESSION_TIMEOUT = 10 * 60 * 1000;
-const STORAGE_KEY_STATE = 'inTactics_app_state_v5';
-const STORAGE_KEY_TIME = 'inTactics_last_active_v5';
+const STORAGE_KEY_STATE = 'inTactics_app_state_v6';
+const STORAGE_KEY_TIME = 'inTactics_last_active_v6';
 
 // --- COMPONENTS ---
 
@@ -575,12 +649,187 @@ const GlobalSearchBar = ({ searchQuery, setSearchQuery, placeholder, className =
   </div>
 );
 
+// Neu: Blueprint Viewer Komponente
+const BlueprintViewer = ({ blueprints }) => {
+  const [activeFloor, setActiveFloor] = useState(0);
+  const [scale, setScale] = useState(1);
+
+  if (!blueprints || blueprints.length === 0) return null;
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-xl md:text-2xl font-black uppercase italic tracking-tighter border-l-4 border-red-600 pl-4">Tactical Blueprint</h3>
+
+        {blueprints.length > 1 && (
+          <div className="flex gap-2 bg-black/50 p-1 rounded-lg border border-white/10">
+            {blueprints.map((bp, idx) => (
+              <button
+                key={idx}
+                onClick={() => { setActiveFloor(idx); setScale(1); }}
+                className={`px-3 py-1.5 text-xs font-bold uppercase rounded ${activeFloor === idx ? 'bg-red-600 text-white' : 'text-white/40 hover:text-white'}`}
+              >
+                {bp.name}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <GlassCard className="relative bg-[#0a0a0a] border-red-500/20 overflow-hidden h-[400px] md:h-[600px]">
+        {/* Interactive Map Area */}
+        <div className="absolute inset-0 overflow-auto no-scrollbar cursor-move touch-pan-x touch-pan-y" style={{ WebkitOverflowScrolling: 'touch' }}>
+          <div className="min-w-full min-h-full flex items-center justify-center p-4">
+            <motion.img
+              src={blueprints[activeFloor].url}
+              animate={{ scale: scale }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              className="max-w-none origin-center"
+              style={{ width: '100%', height: 'auto', filter: 'invert(1) hue-rotate(180deg)' }}
+              alt="Tactical Map"
+            />
+          </div>
+        </div>
+
+        {/* Floating Controls */}
+        <div className="absolute bottom-4 right-4 flex flex-col gap-2">
+          <button onClick={() => setScale(s => Math.min(s + 0.5, 4))} className="p-3 bg-black/80 backdrop-blur border border-white/20 rounded-full text-white hover:bg-white/20 transition-colors shadow-xl">
+            <ZoomIn size={20} />
+          </button>
+          <button onClick={() => setScale(s => Math.max(s - 0.5, 0.5))} className="p-3 bg-black/80 backdrop-blur border border-white/20 rounded-full text-white hover:bg-white/20 transition-colors shadow-xl">
+            <ZoomOut size={20} />
+          </button>
+        </div>
+
+        <div className="absolute top-4 left-4">
+          <span className="bg-red-600/80 text-white text-[10px] px-3 py-1.5 rounded font-mono uppercase tracking-widest animate-pulse">Top Secret</span>
+        </div>
+      </GlassCard>
+    </div>
+  );
+};
+
+// Neu: POI Viewer (Suspects / Civilians)
+const POIViewer = ({ poi }) => {
+  if (!poi || (!poi.suspects?.length && !poi.civilians?.length)) return null;
+
+  const renderTable = (person, type) => (
+    <div key={person.name} className="flex flex-col md:flex-row bg-[#0f0f0f] border border-white/10 rounded-xl overflow-hidden mb-6">
+      {/* Left: Image */}
+      <div className="w-full md:w-1/3 lg:w-1/4 border-b md:border-b-0 md:border-r border-white/10 flex flex-col">
+        <div className="h-10 border-b border-white/10 flex items-center justify-center font-black uppercase text-[10px] tracking-widest text-white/40 bg-black/40">
+          Image
+        </div>
+        <div className="flex-1 p-2 flex items-center justify-center bg-black/20">
+          <img src={person.image} alt={person.name} className="max-h-[250px] object-contain rounded" />
+        </div>
+      </div>
+
+      {/* Right: Details */}
+      <div className="w-full md:w-2/3 lg:w-3/4 flex flex-col">
+        <div className="h-10 border-b border-white/10 flex items-center justify-center font-black uppercase text-[10px] tracking-widest text-white/40 bg-black/40">
+          Name
+        </div>
+        <div className={`p-3 border-b border-white/10 text-lg font-black ${type === 'suspect' ? 'text-red-500' : 'text-orange-500'}`}>
+          {person.name}
+        </div>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-5 border-b border-white/10 bg-black/40 text-[10px] text-center font-bold uppercase tracking-widest text-white/40">
+          <div className="p-2 border-r border-white/10">Sex</div>
+          <div className="p-2 border-r border-white/10">Height</div>
+          <div className="p-2 border-r border-white/10">Weight</div>
+          <div className="p-2 border-r border-white/10">Build</div>
+          <div className="p-2">D.O.B.</div>
+        </div>
+        <div className="grid grid-cols-5 border-b border-white/10 text-xs text-center font-medium">
+          <div className="p-3 border-r border-white/10">{person.sex}</div>
+          <div className="p-3 border-r border-white/10">{person.height}</div>
+          <div className="p-3 border-r border-white/10">{person.weight}</div>
+          <div className="p-3 border-r border-white/10">{person.build}</div>
+          <div className="p-3">{person.dob}</div>
+        </div>
+
+        {/* Description */}
+        <div className="p-4 md:p-6 text-sm text-gray-300 leading-relaxed whitespace-pre-wrap flex-1 bg-white/[0.02]">
+          {person.desc}
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="space-y-10">
+      {poi.civilians?.length > 0 && (
+        <section>
+          <h3 className="text-xl md:text-2xl font-black uppercase italic tracking-tighter border-l-4 border-orange-500 pl-4 mb-6">Civilians</h3>
+          {poi.civilians.map(c => renderTable(c, 'civilian'))}
+        </section>
+      )}
+      {poi.suspects?.length > 0 && (
+        <section>
+          <h3 className="text-xl md:text-2xl font-black uppercase italic tracking-tighter border-l-4 border-red-600 pl-4 mb-6">Suspects</h3>
+          {poi.suspects.map(s => renderTable(s, 'suspect'))}
+        </section>
+      )}
+    </div>
+  );
+};
+
+// Neu: Audio Player für Calls & Briefings
+const AudioLogViewer = ({ logs }) => {
+  const [activeTranscript, setActiveTranscript] = useState(null);
+
+  if (!logs || logs.length === 0) return null;
+
+  return (
+    <div className="space-y-4">
+      <h3 className="text-xl md:text-2xl font-black uppercase italic tracking-tighter border-l-4 border-blue-500 pl-4">Comms & Briefings</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {logs.map((log, idx) => (
+          <GlassCard key={idx} className="p-4 border-blue-500/20 bg-blue-900/5">
+            <div className="flex items-center gap-3 mb-4">
+              {log.type === '911' ? <AlertTriangle className="text-orange-500" size={20} /> : <Info className="text-blue-500" size={20} />}
+              <h4 className="font-bold text-white uppercase text-sm tracking-widest">{log.title}</h4>
+            </div>
+
+            <audio controls className="w-full h-10 mb-4 rounded bg-black outline-none" preload="none">
+              <source src={log.url} type={log.url.endsWith('ogg') ? 'audio/ogg' : 'audio/wav'} />
+              Your browser does not support the audio element.
+            </audio>
+
+            <button
+              onClick={() => setActiveTranscript(activeTranscript === idx ? null : idx)}
+              className="text-[10px] uppercase font-bold tracking-widest text-white/40 hover:text-white flex items-center gap-1 transition-colors"
+            >
+              <FileText size={12} /> {activeTranscript === idx ? 'Hide Transcript' : 'Show Transcript'}
+            </button>
+
+            <AnimatePresence>
+              {activeTranscript === idx && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  className="mt-4 p-3 bg-black/50 border border-white/5 rounded text-xs text-gray-300 font-mono whitespace-pre-wrap leading-relaxed overflow-hidden"
+                >
+                  {log.transcript}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </GlassCard>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const [activeTab, setActiveTab] = useState('home');
   const [ronSubTab, setRonSubTab] = useState('maps');
   const [activeDlc, setActiveDlc] = useState('base');
   const [selectedMap, setSelectedMap] = useState(null);
-  const [selectedWeapon, setSelectedWeapon] = useState(null); // Neuer State für Waffendetails
+  const [selectedWeapon, setSelectedWeapon] = useState(null);
   const [selectedArticle, setSelectedArticle] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -845,7 +1094,7 @@ export default function App() {
     let resultsNews = [];
 
     if (activeTab === 'home' || activeTab === 'ron') {
-      resultsMaps = [...resultsMaps, ...RON_MAPS.filter(m => m.name.toLowerCase().includes(query) || m.codename.toLowerCase().includes(query) || m.situation.toLowerCase().includes(query))];
+      resultsMaps = [...resultsMaps, ...RON_MAPS.filter(m => m.name.toLowerCase().includes(query) || (m.codename && m.codename.toLowerCase().includes(query)) || m.situation.toLowerCase().includes(query))];
       resultsWeapons = [...resultsWeapons, ...RON_WEAPONS.filter(w => w.name.toLowerCase().includes(query) || w.type.toLowerCase().includes(query) || w.desc.toLowerCase().includes(query))];
     }
     if (activeTab === 'home' || activeTab === 'pubg') {
@@ -1178,17 +1427,25 @@ export default function App() {
         >
           <ChevronLeft size={18} /> Zurück zur Auswahl
         </motion.button>
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-10">
+
           <div className="lg:col-span-2 space-y-6 md:space-y-8">
+            {/* Header Image */}
             <div className="relative h-[40vh] md:h-[50vh] rounded-[2rem] md:rounded-[3rem] overflow-hidden border border-white/20 shadow-2xl bg-black">
               <img src={selectedMap.image} className="w-full h-full object-cover" alt={selectedMap.name} />
               <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent"></div>
               <div className="absolute bottom-6 md:bottom-12 left-6 md:left-12 pr-6">
-                <span className="bg-red-600 text-white font-black px-3 md:px-4 py-1 rounded-md text-[8px] md:text-xs uppercase tracking-widest mb-2 md:mb-4 inline-block shadow-lg shadow-red-600/20">Tactical Analysis</span>
+                {selectedMap.codename && (
+                  <span className="bg-red-600 text-white font-black px-3 md:px-4 py-1 rounded-md text-[8px] md:text-xs uppercase tracking-widest mb-2 md:mb-4 inline-block shadow-lg shadow-red-600/20">
+                    Operation: {selectedMap.codename}
+                  </span>
+                )}
                 <h1 className="text-4xl md:text-6xl lg:text-8xl font-black text-white italic uppercase tracking-tighter leading-tight md:leading-none">{selectedMap.name}</h1>
               </div>
             </div>
 
+            {/* Briefing Sections */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
               <GlassCard className="p-6 md:p-10">
                 <h3 className="text-red-500 font-black uppercase text-[10px] tracking-widest mb-3 md:mb-4">Missionsprofil</h3>
@@ -1199,22 +1456,35 @@ export default function App() {
                 <p className="text-gray-200 text-sm md:text-lg leading-relaxed font-medium">{selectedMap.suspects}</p>
               </GlassCard>
             </div>
+
+            {/* Mission Objectives */}
+            {selectedMap.objectives?.length > 0 && (
+              <GlassCard className="p-6 md:p-10 bg-black/40 border-white/5">
+                <h3 className="text-white/40 font-black uppercase text-[10px] tracking-widest mb-6 border-b border-white/10 pb-4">Mission Goals</h3>
+                <ul className="space-y-3">
+                  {selectedMap.objectives.map((obj, i) => (
+                    <li key={i} className="flex items-center gap-3 text-white font-medium">
+                      <div className="w-4 h-4 rounded border border-white/30 bg-black/50 shrink-0"></div>
+                      {obj}
+                    </li>
+                  ))}
+                </ul>
+              </GlassCard>
+            )}
+
+            {/* Audio Logs / Transcripts */}
+            <AudioLogViewer logs={selectedMap.audioLogs} />
+
+            {/* Persons of Interest (Suspects & Civilians) */}
+            <POIViewer poi={selectedMap.poi} />
+
+            {/* Blueprint Zoom Viewer */}
+            <BlueprintViewer blueprints={selectedMap.blueprints} />
+
           </div>
 
-          <div className="space-y-6 md:space-y-8">
-            {selectedMap.tacticalMap && (
-              <div className="space-y-4">
-                <h3 className="text-xl md:text-2xl font-black uppercase italic tracking-tighter border-l-4 border-red-600 pl-4">Tactical Blueprint</h3>
-                <GlassCard className="aspect-square md:aspect-[4/3] bg-black/50 p-4 border-red-500/20">
-                  <div className="relative w-full h-full bg-white/5 rounded-xl border border-white/10 overflow-hidden flex items-center justify-center">
-                    <img src={selectedMap.tacticalMap} className="w-full h-full object-cover opacity-70 contrast-125 grayscale" alt="Blueprint" style={{ filter: 'invert(1) hue-rotate(180deg)' }} />
-                    <div className="absolute top-3 right-3 flex gap-2">
-                      <span className="bg-red-600/80 text-white text-[8px] px-2 py-1 rounded font-mono uppercase tracking-widest animate-pulse">Top Secret</span>
-                    </div>
-                  </div>
-                </GlassCard>
-              </div>
-            )}
+          <div className="space-y-6 md:space-y-10">
+            {/* Screenshots / Intel Footage */}
             {selectedMap.screenshots && selectedMap.screenshots.length > 0 && (
               <div className="space-y-4">
                 <h3 className="text-xl md:text-2xl font-black uppercase italic tracking-tighter border-l-4 border-red-600 pl-4 mt-4 md:mt-0">Intel Footage</h3>
@@ -1222,6 +1492,19 @@ export default function App() {
                   <GlassCard key={i} className="aspect-video relative overflow-hidden group">
                     <img src={img} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="Intel" />
                     <div className="absolute inset-0 border-[2px] border-white/0 group-hover:border-red-500/50 transition-colors pointer-events-none rounded-[1.5rem] md:rounded-[2rem]"></div>
+                  </GlassCard>
+                ))}
+              </div>
+            )}
+
+            {/* Media Coverage */}
+            {selectedMap.media && selectedMap.media.length > 0 && (
+              <div className="space-y-4">
+                <h3 className="text-xl md:text-2xl font-black uppercase italic tracking-tighter border-l-4 border-blue-500 pl-4 mt-4 md:mt-0">Media Coverage</h3>
+                {selectedMap.media.map((img, i) => (
+                  <GlassCard key={i} className="aspect-video relative overflow-hidden group">
+                    <img src={img} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="Media" />
+                    <div className="absolute inset-0 border-[2px] border-white/0 group-hover:border-blue-500/50 transition-colors pointer-events-none rounded-[1.5rem] md:rounded-[2rem]"></div>
                   </GlassCard>
                 ))}
               </div>
@@ -1262,7 +1545,7 @@ export default function App() {
             <div className="relative z-10 w-full overflow-hidden max-w-7xl mx-auto">
               <div className="flex items-center justify-start md:justify-center gap-4 md:gap-8 overflow-x-auto no-scrollbar px-6 md:px-0 snap-x">
 
-                {/* Desktop Search Icon/Input (neben Ready or Not Button) */}
+                {/* Desktop Search Icon/Input */}
                 <div className="hidden md:flex items-center shrink-0">
                   {isRonSearchOpen ? (
                     <motion.div initial={{ width: 0, opacity: 0 }} animate={{ width: 130, opacity: 1 }} className="flex items-center bg-white/10 rounded-full border border-white/20 px-2.5 py-1.5 mr-2">
@@ -1304,7 +1587,8 @@ export default function App() {
                     {activeDlc === dlc.id && (
                       <motion.div
                         layoutId="dlc-bar"
-                        className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#c93b3b]"
+                        // Genau wie im Screenshot: einfacher, gedeckter roter strich. Ohne glow.
+                        className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#cc2e2e]"
                         transition={springTransition}
                       />
                     )}
@@ -1464,7 +1748,7 @@ export default function App() {
                     key={tab}
                     onClick={() => handleRonSubTabSwitch(tab)}
                     className={`flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all border-2 ${ronSubTab === tab
-                      ? 'bg-[#e31e24] text-white border-white shadow-lg' // Rote Pille mit weißem Rand wie im Screenshot
+                      ? 'bg-[#e31e24] text-white border-white shadow-lg'
                       : 'bg-[#111111] text-white/50 border-transparent'
                       }`}
                   >
