@@ -379,10 +379,64 @@ const RON_MAPS = [
 ];
 
 const RON_WEAPONS = [
-  { id: 'w_m4a1', name: 'M4A1', type: 'Sturmgewehr', caliber: '5.56x45mm', desc: 'Zuverlässiges, starkes Standard-Sturmgewehr.' },
-  { id: 'w_mp5', name: 'MP5A3', type: 'Maschinenpistole', caliber: '9x19mm', desc: 'Klassische MP. Ideal für enge Räume (CQB).' },
-  { id: 'w_mcx', name: 'MCX', type: 'Sturmgewehr', caliber: '.300 Blackout', desc: 'Exzellent für Einsätze mit Schalldämpfer. Hohe Stoppwirkung.' },
-  { id: 'w_sa58', name: 'SA-58 OSW', type: 'Sturmgewehr', caliber: '7.62x51mm', desc: 'Massive Durchschlagskraft, schwerer Rückstoß. Zerstört Deckungen mühelos.' }
+  // Primärwaffen (Assault Rifles, SMGs, Shotguns)
+  {
+    id: 'w_m4a1', category: 'primary', name: 'M4A1', type: 'Sturmgewehr', caliber: '5.56x45mm NATO', capacity: '30 Schuss',
+    desc: 'Das M4A1 ist ein vollautomatisches Sturmgewehr, das sich durch hohe Modularität auszeichnet. Es ist der Standard für viele SWAT Einheiten.',
+    tactical: 'Extrem vielseitig. Ideal für Einsätze mit gemischten Distanzen. Dank der 5.56mm Munition gute Rüstungsdurchdringung, allerdings besteht bei ungepanzerten Zielen die Gefahr von Durchschüssen (Overpenetration), was Geiseln hinter den Wänden gefährden kann.'
+  },
+  {
+    id: 'w_arn180', category: 'primary', name: 'ARN-180', type: 'Sturmgewehr', caliber: '.300 Blackout', capacity: '30 Schuss',
+    desc: 'Ein modernes, kompaktes Sturmgewehr, basierend auf dem AR-15 Design, aber für spezielle Ballistik optimiert.',
+    tactical: 'Die .300 Blackout Munition macht diese Waffe perfekt für Schalldämpfer-Einsätze. Hervorragende Stoppwirkung im CQB (Close Quarters Battle) ohne übermäßige Durchschlagskraft, was sie in Häusern sehr sicher macht.'
+  },
+  {
+    id: 'w_sa58', category: 'primary', name: 'SA-58 OSW', type: 'Sturmgewehr', caliber: '7.62x51mm NATO', capacity: '20 Schuss',
+    desc: 'Eine moderne, gekürzte Version des klassischen FAL. Sehr schwer und enorm kraftvoll.',
+    tactical: 'Zerstört Holztüren und durchschlägt schwere Deckungen mit Leichtigkeit. Die absolute beste Wahl gegen Suspects mit schwerer Körperpanzerung. Achtung: Der Rückstoß ist enorm hoch, Feuerstöße sind schwer zu kontrollieren.'
+  },
+  {
+    id: 'w_mp5a3', category: 'primary', name: 'MP5A3', type: 'Maschinenpistole', caliber: '9x19mm Parabellum', capacity: '30 Schuss',
+    desc: 'Die klassische SWAT-Maschinenpistole, berühmt für ihr Rollenverschluss-System.',
+    tactical: 'Die erste Wahl für Geiselsituationen ohne gepanzerte Feinde. Extrem geringer Rückstoß erlaubt sehr präzise Schüsse. Die geringere Durchschlagskraft minimiert Kollateralschäden.'
+  },
+  {
+    id: 'w_ump45', category: 'primary', name: 'UMP-45', type: 'Maschinenpistole', caliber: '.45 ACP', capacity: '25 Schuss',
+    desc: 'Eine leichte Maschinenpistole mit großem Kaliber, aber vergleichsweise langsamer Feuerrate.',
+    tactical: 'Hohe Stoppwirkung gegen ungeschützte Ziele. Gut kontrollierbar dank der langsamen Feuerrate. Etwas schwächer gegen militärische Schutzwesten, aber exzellent, um Gegner schnell niederzustrecken.'
+  },
+  {
+    id: 'w_870cqb', category: 'primary', name: '870 CQB', type: 'Schrotflinte', caliber: '12 Gauge', capacity: '7 Schuss',
+    desc: 'Eine klassische, taktische Pump-Action Schrotflinte, optimiert für den Nahkampf.',
+    tactical: 'Verheerend auf nächste Distanz. Ideal um Türen aufzuschießen (Breaching) und ungeschützte Verdächtige sofort zu neutralisieren. Vorsicht: Nachladen dauert lange und die Feuerrate ist begrenzt.'
+  },
+  {
+    id: 'w_m4super90', category: 'primary', name: 'M4 Super 90', type: 'Schrotflinte', caliber: '12 Gauge', capacity: '7 Schuss',
+    desc: 'Eine halbautomatische Kampfflinte für schnelle Schussfolgen.',
+    tactical: 'Bietet die gleiche Zerstörungskraft wie die 870 CQB, schießt jedoch deutlich schneller. Hervorragend, wenn man in einem Raum direkt auf mehrere Gegner trifft.'
+  },
+
+  // Sekundärwaffen (Pistolen, Revolver)
+  {
+    id: 'w_g19', category: 'secondary', name: 'G19', type: 'Pistole', caliber: '9x19mm Parabellum', capacity: '15 Schuss',
+    desc: 'Eine kompakte, leichte und extrem zuverlässige Dienstpistole aus Polymer.',
+    tactical: 'Die beste Allround-Seitenwaffe im Spiel. Ausreichend Munition, sehr moderater Rückstoß und schnelle Nachladezeit. Perfekt als Backup, wenn das Magazin der Primärwaffe leer ist.'
+  },
+  {
+    id: 'w_m45a1', category: 'secondary', name: 'M45A1', type: 'Pistole', caliber: '.45 ACP', capacity: '7 Schuss',
+    desc: 'Eine moderne, taktische Variante der legendären 1911er Plattform.',
+    tactical: 'Hoher Schaden pro Schuss. Ideal für präzises Einzelfeuer und stark gegen ungepanzerte Ziele, aber die sehr geringe Magazinkapazität verzeiht keine Fehler in Stresssituationen.'
+  },
+  {
+    id: 'w_57usg', category: 'secondary', name: '5.7 USG', type: 'Pistole', caliber: '5.7x28mm', capacity: '20 Schuss',
+    desc: 'Eine Spezialpistole, die ein sehr kleines, pfeilschnelles Kaliber verschießt, ähnlich dem von Sturmgewehren.',
+    tactical: 'Die Waffe der Wahl gegen schwer gepanzerte Ziele, wenn auf die Seitenwaffe gewechselt werden muss. Besitzt zudem das größte Magazin aller Pistolen, hat aber weniger Stoppwirkung als eine .45 ACP.'
+  },
+  {
+    id: 'w_357mag', category: 'secondary', name: '.357 Magnum', type: 'Revolver', caliber: '.357 Magnum', capacity: '6 Schuss',
+    desc: 'Ein klassischer Revolver, der eine immense kinetische Energie ins Ziel bringt.',
+    tactical: 'Ein Schuss, ein Treffer. Durchschlägt fast jede Deckung im Spiel. Das fehlende Magazin und das langsame Nachladen machen den Revolver jedoch zu einer Waffe für absolute Profis.'
+  }
 ];
 
 const PUBG_MAPS = [
@@ -467,8 +521,8 @@ const getRelativeTime = (date) => {
 
 // --- CONSTANTS ---
 const SESSION_TIMEOUT = 10 * 60 * 1000;
-const STORAGE_KEY_STATE = 'inTactics_app_state_v4';
-const STORAGE_KEY_TIME = 'inTactics_last_active_v4';
+const STORAGE_KEY_STATE = 'inTactics_app_state_v5';
+const STORAGE_KEY_TIME = 'inTactics_last_active_v5';
 
 // --- COMPONENTS ---
 
@@ -504,13 +558,13 @@ const DynamicNavItem = ({ id, icon: Icon, label, activeTab, setActiveTab }) => {
 };
 
 const GlobalSearchBar = ({ searchQuery, setSearchQuery, placeholder, className = "mb-8 md:mb-12" }) => (
-  <div className={`relative w-full max-w-md mx-auto group ${className}`}>
+  <div className={`relative w-full max-w-sm mx-auto group ${className}`}>
     <input
       type="text"
       placeholder={placeholder}
       value={searchQuery}
       onChange={(e) => setSearchQuery(e.target.value)}
-      className="w-full bg-white/10 border border-white/10 hover:border-white/20 focus:border-blue-500/50 rounded-xl px-4 py-2 pl-10 text-white placeholder-white/40 outline-none transition-all backdrop-blur-xl shadow-xl text-xs md:text-sm"
+      className="w-full bg-white/10 border border-white/10 hover:border-white/20 focus:border-blue-500/50 rounded-xl px-4 py-2.5 pl-10 text-white placeholder-white/40 outline-none transition-all backdrop-blur-xl shadow-xl text-xs"
     />
     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40 group-focus-within:text-blue-400 transition-colors" size={14} />
     {searchQuery && (
@@ -526,6 +580,7 @@ export default function App() {
   const [ronSubTab, setRonSubTab] = useState('maps');
   const [activeDlc, setActiveDlc] = useState('base');
   const [selectedMap, setSelectedMap] = useState(null);
+  const [selectedWeapon, setSelectedWeapon] = useState(null); // Neuer State für Waffendetails
   const [selectedArticle, setSelectedArticle] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -617,7 +672,7 @@ export default function App() {
     localStorage.setItem(STORAGE_KEY_TIME, Date.now().toString());
   }, [activeTab, ronSubTab, activeDlc, selectedMap, selectedArticle, isRestored]);
 
-  // Window scroll logic (Desktop / General Auto-Hide)
+  // Window scroll logic 
   useEffect(() => {
     if (!isRestored) return;
 
@@ -625,7 +680,7 @@ export default function App() {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
 
-      if (!selectedMap && !selectedArticle) {
+      if (!selectedMap && !selectedArticle && !selectedWeapon) {
         if (currentScrollY > lastScrollY.current + 10) {
           setIsScrollingDown(true);
         } else if (currentScrollY < lastScrollY.current - 15) {
@@ -656,17 +711,37 @@ export default function App() {
       window.removeEventListener('click', handleClick);
       if (timeoutId) clearTimeout(timeoutId);
     };
-  }, [isRestored, selectedMap, selectedArticle]);
+  }, [isRestored, selectedMap, selectedArticle, selectedWeapon]);
 
-  // Mobile Container Scroll Logic (Auto-Hide auf dem Handy)
+  // DER PIXELGENAUE SCROLL-RESTORER (Läuft wenn man "Zurück zur Auswahl" klickt)
+  useEffect(() => {
+    if (!selectedMap && !selectedArticle && !selectedWeapon) {
+      let attempts = 0;
+      const restoreInterval = setInterval(() => {
+        if (ronListRef.current) {
+          window.scrollTo({ top: scrollPosRef.current.window, behavior: 'instant' });
+          ronListRef.current.scrollTop = scrollPosRef.current.ronContainer;
+
+          if (ronListRef.current.scrollTop === scrollPosRef.current.ronContainer || ronListRef.current.scrollTop > 0) {
+            clearInterval(restoreInterval);
+          }
+        }
+        attempts++;
+        if (attempts > 30) clearInterval(restoreInterval);
+      }, 50);
+      return () => clearInterval(restoreInterval);
+    }
+  }, [selectedMap, selectedArticle, selectedWeapon]);
+
+
+  // Mobile Container Scroll Logic 
   const handleContainerScroll = (e) => {
-    if (!selectedMap && !selectedArticle) {
+    if (!selectedMap && !selectedArticle && !selectedWeapon) {
       const currentScrollY = e.target.scrollTop;
-      scrollPosRef.current.ronContainer = currentScrollY;
 
-      if (currentScrollY > lastScrollY.current + 10) {
+      if (currentScrollY > lastScrollY.current + 5) {
         setIsScrollingDown(true);
-      } else if (currentScrollY < lastScrollY.current - 15) {
+      } else if (currentScrollY < lastScrollY.current - 5) {
         setIsScrollingDown(false);
       }
       lastScrollY.current = currentScrollY;
@@ -677,7 +752,7 @@ export default function App() {
   const handleMapClick = (map) => {
     scrollPosRef.current = {
       window: window.scrollY || document.documentElement.scrollTop,
-      ronContainer: ronListRef.current?.scrollTop || 0
+      ronContainer: ronListRef.current ? ronListRef.current.scrollTop : 0
     };
     setSelectedMap(map);
     setSearchQuery('');
@@ -686,25 +761,22 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'instant' });
   };
 
+  const handleWeaponClick = (weapon) => {
+    scrollPosRef.current = {
+      window: window.scrollY || document.documentElement.scrollTop,
+      ronContainer: ronListRef.current ? ronListRef.current.scrollTop : 0
+    };
+    setSelectedWeapon(weapon);
+    setSearchQuery('');
+    setIsRonSearchOpen(false);
+    setIsScrollingDown(false);
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  };
+
   const handleBackClick = () => {
     setSelectedMap(null);
+    setSelectedWeapon(null);
     setIsScrollingDown(false);
-
-    const restoreScroll = () => {
-      window.scrollTo({ top: scrollPosRef.current.window, behavior: 'instant' });
-      if (ronListRef.current) {
-        ronListRef.current.scrollTo({ top: scrollPosRef.current.ronContainer, behavior: 'instant' });
-      }
-    };
-
-    // Nutze mehrere Frames, um sicherzugehen, dass das Grid im DOM ist, bevor wir scrollen. Verhindert das "zu hoch" landen.
-    requestAnimationFrame(() => {
-      restoreScroll();
-      requestAnimationFrame(() => {
-        restoreScroll();
-        setTimeout(restoreScroll, 50);
-      });
-    });
   };
 
   const handleArticleClick = (article) => {
@@ -722,10 +794,6 @@ export default function App() {
   const handleBackFromArticle = () => {
     setSelectedArticle(null);
     setIsScrollingDown(false);
-    requestAnimationFrame(() => {
-      window.scrollTo({ top: scrollPosRef.current.window, behavior: 'instant' });
-      setTimeout(() => window.scrollTo({ top: scrollPosRef.current.window, behavior: 'instant' }), 50);
-    });
   };
 
   const handleOpenMissionFromArticle = (mapId) => {
@@ -829,12 +897,12 @@ export default function App() {
             <h3 className="text-xl font-bold text-white border-b border-white/10 pb-2">Armory / Waffen</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {resultsWeapons.map(w => (
-                <GlassCard key={w.id} className="p-4">
+                <GlassCard key={w.id} onClick={() => handleWeaponClick(w)} className="p-4 cursor-pointer hover:bg-white/10">
                   <div className="flex justify-between items-start mb-2">
                     <h4 className="font-bold text-white">{w.name}</h4>
                     <span className="text-[8px] uppercase bg-red-600/30 text-red-400 px-2 py-1 rounded">{w.type}</span>
                   </div>
-                  <p className="text-xs text-white/50">{w.desc}</p>
+                  <p className="text-xs text-white/50 line-clamp-2">{w.desc}</p>
                 </GlassCard>
               ))}
             </div>
@@ -1038,6 +1106,69 @@ export default function App() {
   };
 
   const renderReadyOrNot = () => {
+    // --- WEAPON DETAIL VIEW ---
+    if (selectedWeapon && activeTab === 'ron') return (
+      <motion.div {...pageTransition} className="space-y-6 md:space-y-8 pt-20 md:pt-24 pb-32 md:pb-20 max-w-6xl mx-auto">
+        <motion.button
+          whileHover={{ x: -5 }}
+          onClick={handleBackClick}
+          className="flex items-center gap-2 text-white/70 hover:text-white bg-white/5 px-4 md:px-6 py-3 rounded-full backdrop-blur-xl border border-white/10 transition-all text-xs md:text-sm"
+        >
+          <ChevronLeft size={18} /> Zurück zur Armory
+        </motion.button>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-10">
+          {/* Main Panel */}
+          <div className="lg:col-span-2 space-y-6 md:space-y-8">
+            <GlassCard className="p-8 md:p-12 relative overflow-hidden bg-gradient-to-tr from-zinc-900 to-black border-red-500/20">
+              <div className="absolute top-8 right-8 opacity-[0.03]">
+                <Target size={200} />
+              </div>
+              <h1 className="text-4xl md:text-6xl font-black text-white italic uppercase tracking-tighter mb-4 relative z-10">{selectedWeapon.name}</h1>
+              <span className="bg-red-600/30 text-red-400 text-[10px] md:text-xs font-black px-3 py-1.5 rounded uppercase tracking-widest border border-red-500/10 relative z-10">
+                {selectedWeapon.type}
+              </span>
+
+              <div className="mt-10 pt-8 border-t border-white/10 text-gray-300 font-medium leading-relaxed text-sm md:text-base relative z-10">
+                {selectedWeapon.desc}
+              </div>
+            </GlassCard>
+
+            <GlassCard className="p-6 md:p-10 border-blue-500/20 bg-blue-900/5">
+              <div className="flex items-center gap-3 mb-6">
+                <Shield className="text-blue-500" size={24} />
+                <h3 className="text-blue-500 font-black uppercase tracking-widest text-[14px]">Einsatztaktik</h3>
+              </div>
+              <p className="text-gray-200 leading-relaxed font-medium md:text-lg">{selectedWeapon.tactical}</p>
+            </GlassCard>
+          </div>
+
+          {/* Sidebar / Stats */}
+          <div className="space-y-6">
+            <GlassCard className="p-6 md:p-8">
+              <h3 className="text-white/40 font-black uppercase text-[10px] tracking-widest mb-6">Waffen-Spezifikationen</h3>
+
+              <div className="space-y-5">
+                <div className="border-b border-white/5 pb-5">
+                  <p className="text-[10px] text-white/30 uppercase font-bold tracking-widest mb-1">Kategorie</p>
+                  <p className="text-lg font-black text-white uppercase italic tracking-tight">{selectedWeapon.category === 'primary' ? 'Primärwaffe' : 'Sekundärwaffe'}</p>
+                </div>
+                <div className="border-b border-white/5 pb-5">
+                  <p className="text-[10px] text-white/30 uppercase font-bold tracking-widest mb-1">Kaliber</p>
+                  <p className="text-lg font-black text-white">{selectedWeapon.caliber}</p>
+                </div>
+                <div className="pb-2">
+                  <p className="text-[10px] text-white/30 uppercase font-bold tracking-widest mb-1">Magazinkapazität</p>
+                  <p className="text-lg font-black text-white">{selectedWeapon.capacity}</p>
+                </div>
+              </div>
+            </GlassCard>
+          </div>
+        </div>
+      </motion.div>
+    );
+
+    // --- MAP DETAIL VIEW ---
     if (selectedMap && selectedMap.game === 'ron') return (
       <motion.div {...pageTransition} className="space-y-6 md:space-y-8 pt-20 md:pt-24 pb-32 md:pb-20">
         <motion.button
@@ -1101,18 +1232,16 @@ export default function App() {
     );
 
     const currentMaps = RON_MAPS.filter(map => map.dlc === activeDlc);
+    const mainWeapons = RON_WEAPONS.filter(w => w.category === 'primary');
+    const secondaryWeapons = RON_WEAPONS.filter(w => w.category === 'secondary');
 
     return (
       <motion.div {...pageTransition} key="ron-main"
-        className="md:space-y-12 pt-0 pb-32 md:pb-20 max-md:fixed max-md:inset-0 max-md:z-30 max-md:bg-[#010101] max-md:block max-md:p-0">
+        className="md:space-y-12 pt-0 md:pt-28 pb-32 md:pb-20 max-md:fixed max-md:inset-0 max-md:top-0 max-md:bottom-[68px] max-md:z-30 max-md:bg-[#010101] max-md:block max-md:p-0">
 
-        {/* --- DESKTOP TOP MENU (Am Handy ausgeblendet, Sticky & Auto-Hide) --- */}
-        <motion.div
-          animate={{ y: isScrollingDown ? -200 : 0 }}
-          transition={{ duration: 0.4, ease: "easeInOut" }}
-          className="max-md:hidden fixed top-0 left-0 right-0 z-40 bg-gradient-to-b from-[#010101] via-[#010101]/90 to-transparent backdrop-blur-md border-b border-white/5 pt-[100px] pb-6 flex flex-col items-center pointer-events-auto"
-        >
-          <div className="w-fit mx-auto mb-6 md:mb-8">
+        {/* --- DESKTOP TOP MENU (Am Handy ausgeblendet, Normaler Flow ohne Auto-Hide/Blur) --- */}
+        <div className="max-md:hidden relative z-20 flex flex-col items-center w-full mb-8">
+          <div className="relative z-10 w-fit mx-auto mb-6 md:mb-8">
             <div className="flex p-[3px] md:p-1 bg-black/60 backdrop-blur-3xl border border-white/10 rounded-full relative shadow-2xl overflow-hidden">
               {['maps', 'weapons'].map((tab) => (
                 <button
@@ -1130,22 +1259,22 @@ export default function App() {
           </div>
 
           {ronSubTab === 'maps' && (
-            <div className="w-full overflow-hidden max-w-7xl mx-auto">
+            <div className="relative z-10 w-full overflow-hidden max-w-7xl mx-auto">
               <div className="flex items-center justify-start md:justify-center gap-4 md:gap-8 overflow-x-auto no-scrollbar px-6 md:px-0 snap-x">
 
                 {/* Desktop Search Icon/Input (neben Ready or Not Button) */}
                 <div className="hidden md:flex items-center shrink-0">
                   {isRonSearchOpen ? (
-                    <motion.div initial={{ width: 0, opacity: 0 }} animate={{ width: 140, opacity: 1 }} className="flex items-center bg-white/10 rounded-full border border-white/20 px-3 py-1.5 mr-2">
-                      <Search size={14} className="text-white/40 mr-2 shrink-0" />
+                    <motion.div initial={{ width: 0, opacity: 0 }} animate={{ width: 130, opacity: 1 }} className="flex items-center bg-white/10 rounded-full border border-white/20 px-2.5 py-1.5 mr-2">
+                      <Search size={14} className="text-white/40 mr-1.5 shrink-0" />
                       <input
                         autoFocus
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         placeholder="Suchen..."
-                        className="bg-transparent text-white outline-none text-[10px] w-full"
+                        className="bg-transparent text-white outline-none text-[11px] w-full"
                       />
-                      <button onClick={() => { setIsRonSearchOpen(false); setSearchQuery(''); }} className="shrink-0 ml-2">
+                      <button onClick={() => { setIsRonSearchOpen(false); setSearchQuery(''); }} className="shrink-0 ml-1.5">
                         <X size={14} className="text-white/40 hover:text-white" />
                       </button>
                     </motion.div>
@@ -1169,21 +1298,22 @@ export default function App() {
                   <button
                     key={dlc.id}
                     onClick={() => setActiveDlc(dlc.id)}
-                    className={`relative uppercase font-black italic tracking-[0.2em] md:tracking-[0.25em] text-[9px] md:text-[10px] transition-all shrink-0 py-2 snap-start whitespace-nowrap ${activeDlc === dlc.id ? 'text-white' : 'text-white/20 hover:text-white/50'}`}
+                    className={`relative uppercase font-black tracking-[0.1em] text-[12px] transition-all shrink-0 py-2 snap-start whitespace-nowrap ${activeDlc === dlc.id ? 'text-[#e5e5e5]' : 'text-white/40 hover:text-white/70'}`}
                   >
                     {dlc.label}
                     {activeDlc === dlc.id && (
-                      <motion.div layoutId="dlc-bar" className="absolute -bottom-2 left-0 right-0 h-[2px] md:h-[3px] bg-red-600 shadow-[0_0_20px_rgba(220,38,38,0.8)]" transition={springTransition} />
+                      <motion.div
+                        layoutId="dlc-bar"
+                        className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#c93b3b]"
+                        transition={springTransition}
+                      />
                     )}
                   </button>
                 ))}
               </div>
             </div>
           )}
-        </motion.div>
-
-        {/* Spacer so the map grid starts below the fixed menu on Desktop */}
-        <div className="max-md:hidden h-[260px] w-full shrink-0 pointer-events-none" />
+        </div>
 
         {/* --- MAPS / WEAPONS BEREICH ODER SUCH-ERGEBNISSE --- */}
         <div className={`max-md:absolute max-md:inset-0 relative z-10 ${searchQuery ? 'max-md:pt-8 max-md:px-4 max-md:overflow-y-auto' : ''}`}>
@@ -1195,7 +1325,7 @@ export default function App() {
             ) : (
               <motion.div
                 key={activeDlc + ronSubTab}
-                initial={{ opacity: 0 }} // KEIN layout-shift durch animiertes Hereinfliegen
+                initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 ref={ronListRef}
@@ -1208,7 +1338,7 @@ export default function App() {
                 {ronSubTab === 'maps' ? currentMaps.map(map => (
                   <div
                     key={map.id}
-                    className="relative md:flex-1 md:hover:flex-[3] transition-all duration-700 ease-in-out overflow-hidden md:rounded-3xl group max-md:h-[100dvh] max-md:w-full max-md:snap-start max-md:shrink-0"
+                    className="relative md:flex-1 md:hover:flex-[3] transition-all duration-700 ease-in-out overflow-hidden md:rounded-3xl group max-md:h-full max-md:w-full max-md:snap-start max-md:shrink-0"
                   >
                     <GlassCard
                       onClick={() => handleMapClick(map)}
@@ -1223,31 +1353,54 @@ export default function App() {
 
                       <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent"></div>
 
-                      <div className="absolute max-md:bottom-[150px] md:bottom-0 left-0 p-6 md:p-12 w-full">
+                      <div className="absolute max-md:bottom-[110px] md:bottom-0 left-0 p-6 md:p-12 w-full">
                         <p className="text-red-600 font-mono text-[10px] md:text-[10px] font-black uppercase tracking-[0.4em] mb-2 md:mb-4 truncate">{map.codename}</p>
                         <h3 className="text-3xl md:text-3xl lg:text-4xl font-black text-white italic uppercase leading-tight tracking-tighter drop-shadow-2xl">{map.name}</h3>
                       </div>
                     </GlassCard>
                   </div>
-                )) : RON_WEAPONS.map(w => (
-                  <GlassCard key={w.id} className="p-8 md:p-12 border-red-500/20 bg-white/[0.03] max-md:shrink-0">
-                    <h4 className="text-xl md:text-3xl font-black text-white italic uppercase mb-2 tracking-tighter">{w.name}</h4>
-                    <div className="flex items-center gap-2 md:gap-3 mb-4 md:mb-6">
-                      <span className="bg-red-600/30 text-red-400 text-[8px] md:text-[10px] font-black px-2 py-1 rounded uppercase tracking-widest border border-red-500/10">{w.type}</span>
-                    </div>
-                    <p className="text-gray-300 text-sm md:text-base font-medium leading-relaxed">{w.desc}</p>
-                  </GlassCard>
-                ))}
+                )) : (
+                  <div className="lg:col-span-2 space-y-12 w-full pb-10">
+                    <section>
+                      <h3 className="text-lg md:text-xl font-black uppercase text-white/50 tracking-[0.2em] mb-4 md:mb-6 border-b border-white/10 pb-4">Primärwaffen</h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                        {mainWeapons.map(w => (
+                          <GlassCard key={w.id} onClick={() => handleWeaponClick(w)} className="p-6 md:p-8 border-red-500/20 bg-white/[0.03] cursor-pointer hover:bg-white/[0.06]">
+                            <h4 className="text-xl font-black text-white italic uppercase mb-2 tracking-tighter">{w.name}</h4>
+                            <div className="flex items-center gap-2 mb-4">
+                              <span className="bg-red-600/30 text-red-400 text-[8px] font-black px-2 py-1 rounded uppercase tracking-widest border border-red-500/10">{w.type}</span>
+                            </div>
+                            <p className="text-gray-300 text-xs font-medium leading-relaxed line-clamp-3">{w.desc}</p>
+                          </GlassCard>
+                        ))}
+                      </div>
+                    </section>
+                    <section>
+                      <h3 className="text-lg md:text-xl font-black uppercase text-white/50 tracking-[0.2em] mb-4 md:mb-6 border-b border-white/10 pb-4">Sekundärwaffen</h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                        {secondaryWeapons.map(w => (
+                          <GlassCard key={w.id} onClick={() => handleWeaponClick(w)} className="p-6 md:p-8 border-blue-500/20 bg-white/[0.03] cursor-pointer hover:bg-white/[0.06]">
+                            <h4 className="text-xl font-black text-white italic uppercase mb-2 tracking-tighter">{w.name}</h4>
+                            <div className="flex items-center gap-2 mb-4">
+                              <span className="bg-blue-600/30 text-blue-400 text-[8px] font-black px-2 py-1 rounded uppercase tracking-widest border border-blue-500/10">{w.type}</span>
+                            </div>
+                            <p className="text-gray-300 text-xs font-medium leading-relaxed line-clamp-3">{w.desc}</p>
+                          </GlassCard>
+                        ))}
+                      </div>
+                    </section>
+                  </div>
+                )}
               </motion.div>
             )}
           </AnimatePresence>
         </div>
 
-        {/* --- MOBILE BOTTOM MENU (Nur am Handy sichtbar / Auto-Hides on Scroll / Liegt an der MainNav an) --- */}
+        {/* --- MOBILE BOTTOM MENU (Nur am Handy sichtbar / Auto-Hides on Scroll / Liegt exakt an der MainNav an) --- */}
         <motion.div
           animate={{ y: isScrollingDown ? 200 : 0 }}
           transition={{ duration: 0.3, ease: "easeInOut" }}
-          className="md:hidden fixed bottom-[68px] left-0 right-0 flex flex-col gap-2 p-3 bg-gradient-to-t from-[#010101] via-[#010101]/95 to-transparent z-40 pointer-events-none"
+          className="md:hidden fixed bottom-[68px] left-0 right-0 flex flex-col gap-2 px-3 pt-8 pb-2 bg-gradient-to-t from-[#010101] via-[#010101] to-transparent z-40 pointer-events-none"
         >
           {/* Innerer Wrapper, der Klicks wieder zulässt */}
           <div className="pointer-events-auto flex flex-col gap-2">
@@ -1303,7 +1456,7 @@ export default function App() {
               </div>
             )}
 
-            {/* Operations & Armory (Werden bei offener Suche ausgeblendet um Platz zu schaffen) */}
+            {/* Operations & Armory */}
             {!searchQuery && (
               <div className="flex gap-2">
                 {['maps', 'weapons'].map((tab) => (
