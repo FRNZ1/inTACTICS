@@ -529,8 +529,6 @@ const BlueprintViewer = ({ blueprints }) => {
 
   const dragStart = useRef(null);
 
-  if (!blueprints || blueprints.length === 0) return null;
-
   const currentFloorKey = `${activePlan}_${activeFloor}`;
   const floorData = markersData[currentFloorKey] || { past: [], present: [], future: [] };
   const currentMarkers = floorData.present;
@@ -619,6 +617,8 @@ const BlueprintViewer = ({ blueprints }) => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isFullscreen, currentFloorKey]);
+
+  if (!blueprints || blueprints.length === 0) return null;
 
   const renderMarkerIcon = (type) => {
     switch (type) {
