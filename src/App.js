@@ -1,6 +1,29 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Home, Crosshair, Map as MapIcon, Shield, Eye, EyeOff, ChevronLeft, Target, Settings, Info, Lock, Menu, X, Activity, Zap, Clock, FileText, ExternalLink, AlertTriangle, Search, Play, Pause, ZoomIn, ZoomOut, Layers, CheckSquare, Square, MapPin, Skull, Undo, Redo, Maximize, Minimize, ChevronRight, Sun, AlignJustify } from 'lucide-react';
+import { Home, Crosshair, Map as MapIcon, Shield, Eye, EyeOff, ChevronLeft, Target, Settings, Info, Lock, Menu, X, Activity, Zap, Clock, FileText, ExternalLink, AlertTriangle, Search, Play, Pause, ZoomIn, ZoomOut, Layers, CheckSquare, Square, MapPin, Skull, Undo, Redo, Maximize, Minimize, ChevronRight, Sun, AlignJustify, HardHat, User, ShieldCheck } from 'lucide-react';
+
+// --- FIREBASE INITIALIZATION ---
+import { initializeApp } from 'firebase/app';
+import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
+import { getFirestore, doc, setDoc, onSnapshot, collection } from 'firebase/firestore';
+
+let app, auth, db, appId;
+try {
+  /* const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+  app = initializeApp(firebaseConfig);
+  auth = getAuth(app);
+  db = getFirestore(app);
+  appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';*/
+  
+  const firebaseConfig = {
+    apiKey: "demo",
+    authDomain: "demo",
+    projectId: "demo",
+    appId: "demo"
+  };
+} catch (e) {
+  console.warn("Firebase config not found or invalid. Persistence will be disabled.");
+}
 
 // --- DATA MOCKS ---
 
@@ -26,7 +49,7 @@ const RON_MAPS = [
     ],
     blueprints: [
       { name: 'Ground Floor', url: 'https://static.wikia.nocookie.net/ready-or-not/images/2/28/4U_Gas_Station_Map.png/revision/latest?cb=20241012143721' },
-      { name: 'Roof', url: 'https://static.wikia.nocookie.net/ready-or-not/images/2/28/4U_Gas_Station_Map.png/revision/latest?cb=20241012143721' } // Platzhalter für 2. Etage zum Demonstrieren
+      { name: 'Roof', url: 'https://static.wikia.nocookie.net/ready-or-not/images/2/28/4U_Gas_Station_Map.png/revision/latest?cb=20241012143721' }
     ],
     audioLogs: [
       {
@@ -54,7 +77,7 @@ const RON_MAPS = [
           name: 'Sharla Leighton',
           image: 'https://static.wikia.nocookie.net/ready-or-not/images/2/2d/Sharla_Leighton.png/revision/latest/scale-to-width-down/350?cb=20241012142512',
           sex: 'Female', height: "5'-6\"", weight: '130lb', build: 'Small', dob: '04/11/1998',
-          desc: "Sharla was our initial point of contact inside the building before police arrived on-scene. She found a hiding place and called 911 immediately after spotting one of the gunmen.\n\nRescue of this civilian is imperative. Specifically, her eyewitness account of the events that transpired before police arrival will help put the suspects behind bars for good.\n\nSharla's child, Cristal, is also inside the building. To our knowledge they are not close to one another, proximally."
+          desc: "Sharla was our initial point of contact inside the building before police arrived on-scene. She found a hiding place and called 911 immediately after spotting one of the gunmen.\n\nRescue of this civilian is imperative. Specifically, her eyewitness account of the events that transpired before police arrival will help put the suspects behind bars for good."
         }
       ],
       suspects: [
@@ -62,7 +85,7 @@ const RON_MAPS = [
           name: 'Andre Williams',
           image: 'https://static.wikia.nocookie.net/ready-or-not/images/a/a4/Andre_Williams.png/revision/latest/scale-to-width-down/350?cb=20241012142502',
           sex: 'Male', height: "6'-3\"", weight: '165lb', build: 'Medium', dob: '05/20/2005',
-          desc: "Attends 213 Mission High School in his final year. Following an incident at the school, Andre was placed under house arrest at his grandmothers house in the Dawson Gardens Projects while an investigation took place. Charges have since been dropped.\n\nOn January 30, Andre was engaged in a gunfight between himself and a rival gang during the shooting of a rap video for an underground media organization titled \"808 SUENOS\"."
+          desc: "Attends 213 Mission High School in his final year. Following an incident at the school, Andre was placed under house arrest at his grandmothers house while an investigation took place."
         }
       ]
     },
@@ -70,7 +93,17 @@ const RON_MAPS = [
       'https://static.wikia.nocookie.net/ready-or-not/images/5/56/Onlooker_Photograph.png/revision/latest/scale-to-width-down/1000?cb=20241012150241',
       'https://static.wikia.nocookie.net/ready-or-not/images/8/82/Media_Coverage.png/revision/latest/scale-to-width-down/1000?cb=20241012150247'
     ],
-    screenshots: ['https://images.steamusercontent.com/ugc/2523778827659601613/1C290698DF614012E3FCB7B8DDCB485652BE9376/']
+    screenshots: ['https://images.steamusercontent.com/ugc/2523778827659601613/1C290698DF614012E3FCB7B8DDCB485652BE9376/'],
+    recommendedLoadout: {
+      primary: 'w_mp5a3',
+      primaryAttachments: { Optics: 'opt_micro', Muzzle: 'muz_socom', Underbarrel: 'ub_angled', Overbarrel: 'ob_flash' },
+      secondary: 'w_taser',
+      armor: 'light',
+      headwear: ['gasmask', 'ballistic'],
+      mags: 4,
+      throwable: 'cs_gas',
+      throwableCount: 3
+    }
   },
   {
     id: 'ron_23mb', game: 'ron', dlc: 'base', name: 'San Uriel Condominiums', codename: '23 Megabytes a Second',
@@ -261,7 +294,6 @@ const RON_MAPS = [
   }
 ];
 
-// Kategorien basierend auf der Ingame-Einteilung
 const WEAPON_CATEGORIES = [
   { id: 'Assault Rifles', label: 'Assault Rifles' },
   { id: 'Submachine Guns', label: 'Submachine Guns' },
@@ -392,29 +424,29 @@ const RON_WEAPONS = [
 
 const RON_ATTACHMENTS = {
   Optics: [
-    { id: 'opt_srs', name: 'SRS', desc: 'Geschlossenes Red Dot Visier. Bietet ein weites Sichtfeld und klare Zielerfassung.' },
-    { id: 'opt_holo', name: 'Holo (EXPS3)', desc: 'Holographisches Visier. Perfekt für den Nahkampf (CQB) mit großem Absehen.' },
-    { id: 'opt_micro', name: 'Micro T2', desc: 'Kompaktes Rotpunktvisier. Nimmt extrem wenig Platz auf der Schiene ein.' },
-    { id: 'opt_m5b', name: 'M5B', desc: 'Kompaktes Red Dot mit minimalem Rahmen.' },
-    { id: 'opt_atakr', name: 'ATAK-R', desc: 'Variables Zielfernrohr (1-4x). Ideal für längere Distanzen, z.B. auf Brisa Cove.' },
-    { id: 'opt_sdr', name: 'SDR', desc: 'Combat-Visier mit fester Vergrößerung. Ein guter Mittelweg.' }
+    { id: 'opt_srs', name: 'SRS', image: 'https://readyornot.wiki.gg/images/thumb/8/87/SRS.png/120px-SRS.png', desc: 'Geschlossenes Red Dot Visier. Bietet ein weites Sichtfeld und klare Zielerfassung.' },
+    { id: 'opt_holo', name: 'Holo (EXPS3)', image: 'https://readyornot.wiki.gg/images/thumb/5/52/EXPS3.png/120px-EXPS3.png', desc: 'Holographisches Visier. Perfekt für den Nahkampf (CQB) mit großem Absehen.' },
+    { id: 'opt_micro', name: 'Micro T2', image: 'https://readyornot.wiki.gg/images/thumb/0/07/Micro_T2.png/120px-Micro_T2.png', desc: 'Kompaktes Rotpunktvisier. Nimmt extrem wenig Platz auf der Schiene ein.' },
+    { id: 'opt_m5b', name: 'M5B', image: 'https://readyornot.wiki.gg/images/thumb/1/1b/M5B.png/120px-M5B.png', desc: 'Kompaktes Red Dot mit minimalem Rahmen.' },
+    { id: 'opt_atakr', name: 'ATAK-R', image: 'https://readyornot.wiki.gg/images/thumb/a/a2/ATAK-R.png/120px-ATAK-R.png', desc: 'Variables Zielfernrohr (1-4x). Ideal für längere Distanzen, z.B. auf Brisa Cove.' },
+    { id: 'opt_sdr', name: 'SDR', image: 'https://readyornot.wiki.gg/images/thumb/2/25/SDR.png/120px-SDR.png', desc: 'Combat-Visier mit fester Vergrößerung. Ein guter Mittelweg.' }
   ],
   Muzzle: [
-    { id: 'muz_socom', name: 'SOCOM556 (Suppressor)', desc: 'Schalldämpfer. Reduziert den Mündungsknall drastisch, verringert aber leicht die Führigkeit.' },
-    { id: 'muz_osprey', name: 'Osprey (Suppressor)', desc: 'Rechteckiger Schalldämpfer für Pistolen und Maschinenpistolen. Sehr leise.' },
-    { id: 'muz_comp', name: 'Compensator', desc: 'Leitet Gase nach oben ab, um den vertikalen Rückstoß bei Dauerfeuer zu verringern.' },
-    { id: 'muz_flash', name: 'Flash Hider', desc: 'Eliminiert den Mündungsblitz komplett. Verhindert Blendung bei Nutzung von Nachtsicht.' }
+    { id: 'muz_socom', name: 'SOCOM556', image: 'https://readyornot.wiki.gg/images/thumb/e/ef/Suppressor_%285.56%29.png/120px-Suppressor_%285.56%29.png', desc: 'Schalldämpfer. Reduziert den Mündungsknall drastisch, verringert aber leicht die Führigkeit.' },
+    { id: 'muz_osprey', name: 'Osprey', image: 'https://readyornot.wiki.gg/images/thumb/3/36/Suppressor_%28.45%29.png/120px-Suppressor_%28.45%29.png', desc: 'Rechteckiger Schalldämpfer für Pistolen und Maschinenpistolen. Sehr leise.' },
+    { id: 'muz_comp', name: 'Compensator', image: 'https://readyornot.wiki.gg/images/thumb/b/b3/Compensator.png/120px-Compensator.png', desc: 'Leitet Gase nach oben ab, um den vertikalen Rückstoß bei Dauerfeuer zu verringern.' },
+    { id: 'muz_flash', name: 'Flash Hider', image: 'https://readyornot.wiki.gg/images/thumb/4/4b/Flash_Hider.png/120px-Flash_Hider.png', desc: 'Eliminiert den Mündungsblitz komplett. Verhindert Blendung bei Nutzung von Nachtsicht.' }
   ],
   Underbarrel: [
-    { id: 'ub_vert', name: 'Vertical Grip', desc: 'Klassischer Sturmgriff. Maximale Reduzierung des vertikalen Rückstoßes.' },
-    { id: 'ub_angled', name: 'Angled Grip', desc: 'Abgewinkelter Griff. Verbessert die ADS-Zeit (Aim Down Sights) erheblich.' },
-    { id: 'ub_combat', name: 'Combat Grip', desc: 'Ein Hybridgriff für ausgewogene Rückstoßkontrolle und Handhabung.' }
+    { id: 'ub_vert', name: 'Vertical Grip', image: 'https://readyornot.wiki.gg/images/thumb/0/06/Control_Grip.png/120px-Control_Grip.png', desc: 'Klassischer Sturmgriff. Maximale Reduzierung des vertikalen Rückstoßes.' },
+    { id: 'ub_angled', name: 'Angled Grip', image: 'https://readyornot.wiki.gg/images/thumb/5/5f/Speed_Grip.png/120px-Speed_Grip.png', desc: 'Abgewinkelter Griff. Verbessert die ADS-Zeit (Aim Down Sights) erheblich.' },
+    { id: 'ub_combat', name: 'Combat Grip', image: 'https://readyornot.wiki.gg/images/thumb/1/1d/Combat_Grip.png/120px-Combat_Grip.png', desc: 'Ein Hybridgriff für ausgewogene Rückstoßkontrolle und Handhabung.' }
   ],
   Overbarrel: [
-    { id: 'ob_flash', name: 'Flashlight', desc: 'Helle Weißlicht-Taschenlampe. Blendet Verdächtige leicht und leuchtet dunkle Ecken aus.' },
-    { id: 'ob_laser', name: 'Laser Pointer', desc: 'Roter Laser. Zeigt exakt dorthin, wo der Schuss landet. Gut für Hüftfeuer.' },
-    { id: 'ob_peq', name: 'PEQ-15', desc: 'IR-Laser und IR-Strahler. Unsichtbar für das bloße Auge, nur mit NVG (Nachtsicht) sichtbar.' },
-    { id: 'ob_mawl', name: 'MAWL', desc: 'Fortschrittlicher Laser/Illuminator. Bessere Ergonomie als der PEQ-15.' }
+    { id: 'ob_flash', name: 'Flashlight', image: 'https://readyornot.wiki.gg/images/thumb/2/22/Flashlight.png/120px-Flashlight.png', desc: 'Helle Weißlicht-Taschenlampe. Blendet Verdächtige leicht und leuchtet dunkle Ecken aus.' },
+    { id: 'ob_laser', name: 'Laser Pointer', image: 'https://readyornot.wiki.gg/images/thumb/4/41/Laser_Pointer.png/120px-Laser_Pointer.png', desc: 'Roter Laser. Zeigt exakt dorthin, wo der Schuss landet. Gut für Hüftfeuer.' },
+    { id: 'ob_peq', name: 'PEQ-15', image: 'https://readyornot.wiki.gg/images/thumb/3/30/PEQ-15.png/120px-PEQ-15.png', desc: 'IR-Laser und IR-Strahler. Unsichtbar für das bloße Auge, nur mit NVG (Nachtsicht) sichtbar.' },
+    { id: 'ob_mawl', name: 'MAWL', image: 'https://readyornot.wiki.gg/images/thumb/e/e6/MAWL.png/120px-MAWL.png', desc: 'Fortschrittlicher Laser/Illuminator. Bessere Ergonomie als der PEQ-15.' }
   ]
 };
 
@@ -427,6 +459,77 @@ const PUBG_MAPS = [
     locations: 'Typische Keller-Standorte: Rozhok, südlich von Yasnaya Polyana.'
   }
 ];
+
+const RON_THROWABLES = [
+  { id: 'flashbang', name: 'Flashbang (9-Bang)', desc: 'Blendet und desorientiert Personen im Raum.' },
+  { id: 'cs_gas', name: 'CS Gas (Tränengas)', desc: 'Zwingt ungeschützte Personen zum Husten und Waffe fallen lassen.' },
+  { id: 'stinger', name: 'Stinger (Gummischrot)', desc: 'Explodiert und verteilt schmerzhaftes Gummischrot im Raum.' },
+  { id: 'c2', name: 'C2 Sprengladung', desc: 'Sprengt Türen auf und betäubt Personen direkt dahinter.' }
+];
+
+const RON_HEADWEAR_OPTIONS = [
+  { id: 'ballistic', name: 'Ballistic Helmet', type: 'helmet' },
+  { id: 'bump', name: 'Bump Helmet', type: 'helmet' },
+  { id: 'nvg', name: 'Night Vision Goggles (NVG)', type: 'facewear' },
+  { id: 'gasmask', name: 'CBRN Gas Mask', type: 'facewear' },
+  { id: 'flashgoggles', name: 'Anti-Flash Goggles', type: 'facewear' },
+  { id: 'ballistic_mask', name: 'Ballistic Facemask', type: 'facewear' }
+];
+
+const RON_ARMOR_OPTIONS = [
+  { id: 'heavy_steel', name: 'Heavy Armor (Steel)', desc: 'Maximaler Schutz, stoppt fast alles. Sehr schwer und langsam.' },
+  { id: 'heavy_ceramic', name: 'Heavy Armor (Ceramic)', desc: 'Bricht nach einigen Treffern, schützt aber vor starken Kalibern. Leichter als Stahl.' },
+  { id: 'light', name: 'Light Armor (Kevlar)', desc: 'Schützt vor Pistolenkalibern. Sehr mobil.' },
+  { id: 'none', name: 'No Armor (Stab Vest)', desc: 'Nur Stichschutz. Maximale Bewegungsfreiheit.' }
+];
+
+const RON_UTILITIES = [
+  // Throwables
+  { id: 'util_flash', category: 'Throwable', name: 'Flashbang', desc: 'Blendet und desorientiert Verdächtige und Zivilisten im Wirkungsbereich temporär durch einen grellen Blitz und lauten Knall.' },
+  { id: 'util_9bang', category: 'Throwable', name: '9-Bang', desc: 'Zündet neunmal extrem schnell hintereinander. Erzeugt langanhaltende und massive Desorientierung im Raum.' },
+  { id: 'util_cs', category: 'Throwable', name: 'CS Gas', desc: 'Verursacht Husten, Atemnot und tränende Augen. Zwingt zur Aufgabe. Erfordert eine Gasmaske für den Operator.' },
+  { id: 'util_stinger', category: 'Throwable', name: 'Stinger Grenade', desc: 'Explodiert und verteilt schmerzhaftes Gummischrot im ganzen Raum. Sehr effektiv für Schockwirkung.' },
+
+  // Breaching
+  { id: 'util_c2', category: 'Breaching', name: 'C2 Explosive', desc: 'Sprengt Türen mit enormer Wucht auf und betäubt alle Personen, die direkt dahinter stehen. Hohe Kollateralschaden-Gefahr.' },
+  { id: 'util_ram', category: 'Breaching', name: 'Battering Ram', desc: 'Schwere Ramme zum schnellen, manuellen Aufbrechen von Türen. Kann verschlossene Türen mit einem Schlag öffnen.' },
+  { id: 'util_breach_shotgun', category: 'Breaching', name: 'Breaching Shotgun', desc: 'Zerstört Türschlösser aus sicherer Entfernung mit spezieller Munition. Schneller als Lockpicking.' },
+
+  // Long Tactical
+  { id: 'util_mirror', category: 'Long Tactical', name: 'Mirrorgun', desc: 'Wird unter der Tür hindurchgeschoben. Erkennt Sprengfallen und die Feindlage im Raum, bevor man eindringt.' },
+  { id: 'util_shield', category: 'Long Tactical', name: 'Ballistic Shield', desc: 'Schützt den Träger von vorne vor fast allem Beschuss. Zwingt den Operator zur Nutzung einer Handfeuerwaffe.' },
+  { id: 'util_rescue_shield', category: 'Long Tactical', name: 'Rescue Shield', desc: 'Umfassenderer, größerer Schild für Geiselrettungen, nimmt aber deutlich mehr Sicht weg.' },
+  { id: 'util_launcher', category: 'Long Tactical', name: 'M320 Grenade Launcher', desc: 'Verschießt Flash-, Stinger- oder Gas-Granaten zielgenau über mittlere Distanzen.' },
+  { id: 'util_pepperball', category: 'Long Tactical', name: 'Pepperball Launcher', desc: 'Verschießt Pfefferkugeln ähnlich einem Paintball-Markierer zur Aufruhrkontrolle. Komplett nicht-tödlich.' }
+];
+
+// Automatische Platzhalter für alle Maps ohne detaillierte Daten generieren
+RON_MAPS.forEach(map => {
+  if (map.id !== 'ron_gas') {
+    map.objectives = map.objectives || ['Bring Order to Chaos', 'Rescue all of the Civilians', 'Arrest Main Suspects', 'Secure Evidence', 'Report Status to TOC'];
+    map.blueprints = map.blueprints || [{ name: 'Main Floor', url: 'https://placehold.co/1200x800/111/FFF?text=Classified+Blueprint' }];
+    map.audioLogs = map.audioLogs || [
+      { title: 'TOC Briefing', type: 'briefing', url: '', transcript: 'TOC: Listen up. We have a rapidly developing situation. Proceed with extreme caution and check your corners.' },
+      { title: 'Emergency Call', type: '911', url: '', transcript: 'Operator: 911, what is your emergency?\nCaller: They have guns! Please hurry!' }
+    ];
+    map.poi = map.poi || {
+      civilians: [{ name: 'Unknown Civilian', image: 'https://placehold.co/250x250/222/FFF?text=CIV', sex: 'Unknown', height: 'N/A', weight: 'N/A', build: 'N/A', dob: 'Classified', desc: 'No prior intel available on civilian presence in this sector.' }],
+      suspects: [{ name: 'Unknown Suspect', image: 'https://placehold.co/250x250/222/F00?text=SUS', sex: 'Unknown', height: 'N/A', weight: 'N/A', build: 'N/A', dob: 'Classified', desc: 'Armed and considered highly dangerous. Proceed with caution.' }]
+    };
+    map.media = map.media || ['https://placehold.co/1000x562/111/FFF?text=Media+Coverage+1', 'https://placehold.co/1000x562/111/FFF?text=Media+Coverage+2'];
+    map.screenshots = map.screenshots || ['https://placehold.co/1000x562/111/FFF?text=Intel+Footage+1', 'https://placehold.co/1000x562/111/FFF?text=Intel+Footage+2'];
+    map.recommendedLoadout = map.recommendedLoadout || {
+      primary: 'w_m4a1',
+      primaryAttachments: { Optics: 'opt_holo', Muzzle: 'muz_comp', Underbarrel: 'ub_vert', Overbarrel: 'ob_laser' },
+      secondary: 'w_g19',
+      armor: 'heavy_ceramic',
+      headwear: ['ballistic', 'flashgoggles'],
+      mags: 5,
+      throwable: 'flashbang',
+      throwableCount: 4
+    };
+  }
+});
 
 const NEWS_POOL = [
   {
@@ -468,8 +571,8 @@ const getRelativeTime = (date) => {
 
 // --- CONSTANTS ---
 const SESSION_TIMEOUT = 10 * 60 * 1000;
-const STORAGE_KEY_STATE = 'inTactics_app_state_v7';
-const STORAGE_KEY_TIME = 'inTactics_last_active_v7';
+const STORAGE_KEY_STATE = 'inTactics_app_state_v8';
+const STORAGE_KEY_TIME = 'inTactics_last_active_v8';
 
 // --- COMPONENTS ---
 
@@ -518,14 +621,31 @@ const GlobalSearchBar = ({ searchQuery, setSearchQuery, placeholder, className =
   </div>
 );
 
-const BlueprintViewer = ({ blueprints }) => {
+const BlueprintViewer = ({ mapId, blueprints, dbUser, userBlueprints }) => {
   const [activeFloor, setActiveFloor] = useState(0);
   const [scale, setScale] = useState(1);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   const [activePlan, setActivePlan] = useState('Plan A');
   const [markerType, setMarkerType] = useState('move');
+
+  // Initialize with DB Data or default
   const [markersData, setMarkersData] = useState({});
+
+  useEffect(() => {
+    if (userBlueprints && userBlueprints[mapId]) {
+      const docData = userBlueprints[mapId];
+      if (docData && docData.data) {
+        try {
+          setMarkersData(JSON.parse(docData.data));
+        } catch (e) {
+          console.error("Error parsing blueprint markers", e);
+        }
+      } else {
+        setMarkersData(docData);
+      }
+    }
+  }, [userBlueprints, mapId]);
 
   const dragStart = useRef(null);
 
@@ -535,6 +655,14 @@ const BlueprintViewer = ({ blueprints }) => {
 
   const canUndo = floorData.past.length > 0;
   const canRedo = floorData.future.length > 0;
+
+  const saveToDb = (newData) => {
+    if (db && dbUser) {
+      // Serialize to JSON to prevent Firestore "Nested arrays are not supported" error
+      const serializedData = JSON.stringify(newData);
+      setDoc(doc(db, 'artifacts', appId, 'users', dbUser.uid, 'blueprintMarkers', mapId), { data: serializedData }).catch(console.error);
+    }
+  };
 
   const handlePointerDown = (e) => {
     dragStart.current = { x: e.clientX, y: e.clientY };
@@ -554,7 +682,7 @@ const BlueprintViewer = ({ blueprints }) => {
 
       setMarkersData(prev => {
         const fd = prev[currentFloorKey] || { past: [], present: [], future: [] };
-        return {
+        const newData = {
           ...prev,
           [currentFloorKey]: {
             past: [...fd.past, fd.present],
@@ -562,6 +690,8 @@ const BlueprintViewer = ({ blueprints }) => {
             future: []
           }
         };
+        saveToDb(newData);
+        return newData;
       });
     }
     dragStart.current = null;
@@ -573,10 +703,12 @@ const BlueprintViewer = ({ blueprints }) => {
       if (!fd || fd.past.length === 0) return prev;
       const newPast = [...fd.past];
       const newPresent = newPast.pop();
-      return {
+      const newData = {
         ...prev,
         [currentFloorKey]: { past: newPast, present: newPresent, future: [fd.present, ...fd.future] }
       };
+      saveToDb(newData);
+      return newData;
     });
   };
 
@@ -586,10 +718,12 @@ const BlueprintViewer = ({ blueprints }) => {
       if (!fd || fd.future.length === 0) return prev;
       const newFuture = [...fd.future];
       const newPresent = newFuture.shift();
-      return {
+      const newData = {
         ...prev,
         [currentFloorKey]: { past: [...fd.past, fd.present], present: newPresent, future: newFuture }
       };
+      saveToDb(newData);
+      return newData;
     });
   };
 
@@ -597,10 +731,12 @@ const BlueprintViewer = ({ blueprints }) => {
     setMarkersData(prev => {
       const fd = prev[currentFloorKey];
       if (!fd || fd.present.length === 0) return prev;
-      return {
+      const newData = {
         ...prev,
         [currentFloorKey]: { past: [...fd.past, fd.present], present: [], future: [] }
       };
+      saveToDb(newData);
+      return newData;
     });
   };
 
@@ -729,7 +865,6 @@ const BlueprintViewer = ({ blueprints }) => {
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[100] bg-[#050505] flex flex-col"
           >
-            {/* Fullscreen Planner Toolbar */}
             <div className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-2 p-2 bg-black/80 backdrop-blur-xl border border-white/10 rounded-2xl z-[110] shadow-2xl overflow-x-auto max-w-[95vw]">
 
               <select
@@ -744,7 +879,6 @@ const BlueprintViewer = ({ blueprints }) => {
 
               <div className="h-6 w-px bg-white/20 mx-1 shrink-0" />
 
-              {/* Etagen-Switcher im Fullscreen-Modus */}
               {blueprints.length > 1 && (
                 <>
                   <div className="flex gap-1 shrink-0">
@@ -893,11 +1027,22 @@ const AudioLogViewer = ({ logs }) => {
 }
 
 // --- NEW COMPONENT: MISSION OBJECTIVES ---
-const MissionObjectives = ({ objectives }) => {
+const MissionObjectives = ({ mapId, objectives, dbUser, userObjectives }) => {
   const [checkedItems, setCheckedItems] = useState([]);
 
+  useEffect(() => {
+    if (userObjectives && userObjectives[mapId]) {
+      setCheckedItems(userObjectives[mapId].checked || []);
+    }
+  }, [userObjectives, mapId]);
+
   const toggleObj = (idx) => {
-    setCheckedItems(prev => prev.includes(idx) ? prev.filter(i => i !== idx) : [...prev, idx]);
+    const newChecked = checkedItems.includes(idx) ? checkedItems.filter(i => i !== idx) : [...checkedItems, idx];
+    setCheckedItems(newChecked);
+
+    if (db && dbUser) {
+      setDoc(doc(db, 'artifacts', appId, 'users', dbUser.uid, 'mapObjectives', mapId), { checked: newChecked }).catch(console.error);
+    }
   };
 
   if (!objectives || objectives.length === 0) return null;
@@ -928,8 +1073,289 @@ const MissionObjectives = ({ objectives }) => {
   );
 };
 
+// --- NEW COMPONENT: MAP LOADOUT EDITOR ---
+const MapLoadoutEditor = ({ map, dbUser, userMapLoadouts }) => {
+  const defaultLoadout = map.recommendedLoadout || {
+    primary: 'w_m4a1',
+    primaryAttachments: { Optics: null, Muzzle: null, Underbarrel: null, Overbarrel: null },
+    secondary: 'w_g19',
+    armor: 'heavy_ceramic',
+    headwear: ['ballistic'],
+    mags: 4,
+    throwable: 'flashbang',
+    throwableCount: 3
+  };
+
+  const [primary, setPrimary] = useState(defaultLoadout.primary);
+  const [primaryAtt, setPrimaryAtt] = useState({ Optics: null, Muzzle: null, Underbarrel: null, Overbarrel: null });
+  const [secondary, setSecondary] = useState(defaultLoadout.secondary);
+  const [armor, setArmor] = useState(defaultLoadout.armor);
+  const [headwear, setHeadwear] = useState(defaultLoadout.headwear);
+  const [mags, setMags] = useState(defaultLoadout.mags);
+  const [throwable, setThrowable] = useState(defaultLoadout.throwable);
+  const [throwableCount, setThrowableCount] = useState(defaultLoadout.throwableCount);
+
+  // Initialize from DB if exists
+  useEffect(() => {
+    if (userMapLoadouts && userMapLoadouts[map.id]) {
+      const data = userMapLoadouts[map.id];
+      setPrimary(data.primary || defaultLoadout.primary);
+      setSecondary(data.secondary || defaultLoadout.secondary);
+      setArmor(data.armor || defaultLoadout.armor);
+      setHeadwear(data.headwear || defaultLoadout.headwear);
+      setMags(data.mags || defaultLoadout.mags);
+      setThrowable(data.throwable || defaultLoadout.throwable);
+      setThrowableCount(data.throwableCount || defaultLoadout.throwableCount);
+
+      const attObj = { Optics: null, Muzzle: null, Underbarrel: null, Overbarrel: null };
+      if (data.primaryAttachments) {
+        Object.keys(data.primaryAttachments).forEach(slot => {
+          const attId = data.primaryAttachments[slot];
+          if (attId && RON_ATTACHMENTS[slot]) {
+            attObj[slot] = RON_ATTACHMENTS[slot].find(a => a.id === attId) || null;
+          }
+        });
+      }
+      setPrimaryAtt(attObj);
+    } else {
+      // Wenn nichts vorliegt, bleiben die defaults bzw. die von recommended.
+      // Parsen der recommended attachments
+      const attObj = { Optics: null, Muzzle: null, Underbarrel: null, Overbarrel: null };
+      if (map.recommendedLoadout) {
+        Object.keys(map.recommendedLoadout.primaryAttachments).forEach(slot => {
+          const attId = map.recommendedLoadout.primaryAttachments[slot];
+          if (attId && RON_ATTACHMENTS[slot]) {
+            attObj[slot] = RON_ATTACHMENTS[slot].find(a => a.id === attId) || null;
+          }
+        });
+      }
+      setPrimaryAtt(attObj);
+    }
+  }, [userMapLoadouts, map.id]);
+
+  const primaries = RON_WEAPONS.filter(w => w.category === 'primary');
+  const secondaries = RON_WEAPONS.filter(w => w.category === 'secondary');
+
+  const saveToDb = (field, value) => {
+    if (!db || !dbUser) return;
+
+    // Aktuellen Stand sichern, damit überschrieben werden kann
+    const currentState = {
+      primary, secondary, armor, headwear, mags, throwable, throwableCount,
+      primaryAttachments: {
+        Optics: primaryAtt.Optics?.id || null,
+        Muzzle: primaryAtt.Muzzle?.id || null,
+        Underbarrel: primaryAtt.Underbarrel?.id || null,
+        Overbarrel: primaryAtt.Overbarrel?.id || null
+      }
+    };
+    currentState[field] = value;
+
+    setDoc(doc(db, 'artifacts', appId, 'users', dbUser.uid, 'mapLoadouts', map.id), currentState).catch(console.error);
+  };
+
+  const loadRecommendation = () => {
+    if (!map || !map.recommendedLoadout) return;
+    const rec = map.recommendedLoadout;
+    setPrimary(rec.primary);
+    setSecondary(rec.secondary);
+    setArmor(rec.armor);
+    setHeadwear(rec.headwear);
+    setMags(rec.mags);
+    setThrowable(rec.throwable);
+    setThrowableCount(rec.throwableCount);
+
+    const attObj = { Optics: null, Muzzle: null, Underbarrel: null, Overbarrel: null };
+    Object.keys(rec.primaryAttachments).forEach(slot => {
+      const attId = rec.primaryAttachments[slot];
+      if (attId && RON_ATTACHMENTS[slot]) {
+        attObj[slot] = RON_ATTACHMENTS[slot].find(a => a.id === attId) || null;
+      }
+    });
+    setPrimaryAtt(attObj);
+
+    if (db && dbUser) {
+      setDoc(doc(db, 'artifacts', appId, 'users', dbUser.uid, 'mapLoadouts', map.id), {
+        primary: rec.primary, secondary: rec.secondary, armor: rec.armor, headwear: rec.headwear, mags: rec.mags, throwable: rec.throwable, throwableCount: rec.throwableCount, primaryAttachments: rec.primaryAttachments
+      }).catch(console.error);
+    }
+  };
+
+  const toggleHeadwear = (id) => {
+    const newHeadwear = headwear.includes(id) ? headwear.filter(h => h !== id) : [...headwear, id];
+    setHeadwear(newHeadwear);
+    saveToDb('headwear', newHeadwear);
+  };
+
+  return (
+    <GlassCard className="p-6 md:p-10 bg-black/40 border-white/5 relative overflow-hidden">
+      <div className="absolute top-0 right-0 p-6 z-10">
+        <button onClick={loadRecommendation} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-full text-[10px] md:text-xs font-black uppercase tracking-widest transition-all shadow-[0_0_20px_rgba(37,99,235,0.4)]">
+          <Zap size={14} /> Empfohlenes Loadout laden
+        </button>
+      </div>
+
+      <h3 className="text-xl md:text-2xl font-black uppercase italic tracking-tighter border-l-4 border-green-500 pl-4 mb-8 mt-10 md:mt-0">Tactical Loadout</h3>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
+
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between border-b border-white/10 pb-2">
+            <label className="text-[10px] uppercase font-bold tracking-widest text-white/40">Primärwaffe</label>
+            <span className="text-[10px] text-green-500 font-mono font-bold bg-green-500/10 px-2 py-0.5 rounded">{mags} Mags</span>
+          </div>
+          <select value={primary} onChange={(e) => { setPrimary(e.target.value); saveToDb('primary', e.target.value); }} className="bg-white/5 border border-white/10 text-white text-sm md:text-base font-bold p-3 rounded-xl outline-none hover:bg-white/10 transition-colors focus:border-green-500/50">
+            {primaries.map(w => <option key={w.id} className="bg-black text-white" value={w.id}>{w.name} ({w.type})</option>)}
+          </select>
+          <div className="flex items-center gap-2 mt-1">
+            <label className="text-[10px] text-white/30 uppercase w-12">Mags:</label>
+            <input type="range" min="1" max="8" value={mags} onChange={(e) => { setMags(parseInt(e.target.value)); saveToDb('mags', parseInt(e.target.value)); }} className="flex-1 accent-green-500" />
+          </div>
+          {/* Zeigt Attachments an, falls geladen */}
+          <div className="flex flex-wrap gap-1 mt-2">
+            {Object.entries(primaryAtt).map(([slot, att]) => att && (
+              <span key={slot} className="text-[8px] uppercase tracking-widest bg-white/10 text-white/70 px-1.5 py-0.5 rounded border border-white/5">{att.name}</span>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between border-b border-white/10 pb-2">
+            <label className="text-[10px] uppercase font-bold tracking-widest text-white/40">Sekundärwaffe & Gear</label>
+            <span className="text-[10px] text-orange-500 font-mono font-bold bg-orange-500/10 px-2 py-0.5 rounded">{throwableCount}x Utils</span>
+          </div>
+          <select value={secondary} onChange={(e) => { setSecondary(e.target.value); saveToDb('secondary', e.target.value); }} className="bg-white/5 border border-white/10 text-white text-sm md:text-base font-bold p-3 rounded-xl outline-none hover:bg-white/10 transition-colors focus:border-green-500/50">
+            {secondaries.map(w => <option key={w.id} className="bg-black text-white" value={w.id}>{w.name}</option>)}
+          </select>
+          <select value={throwable} onChange={(e) => { setThrowable(e.target.value); saveToDb('throwable', e.target.value); }} className="bg-white/5 border border-white/10 text-white text-xs md:text-sm font-bold p-2.5 rounded-xl outline-none hover:bg-white/10 transition-colors mt-1">
+            {RON_THROWABLES.map(t => <option key={t.id} className="bg-black text-white" value={t.id}>{t.name}</option>)}
+          </select>
+          <div className="flex items-center gap-2 mt-1">
+            <label className="text-[10px] text-white/30 uppercase w-12">Count:</label>
+            <input type="range" min="1" max="8" value={throwableCount} onChange={(e) => { setThrowableCount(parseInt(e.target.value)); saveToDb('throwableCount', parseInt(e.target.value)); }} className="flex-1 accent-orange-500" />
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <label className="text-[10px] uppercase font-bold tracking-widest text-white/40 border-b border-white/10 pb-2">Rüstung (Armor)</label>
+          <div className="flex flex-col gap-2">
+            {RON_ARMOR_OPTIONS.map(a => (
+              <button
+                key={a.id}
+                onClick={() => { setArmor(a.id); saveToDb('armor', a.id); }}
+                className={`text-left p-2.5 rounded-xl border text-xs transition-all ${armor === a.id ? 'bg-blue-600/20 border-blue-500/50 text-white font-bold' : 'bg-white/5 border-white/5 text-white/60 hover:bg-white/10'}`}
+              >
+                {a.name}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <label className="text-[10px] uppercase font-bold tracking-widest text-white/40 border-b border-white/10 pb-2">Kopfbedeckung (Kombinierbar)</label>
+          <div className="flex flex-col gap-2">
+            {RON_HEADWEAR_OPTIONS.map(h => {
+              const isChecked = headwear.includes(h.id);
+              return (
+                <button
+                  key={h.id}
+                  onClick={() => toggleHeadwear(h.id)}
+                  className={`flex items-center gap-3 text-left p-2 rounded-xl border text-xs transition-all ${isChecked ? 'bg-white/10 border-white/30 text-white font-bold' : 'bg-transparent border-transparent text-white/50 hover:bg-white/5'}`}
+                >
+                  {isChecked ? <CheckSquare size={16} className="text-green-500 shrink-0" /> : <Square size={16} className="shrink-0" />}
+                  {h.name}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+      </div>
+    </GlassCard>
+  );
+};
+
+// --- NEW COMPONENT: SWAT OPERATOR UI (LOADOUT OVERVIEW) ---
+const SwatOperatorUI = ({ onSelectCategory }) => {
+  return (
+    <div className="flex flex-col items-center justify-center w-full py-8 md:py-12">
+      <h2 className="text-4xl md:text-6xl font-black text-white italic uppercase tracking-tighter mb-2 text-center">Tactical Loadout</h2>
+      <p className="text-white/40 font-mono text-xs uppercase tracking-widest mb-12 text-center">Operator Equipment Configuration</p>
+
+      {/* Spider/Cross Layout for Officer */}
+      <div className="relative w-full max-w-4xl mx-auto min-h-[450px] md:min-h-[500px] flex items-center justify-center">
+
+        {/* Hintergund/Skelett */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center opacity-[0.05] pointer-events-none z-0">
+          <User size={350} strokeWidth={1} />
+        </div>
+
+        {/* Slots Grid um den Operator herum */}
+        <div className="relative z-10 w-full h-full flex flex-col items-center justify-between py-4">
+
+          {/* TOP: HELMET */}
+          <div className="w-full flex justify-center mb-8 md:mb-12">
+            <GlassCard
+              onClick={() => onSelectCategory('headwear')}
+              className="w-48 p-4 flex flex-col items-center justify-center gap-2 cursor-pointer bg-black/60 hover:bg-white/10 hover:border-blue-500/50 hover:shadow-[0_0_30px_rgba(59,130,246,0.2)] transition-all group"
+            >
+              <HardHat size={32} className="text-white/60 group-hover:text-blue-400 transition-colors" />
+              <div className="text-center">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Slot</p>
+                <p className="text-sm font-bold uppercase text-white">Headwear</p>
+              </div>
+            </GlassCard>
+          </div>
+
+          {/* MIDDLE ROW: ARMORY & ARMOR */}
+          <div className="w-full flex flex-col md:flex-row justify-between md:justify-center md:gap-40 lg:gap-64 px-4 items-center">
+
+            <GlassCard
+              onClick={() => onSelectCategory('armory')}
+              className="w-48 p-4 flex flex-col items-center justify-center gap-2 cursor-pointer bg-black/60 hover:bg-white/10 hover:border-red-500/50 hover:shadow-[0_0_30px_rgba(239,68,68,0.2)] transition-all group mb-8 md:mb-0"
+            >
+              <Target size={32} className="text-white/60 group-hover:text-red-500 transition-colors" />
+              <div className="text-center">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Arsenal</p>
+                <p className="text-sm font-bold uppercase text-white">Armory</p>
+              </div>
+            </GlassCard>
+
+            <GlassCard
+              onClick={() => onSelectCategory('armor')}
+              className="w-48 p-4 flex flex-col items-center justify-center gap-2 cursor-pointer bg-black/60 hover:bg-white/10 hover:border-green-500/50 hover:shadow-[0_0_30px_rgba(34,197,94,0.2)] transition-all group mb-8 md:mb-0"
+            >
+              <ShieldCheck size={32} className="text-white/60 group-hover:text-green-500 transition-colors" />
+              <div className="text-center">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Protection</p>
+                <p className="text-sm font-bold uppercase text-white">Plate / Armor</p>
+              </div>
+            </GlassCard>
+
+          </div>
+
+          {/* BOTTOM: UTILS */}
+          <div className="w-full flex justify-center mt-8 md:mt-12">
+            <GlassCard
+              onClick={() => onSelectCategory('utilities')}
+              className="w-48 p-4 flex flex-col items-center justify-center gap-2 cursor-pointer bg-black/60 hover:bg-white/10 hover:border-orange-500/50 hover:shadow-[0_0_30px_rgba(249,115,22,0.2)] transition-all group"
+            >
+              <Layers size={32} className="text-white/60 group-hover:text-orange-500 transition-colors" />
+              <div className="text-center">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Tactical</p>
+                <p className="text-sm font-bold uppercase text-white">Utilities</p>
+              </div>
+            </GlassCard>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // --- NEW COMPONENT: WEAPON GUNSMITH ---
-const WeaponGunsmith = ({ equipped, setEquipped, activeSlot, setActiveSlot }) => {
+const WeaponGunsmith = ({ weaponId, equipped, setEquipped, activeSlot, setActiveSlot, dbUser }) => {
   const slots = [
     { id: 'Optics', icon: Crosshair, label: 'Optics' },
     { id: 'Muzzle', icon: Zap, label: 'Muzzle' },
@@ -938,8 +1364,19 @@ const WeaponGunsmith = ({ equipped, setEquipped, activeSlot, setActiveSlot }) =>
   ];
 
   const handleEquip = (slotId, attachment) => {
-    setEquipped(prev => ({ ...prev, [slotId]: attachment }));
+    const newEquipped = { ...equipped, [slotId]: attachment };
+    setEquipped(newEquipped);
     setActiveSlot(null);
+
+    if (db && dbUser) {
+      const dataToSave = {
+        Optics: newEquipped.Optics?.id || null,
+        Muzzle: newEquipped.Muzzle?.id || null,
+        Underbarrel: newEquipped.Underbarrel?.id || null,
+        Overbarrel: newEquipped.Overbarrel?.id || null
+      };
+      setDoc(doc(db, 'artifacts', appId, 'users', dbUser.uid, 'attachments', weaponId), dataToSave).catch(console.error);
+    }
   };
 
   return (
@@ -998,11 +1435,20 @@ const WeaponGunsmith = ({ equipped, setEquipped, activeSlot, setActiveSlot }) =>
                       onClick={() => handleEquip(activeSlot, att)}
                       className={`p-4 rounded-xl border text-left flex flex-col gap-2 transition-all ${isEquipped ? 'bg-red-600/20 border-red-500/50' : 'bg-black/50 border-white/5 hover:bg-white/10 hover:border-white/20'}`}
                     >
-                      <div className="flex justify-between items-start">
-                        <span className="font-bold text-sm text-white uppercase">{att.name}</span>
-                        {isEquipped && <CheckSquare size={14} className="text-red-500" />}
+                      <div className="flex items-start gap-3">
+                        {att.image && (
+                          <div className="w-16 h-16 shrink-0 bg-white/5 rounded-lg border border-white/10 p-1 flex items-center justify-center overflow-hidden">
+                            <img src={att.image} alt={att.name} className="max-w-full max-h-full object-contain" style={{ filter: 'drop-shadow(0px 4px 6px rgba(0,0,0,0.5))' }} />
+                          </div>
+                        )}
+                        <div className="flex flex-col gap-1 w-full">
+                          <div className="flex justify-between items-start">
+                            <span className="font-bold text-sm text-white uppercase">{att.name}</span>
+                            {isEquipped && <CheckSquare size={14} className="text-red-500 shrink-0" />}
+                          </div>
+                          <span className="text-[10px] md:text-xs text-gray-400 leading-relaxed">{att.desc}</span>
+                        </div>
                       </div>
-                      <span className="text-xs text-gray-400 leading-relaxed">{att.desc}</span>
                     </button>
                   );
                 })}
@@ -1027,17 +1473,25 @@ const WeaponGunsmith = ({ equipped, setEquipped, activeSlot, setActiveSlot }) =>
 // --- MAIN APP ---
 
 export default function App() {
+  const [dbUser, setDbUser] = useState(null);
+
+  // Firebase Data States
+  const [userAttachments, setUserAttachments] = useState({});
+  const [userMapLoadouts, setUserMapLoadouts] = useState({});
+  const [userObjectives, setUserObjectives] = useState({});
+  const [userBlueprints, setUserBlueprints] = useState({});
+
   const [activeTab, setActiveTab] = useState('home');
   const [ronSubTab, setRonSubTab] = useState('maps');
+  const [loadoutSubTab, setLoadoutSubTab] = useState('overview');
   const [activeDlc, setActiveDlc] = useState('base');
-  const [activeWeaponCat, setActiveWeaponCat] = useState('Assault Rifles'); // NEU: Weapon Category State
+  const [activeWeaponCat, setActiveWeaponCat] = useState('Assault Rifles');
 
   const [selectedMap, setSelectedMap] = useState(null);
   const [selectedWeapon, setSelectedWeapon] = useState(null);
   const [selectedArticle, setSelectedArticle] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // GUNSMITH STATE
   const [equippedAttachments, setEquippedAttachments] = useState({ Optics: null, Muzzle: null, Underbarrel: null, Overbarrel: null });
   const [activeAttachmentSlot, setActiveAttachmentSlot] = useState(null);
 
@@ -1051,6 +1505,70 @@ export default function App() {
   const scrollPosRef = useRef({ window: 0, ronContainer: 0 });
   const ronListRef = useRef(null);
   const lastScrollY = useRef(0);
+
+  // Initialisiere Firebase Auth
+  useEffect(() => {
+    if (!auth) return;
+    const initAuth = async () => {
+      try {
+        if (typeof null !== 'undefined' && null) {
+          await signInWithCustomToken(auth, null);
+        } else {
+          await signInAnonymously(auth);
+        }
+      } catch (err) {
+        console.error('Auth error', err);
+      }
+    };
+    initAuth();
+    const unsubscribe = onAuthStateChanged(auth, setDbUser);
+    return () => unsubscribe();
+  }, []);
+
+  // Lade Firebase Daten (Live-Synchronisation)
+  useEffect(() => {
+    if (!db || !dbUser) return;
+
+    const unsubs = [];
+    const collections = [
+      { name: 'attachments', setter: setUserAttachments },
+      { name: 'mapLoadouts', setter: setUserMapLoadouts },
+      { name: 'mapObjectives', setter: setUserObjectives },
+      { name: 'blueprintMarkers', setter: setUserBlueprints }
+    ];
+
+    collections.forEach(colInfo => {
+      const q = collection(db, 'artifacts', appId, 'users', dbUser.uid, colInfo.name);
+      unsubs.push(
+        onSnapshot(q, (snap) => {
+          const data = {};
+          snap.forEach(d => data[d.id] = d.data());
+          colInfo.setter(data);
+        }, console.error)
+      );
+    });
+
+    return () => unsubs.forEach(u => u());
+  }, [dbUser]);
+
+  // Lade spezifische Waffendaten aus Firebase in den lokalen State
+  useEffect(() => {
+    if (selectedWeapon) {
+      if (userAttachments[selectedWeapon.id]) {
+        const saved = userAttachments[selectedWeapon.id];
+        const loadedEquip = { Optics: null, Muzzle: null, Underbarrel: null, Overbarrel: null };
+        Object.keys(saved).forEach(slot => {
+          if (saved[slot] && RON_ATTACHMENTS[slot]) {
+            loadedEquip[slot] = RON_ATTACHMENTS[slot].find(a => a.id === saved[slot]) || null;
+          }
+        });
+        setEquippedAttachments(loadedEquip);
+      } else {
+        setEquippedAttachments({ Optics: null, Muzzle: null, Underbarrel: null, Overbarrel: null });
+      }
+      setActiveAttachmentSlot(null);
+    }
+  }, [selectedWeapon, userAttachments]);
 
   // Live Feed Logic
   useEffect(() => {
@@ -1067,7 +1585,7 @@ export default function App() {
     return () => clearInterval(intervalId);
   }, []);
 
-  // State Persistence Logic
+  // State Persistence Logic (Local Storage Fallback for Tab Navigation etc.)
   useEffect(() => {
     const lastActive = localStorage.getItem(STORAGE_KEY_TIME);
     const now = Date.now();
@@ -1180,10 +1698,16 @@ export default function App() {
   const handleWeaponClick = (weapon) => {
     scrollPosRef.current = { window: window.scrollY || document.documentElement.scrollTop, ronContainer: ronListRef.current ? ronListRef.current.scrollTop : 0 };
     setSelectedWeapon(weapon); setSearchQuery(''); setIsRonSearchOpen(false); setIsScrollingDown(false);
-    setEquippedAttachments({ Optics: null, Muzzle: null, Underbarrel: null, Overbarrel: null }); setActiveAttachmentSlot(null);
     window.scrollTo({ top: 0, behavior: 'instant' });
   };
-  const handleBackClick = () => { setSelectedMap(null); setSelectedWeapon(null); setIsScrollingDown(false); };
+  const handleBackClick = () => {
+    setSelectedMap(null);
+    setSelectedWeapon(null);
+    setIsScrollingDown(false);
+    if (ronSubTab === 'loadout' && selectedWeapon) {
+      setLoadoutSubTab('armory');
+    }
+  };
   const handleArticleClick = (article) => {
     scrollPosRef.current = { window: window.scrollY, ronContainer: ronListRef.current?.scrollTop || 0 };
     setSelectedArticle(article); setSearchQuery(''); setIsRonSearchOpen(false); setIsScrollingDown(false); window.scrollTo({ top: 0, behavior: 'instant' });
@@ -1200,7 +1724,15 @@ export default function App() {
     }
   };
   const handleTabSwitch = (tab) => { setSearchQuery(''); setIsRonSearchOpen(false); setIsScrollingDown(false); setActiveTab(tab); };
-  const handleRonSubTabSwitch = (tab) => { setSearchQuery(''); setIsRonSearchOpen(false); setRonSubTab(tab); };
+  const handleRonSubTabSwitch = (tab) => {
+    setSearchQuery('');
+    setIsRonSearchOpen(false);
+    setRonSubTab(tab);
+    if (tab === 'loadout') {
+      setLoadoutSubTab('overview');
+      setSelectedWeapon(null);
+    }
+  };
 
   const getTypeColor = (type) => {
     switch (type) {
@@ -1366,10 +1898,12 @@ export default function App() {
             </GlassCard>
 
             <WeaponGunsmith
+              weaponId={selectedWeapon.id}
               equipped={equippedAttachments}
               setEquipped={setEquippedAttachments}
               activeSlot={activeAttachmentSlot}
               setActiveSlot={setActiveAttachmentSlot}
+              dbUser={dbUser}
             />
 
             <GlassCard className="p-6 md:p-10 border-blue-500/20 bg-blue-900/5">
@@ -1410,12 +1944,11 @@ export default function App() {
               <GlassCard className="p-6 md:p-10"><h3 className="text-red-500 font-black uppercase text-[10px] tracking-widest mb-3 md:mb-4">Feindlage</h3><p className="text-gray-200 text-sm md:text-lg leading-relaxed font-medium">{selectedMap.suspects}</p></GlassCard>
             </div>
 
-            {/* Missionsziele interaktiv gemacht */}
-            <MissionObjectives objectives={selectedMap.objectives} />
+            <MissionObjectives mapId={selectedMap.id} objectives={selectedMap.objectives} dbUser={dbUser} userObjectives={userObjectives} />
 
             <AudioLogViewer logs={selectedMap.audioLogs} />
             <POIViewer poi={selectedMap.poi} />
-            <BlueprintViewer blueprints={selectedMap.blueprints} />
+            <BlueprintViewer mapId={selectedMap.id} blueprints={selectedMap.blueprints} dbUser={dbUser} userBlueprints={userBlueprints} />
           </div>
           <div className="space-y-6 md:space-y-10">
             {selectedMap.screenshots?.length > 0 && (
@@ -1451,6 +1984,12 @@ export default function App() {
               </div>
             )}
           </div>
+
+          {/* LOADOUT EDITOR (FULL WIDTH AT BOTTOM) */}
+          <div className="lg:col-span-3 mt-4">
+            <MapLoadoutEditor map={selectedMap} dbUser={dbUser} userMapLoadouts={userMapLoadouts} />
+          </div>
+
         </div>
       </motion.div>
     );
@@ -1465,10 +2004,10 @@ export default function App() {
         <div className="max-md:hidden relative z-20 flex flex-col items-center w-full mb-8">
           <div className="relative z-10 w-fit mx-auto mb-6 md:mb-8">
             <div className="flex p-[3px] md:p-1 bg-black/60 backdrop-blur-3xl border border-white/10 rounded-full relative shadow-2xl overflow-hidden">
-              {['maps', 'weapons'].map((tab) => (
+              {['maps', 'loadout'].map((tab) => (
                 <button key={tab} onClick={() => handleRonSubTabSwitch(tab)} className={`relative px-8 md:px-14 py-2 md:py-3.5 rounded-full font-black uppercase italic tracking-tighter text-[10px] md:text-[13px] z-10 transition-colors duration-500 ${ronSubTab === tab ? 'text-white' : 'text-white/30 hover:text-white/60'}`}>
                   {ronSubTab === tab && <motion.div layoutId="ron-active-sub" className="absolute inset-0 bg-[#e31e24] rounded-full -z-10 shadow-[0_0_30px_rgba(227,30,36,0.3)]" transition={springTransition} />}
-                  {tab === 'maps' ? 'Operations' : 'Armory'}
+                  {tab === 'maps' ? 'Operations' : 'Loadout'}
                 </button>
               ))}
             </div>
@@ -1476,13 +2015,37 @@ export default function App() {
 
           <div className="relative z-10 w-full overflow-hidden max-w-7xl mx-auto">
             <div className="flex items-center justify-start md:justify-center gap-4 md:gap-8 overflow-x-auto no-scrollbar px-6 md:px-0 snap-x">
+
+              {/* Back Button for Loadout Sub-Tabs */}
+              {ronSubTab === 'loadout' && loadoutSubTab !== 'overview' && (
+                <button
+                  onClick={() => setLoadoutSubTab('overview')}
+                  className="flex items-center gap-1 text-white/50 hover:text-white transition-colors text-[10px] uppercase font-black shrink-0 mr-4 border border-white/10 px-3 py-1.5 rounded-full"
+                >
+                  <ChevronLeft size={14} /> Back
+                </button>
+              )}
+
+              {/* RESTORED DESKTOP SEARCH BAR */}
               <div className="hidden md:flex items-center shrink-0">
                 {isRonSearchOpen ? (
                   <motion.div initial={{ width: 0, opacity: 0 }} animate={{ width: 130, opacity: 1 }} className="flex items-center bg-white/10 rounded-full border border-white/20 px-2.5 py-1.5 mr-2">
-                    <Search size={14} className="text-white/40 mr-1.5 shrink-0" /><input autoFocus value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Suchen..." className="bg-transparent text-white outline-none text-[11px] w-full" /><button onClick={() => { setIsRonSearchOpen(false); setSearchQuery(''); }} className="shrink-0 ml-1.5"><X size={14} className="text-white/40 hover:text-white" /></button>
+                    <Search size={14} className="text-white/40 mr-1.5 shrink-0" />
+                    <input
+                      autoFocus
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Suchen..."
+                      className="bg-transparent text-white outline-none text-[11px] w-full"
+                    />
+                    <button onClick={() => { setIsRonSearchOpen(false); setSearchQuery(''); }} className="shrink-0 ml-1.5">
+                      <X size={14} className="text-white/40 hover:text-white" />
+                    </button>
                   </motion.div>
                 ) : (
-                  <button onClick={() => setIsRonSearchOpen(true)} className="p-1.5 text-white/40 hover:text-white transition-colors flex items-center justify-center mr-2"><Search size={16} /></button>
+                  <button onClick={() => setIsRonSearchOpen(true)} className="p-1.5 text-white/40 hover:text-white transition-colors flex items-center justify-center mr-2">
+                    <Search size={16} />
+                  </button>
                 )}
               </div>
 
@@ -1494,14 +2057,14 @@ export default function App() {
                     {activeDlc === dlc.id && <motion.div layoutId="dlc-bar" className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#cc2e2e]" transition={springTransition} />}
                   </button>
                 ))
-              ) : (
+              ) : (ronSubTab === 'loadout' && loadoutSubTab === 'armory') ? (
                 WEAPON_CATEGORIES.map(cat => (
                   <button key={cat.id} onClick={() => setActiveWeaponCat(cat.id)} className={`relative uppercase font-black tracking-[0.1em] text-[12px] transition-all shrink-0 py-2 snap-start whitespace-nowrap ${activeWeaponCat === cat.id ? 'text-[#e5e5e5]' : 'text-white/40 hover:text-white/70'}`}>
                     {cat.label}
                     {activeWeaponCat === cat.id && <motion.div layoutId="wep-cat-bar" className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#cc2e2e]" transition={springTransition} />}
                   </button>
                 ))
-              )}
+              ) : null}
             </div>
           </div>
         </div>
@@ -1512,7 +2075,7 @@ export default function App() {
             {searchQuery ? (
               <div className="w-full h-full overflow-y-auto pb-32 no-scrollbar">{renderSearchResults()}</div>
             ) : (
-              <motion.div key={activeDlc + activeWeaponCat + ronSubTab} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} ref={ronListRef} onScroll={handleContainerScroll} className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6 md:gap-10 max-md:flex max-md:flex-col max-md:overflow-y-scroll no-scrollbar ${ronSubTab === 'maps' ? 'max-md:gap-0 max-md:h-full max-md:snap-y max-md:snap-mandatory' : 'max-md:gap-4 max-md:p-4 max-md:h-full max-md:pb-32'}`}>
+              <motion.div key={activeDlc + activeWeaponCat + ronSubTab + loadoutSubTab} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} ref={ronListRef} onScroll={handleContainerScroll} className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6 md:gap-10 max-md:flex max-md:flex-col max-md:overflow-y-scroll no-scrollbar ${ronSubTab === 'maps' ? 'max-md:gap-0 max-md:h-full max-md:snap-y max-md:snap-mandatory' : 'max-md:gap-4 max-md:p-4 max-md:h-full max-md:pb-32'}`}>
                 {ronSubTab === 'maps' ? currentMaps.map(map => (
                   <div key={map.id} className="relative md:flex-1 md:hover:flex-[3] transition-all duration-700 ease-in-out overflow-hidden md:rounded-3xl group max-md:h-full max-md:w-full max-md:snap-start max-md:shrink-0">
                     <GlassCard onClick={() => handleMapClick(map)} className="h-[350px] md:h-[480px] max-md:h-full max-md:w-full max-md:rounded-none max-md:border-none max-md:shadow-none bg-black">
@@ -1524,60 +2087,151 @@ export default function App() {
                       </div>
                     </GlassCard>
                   </div>
-                )) : (
-                  <div className="lg:col-span-2 w-full pb-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-                    {currentWeapons.map(w => (
-                      <GlassCard key={w.id} onClick={() => handleWeaponClick(w)} className="relative h-[200px] md:h-[250px] overflow-hidden border-white/5 bg-[#111] cursor-pointer group">
-                        {/* Background Image Area */}
-                        <div className="absolute inset-0 p-4 pt-8 md:p-8 flex items-center justify-center pointer-events-none">
-                          <img src={w.image} alt={w.name} className="w-[80%] h-auto object-contain transition-transform duration-500 group-hover:scale-105" style={{ filter: 'drop-shadow(0px 10px 20px rgba(0,0,0,0.8))' }} />
-                        </div>
-                        {/* Gradient Overlay for Text Readability */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/40 to-transparent pointer-events-none"></div>
-                        {/* Text Area */}
-                        <div className="absolute bottom-4 left-6 pointer-events-none">
-                          <p className="text-gray-400 font-bold text-[10px] uppercase tracking-widest mb-1">{w.type}</p>
-                          <h3 className="text-3xl font-black text-white uppercase tracking-tighter leading-none">{w.name}</h3>
-                        </div>
-                      </GlassCard>
-                    ))}
+                )) : (ronSubTab === 'loadout') ? (
+                  <div className="lg:col-span-2 w-full pb-10">
+                    {loadoutSubTab === 'overview' && (
+                      <SwatOperatorUI onSelectCategory={setLoadoutSubTab} />
+                    )}
+
+                    {loadoutSubTab === 'armory' && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                        {currentWeapons.map(w => (
+                          <GlassCard key={w.id} onClick={() => handleWeaponClick(w)} className="relative h-[200px] md:h-[250px] overflow-hidden border-white/5 bg-[#111] cursor-pointer group">
+                            {/* Background Image Area */}
+                            <div className="absolute inset-0 p-4 pt-8 md:p-8 flex items-center justify-center pointer-events-none">
+                              <img src={w.image} alt={w.name} className="w-[80%] h-auto object-contain transition-transform duration-500 group-hover:scale-105" style={{ filter: 'drop-shadow(0px 10px 20px rgba(0,0,0,0.8))' }} />
+                            </div>
+                            {/* Gradient Overlay for Text Readability */}
+                            <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/40 to-transparent pointer-events-none"></div>
+                            {/* Text Area */}
+                            <div className="absolute bottom-4 left-6 pointer-events-none">
+                              <p className="text-gray-400 font-bold text-[10px] uppercase tracking-widest mb-1">{w.type}</p>
+                              <h3 className="text-3xl font-black text-white uppercase tracking-tighter leading-none">{w.name}</h3>
+                            </div>
+                          </GlassCard>
+                        ))}
+                      </div>
+                    )}
+
+                    {loadoutSubTab === 'armor' && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-4xl mx-auto">
+                        <h3 className="sm:col-span-2 text-2xl font-black uppercase italic tracking-tighter border-l-4 border-green-500 pl-4 mb-4">Plate / Armor Database</h3>
+                        {RON_ARMOR_OPTIONS.map(a => (
+                          <GlassCard key={a.id} className="p-6 border-white/5 hover:border-green-500/30 transition-colors">
+                            <ShieldCheck size={32} className="text-green-500 mb-4" />
+                            <h4 className="text-xl font-bold uppercase text-white mb-2">{a.name}</h4>
+                            <p className="text-sm text-gray-400">{a.desc}</p>
+                          </GlassCard>
+                        ))}
+                      </div>
+                    )}
+
+                    {loadoutSubTab === 'headwear' && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-4xl mx-auto">
+                        <h3 className="sm:col-span-2 text-2xl font-black uppercase italic tracking-tighter border-l-4 border-blue-500 pl-4 mb-4">Headwear Database</h3>
+                        {RON_HEADWEAR_OPTIONS.map(h => (
+                          <GlassCard key={h.id} className="p-6 border-white/5 hover:border-blue-500/30 transition-colors flex items-center gap-4">
+                            <HardHat size={32} className="text-blue-500 shrink-0" />
+                            <div>
+                              <p className="text-[10px] uppercase font-bold text-white/40 tracking-widest mb-1">{h.type}</p>
+                              <h4 className="text-lg font-bold uppercase text-white">{h.name}</h4>
+                            </div>
+                          </GlassCard>
+                        ))}
+                      </div>
+                    )}
+
+                    {loadoutSubTab === 'utilities' && (
+                      <div className="space-y-10 max-w-6xl mx-auto">
+                        <h3 className="text-2xl font-black uppercase italic tracking-tighter border-l-4 border-orange-500 pl-4 mb-4">Tactical Utilities Database</h3>
+
+                        {['Throwable', 'Breaching', 'Long Tactical'].map(cat => (
+                          <div key={cat} className="space-y-4">
+                            <h4 className="text-lg font-bold uppercase text-white/50 tracking-widest border-b border-white/10 pb-2">{cat}s</h4>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                              {RON_UTILITIES.filter(u => u.category === cat).map(u => (
+                                <GlassCard key={u.id} className="p-6 border-white/5 hover:border-orange-500/30 transition-colors flex flex-col h-full">
+                                  <div className="flex items-center gap-3 mb-3">
+                                    {cat === 'Throwable' && <Zap size={24} className="text-orange-500 shrink-0" />}
+                                    {cat === 'Breaching' && <Target size={24} className="text-orange-500 shrink-0" />}
+                                    {cat === 'Long Tactical' && <Eye size={24} className="text-orange-500 shrink-0" />}
+                                    <h5 className="text-lg font-bold uppercase text-white leading-tight">{u.name}</h5>
+                                  </div>
+                                  <p className="text-sm text-gray-400 flex-1">{u.desc}</p>
+                                </GlassCard>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                )}
+                ) : null}
               </motion.div>
             )}
           </AnimatePresence>
         </div>
+
+        {/* --- MOBILE SEARCH BAR OVERLAY (Fixed Top) --- */}
+        <AnimatePresence>
+          {isRonSearchOpen && (
+            <motion.div
+              initial={{ y: -50, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: -50, opacity: 0 }}
+              className="fixed top-4 left-4 right-4 z-[100] md:hidden"
+            >
+              <div className="flex items-center bg-zinc-900 border border-white/20 rounded-full px-4 py-3 shadow-2xl">
+                <Search size={18} className="text-white/40 mr-3 shrink-0" />
+                <input
+                  autoFocus
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Gesamte Datenbank durchsuchen..."
+                  className="bg-transparent text-white outline-none text-sm w-full"
+                />
+                <button onClick={() => { setIsRonSearchOpen(false); setSearchQuery(''); }} className="ml-3 shrink-0">
+                  <X size={18} className="text-white/40 hover:text-white" />
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* MOBILE BOTTOM MENU */}
         <motion.div animate={{ y: isScrollingDown ? 200 : 0 }} transition={{ duration: 0.3, ease: "easeInOut" }} className="md:hidden fixed bottom-[68px] left-0 right-0 flex flex-col gap-2 px-3 pt-8 pb-2 bg-gradient-to-t from-[#010101] via-[#010101] to-transparent z-40 pointer-events-none">
           <div className="pointer-events-auto flex flex-col gap-2">
             <div className="flex overflow-x-auto no-scrollbar gap-2 py-1 items-center">
               <div className="shrink-0 flex items-center">
-                {isRonSearchOpen ? (
-                  <motion.div initial={{ width: 0, opacity: 0 }} animate={{ width: 100, opacity: 1 }} className="flex items-center bg-[#111111] rounded-full border border-white/20 px-2 py-1.5 mr-1">
-                    <Search size={12} className="text-white/40 mr-1.5 shrink-0" /><input autoFocus value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Suchen..." className="bg-transparent text-white outline-none text-[10px] w-full" /><button onClick={() => { setIsRonSearchOpen(false); setSearchQuery(''); }} className="shrink-0 ml-1"><X size={12} className="text-white/40 hover:text-white" /></button>
-                  </motion.div>
-                ) : (
-                  <button onClick={() => setIsRonSearchOpen(true)} className="p-1.5 bg-[#111111] border border-transparent rounded-full text-white/50 hover:text-white transition-colors flex items-center justify-center mr-1"><Search size={12} /></button>
-                )}
+                <button onClick={() => setIsRonSearchOpen(true)} className="p-1.5 bg-[#111111] border border-transparent rounded-full text-white/50 hover:text-white transition-colors flex items-center justify-center mr-1"><Search size={12} /></button>
               </div>
+
+              {/* Mobile Back Button for Loadout sub-tabs */}
+              {!searchQuery && ronSubTab === 'loadout' && loadoutSubTab !== 'overview' && (
+                <button
+                  onClick={() => setLoadoutSubTab('overview')}
+                  className="px-3 py-1.5 rounded-full whitespace-nowrap text-[9px] font-black uppercase border border-white/30 text-white shrink-0 mr-2 flex items-center gap-1"
+                >
+                  <ChevronLeft size={12} /> BACK
+                </button>
+              )}
 
               {!searchQuery && (ronSubTab === 'maps' ? (
                 [{ id: 'base', label: 'READY OR NOT' }, { id: 'home_invasion', label: 'HOME INVASION' }, { id: 'dark_waters', label: 'DARK WATERS' }, { id: 'ls_stories', label: 'LOS SUENOS STORIES' }, { id: 'boiling_point', label: 'BOILING POINT' }].map(dlc => (
                   <button key={dlc.id} onClick={() => setActiveDlc(dlc.id)} className={`px-3 py-1.5 rounded-full whitespace-nowrap text-[9px] font-black uppercase border transition-all shrink-0 ${activeDlc === dlc.id ? 'border-[#e31e24] text-white bg-transparent' : 'border-transparent bg-[#111111] text-white/50'}`}>{dlc.label}</button>
                 ))
-              ) : (
+              ) : (ronSubTab === 'loadout' && loadoutSubTab === 'armory') ? (
                 WEAPON_CATEGORIES.map(cat => (
                   <button key={cat.id} onClick={() => setActiveWeaponCat(cat.id)} className={`px-3 py-1.5 rounded-full whitespace-nowrap text-[9px] font-black uppercase border transition-all shrink-0 ${activeWeaponCat === cat.id ? 'border-[#e31e24] text-white bg-transparent' : 'border-transparent bg-[#111111] text-white/50'}`}>{cat.label}</button>
                 ))
-              ))}
+              ) : null)}
             </div>
 
             {!searchQuery && (
               <div className="flex gap-2">
-                {['maps', 'weapons'].map((tab) => (
+                {['maps', 'loadout'].map((tab) => (
                   <button key={tab} onClick={() => handleRonSubTabSwitch(tab)} className={`flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all border-2 ${ronSubTab === tab ? 'bg-[#e31e24] text-white border-white shadow-lg' : 'bg-[#111111] text-white/50 border-transparent'}`}>
-                    {tab === 'maps' ? 'Operations' : 'Armory'}
+                    {tab === 'maps' ? 'Operations' : 'Loadout'}
                   </button>
                 ))}
               </div>
@@ -1589,7 +2243,6 @@ export default function App() {
   };
 
   const renderPubg = () => {
-    // Basic Structure for PUBG remains untouched, keeping original functionality.
     if (selectedMap && selectedMap.game === 'pubg') return (
       <motion.div {...pageTransition} className="space-y-6 md:space-y-8 pt-20 md:pt-24 pb-32 md:pb-20">
         <motion.button onClick={handleBackClick} className="flex items-center gap-2 text-white/70 hover:text-white bg-white/5 px-4 md:px-6 py-3 rounded-full backdrop-blur-xl border border-white/10 transition-all text-xs md:text-sm"><ChevronLeft size={18} /> Zurück zur Auswahl</motion.button>
@@ -1675,7 +2328,7 @@ export default function App() {
         </main>
 
         <footer className="w-full py-8 md:py-10 text-center text-white/10 font-black text-[8px] md:text-[10px] tracking-[0.5em] md:tracking-[1em] uppercase mb-20 md:mb-0">
-          Tactical Repository // inTACTICS v3.3.0
+          Tactical Repository // inTACTICS v4.0.0
           <div className="w-full py-8 md:py-10 text-center text-white/10 text-[8px] copyright">
             <h3>© Copyright</h3>
             <p className="py-8 md:py-10">Ready or Not is a trademark of <a href="https://voidinteractive.net/" target="_blank" rel="noopener noreferrer">VOID Interactive</a>. This is a fan-made project.</p>
