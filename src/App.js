@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Home, Crosshair, Map as MapIcon, Shield, Eye, EyeOff, ChevronLeft, Target, Settings, Info, Lock, Menu, X, Activity, Zap, Clock, FileText, ExternalLink, AlertTriangle, Search, Play, Pause, ZoomIn, ZoomOut, Layers, CheckSquare, Square, MapPin, Skull, Undo, Redo, Maximize, Minimize, ChevronRight, Sun, AlignJustify, HardHat, User, ShieldCheck } from 'lucide-react';
+import { Home, Crosshair, Map as MapIcon, Shield, Eye, EyeOff, ChevronLeft, Target, Settings, Info, Lock, Menu, X, Activity, Zap, Clock, FileText, ExternalLink, AlertTriangle, Search, Play, Pause, ZoomIn, ZoomOut, Layers, CheckSquare, Square, MapPin, Skull, Undo, Redo, Maximize, Minimize, ChevronRight, Sun, AlignJustify, HardHat, User, ShieldCheck, Plus, Minus, Edit3 } from 'lucide-react';
 
 // --- FIREBASE INITIALIZATION ---
 import { initializeApp } from 'firebase/app';
@@ -9,12 +9,6 @@ import { getFirestore, doc, setDoc, onSnapshot, collection } from 'firebase/fire
 
 let app, auth, db, appId;
 try {
-  /* const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-  app = initializeApp(firebaseConfig);
-  auth = getAuth(app);
-  db = getFirestore(app);
-  appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';*/
-  
   const firebaseConfig = {
     apiKey: "demo",
     authDomain: "demo",
@@ -24,6 +18,252 @@ try {
 } catch (e) {
   console.warn("Firebase config not found or invalid. Persistence will be disabled.");
 }
+
+// --- DATA MOCKS ---
+
+const WEAPON_CATEGORIES = [
+  { id: 'Assault Rifles', label: 'Assault Rifles' },
+  { id: 'Submachine Guns', label: 'Submachine Guns' },
+  { id: 'Shotguns', label: 'Shotguns' },
+  { id: 'Pistols', label: 'Pistols' },
+  { id: 'Less-Than-Lethal', label: 'Less-Than-Lethal' }
+];
+
+const RON_WEAPONS = [
+  // --- ASSAULT RIFLES ---
+  {
+    id: 'w_m4a1', category: 'primary', name: 'M4A1', type: 'Assault Rifles', caliber: '5.56x45mm NATO', capacity: '30 Schuss',
+    image: 'https://readyornot.wiki.gg/images/thumb/7/7f/M4A1.png/320px-M4A1.png',
+    desc: 'Das M4A1 ist ein vollautomatisches Sturmgewehr, das sich durch hohe Modularität auszeichnet.',
+    tactical: 'Extrem vielseitig. Ideal für Einsätze mit gemischten Distanzen.'
+  },
+  {
+    id: 'w_mk18', category: 'primary', name: 'MK18', type: 'Assault Rifles', caliber: '5.56x45mm NATO', capacity: '30 Schuss',
+    image: 'https://readyornot.wiki.gg/images/thumb/4/4b/MK18.png/320px-MK18.png',
+    desc: 'Eine kompaktere Version des M4A1, entwickelt für den Nahkampf (CQB).',
+    tactical: 'Viel führiger in extrem engen Umgebungen als das Standard M4A1.'
+  },
+  {
+    id: 'w_arn180', category: 'primary', name: 'ARN-180', type: 'Assault Rifles', caliber: '.300 Blackout', capacity: '30 Schuss',
+    image: 'https://readyornot.wiki.gg/images/thumb/7/7b/ARN-180.png/320px-ARN-180.png?dc189c',
+    desc: 'Ein modernes, kompaktes Sturmgewehr für spezielle Ballistik optimiert.',
+    tactical: 'Die .300 Blackout Munition macht diese Waffe perfekt für Schalldämpfer-Einsätze.'
+  },
+  {
+    id: 'w_sa58', category: 'primary', name: 'SA-58 OSW', type: 'Assault Rifles', caliber: '7.62x51mm NATO', capacity: '20 Schuss',
+    image: 'https://readyornot.wiki.gg/images/thumb/b/ba/SA-58.png/320px-SA-58.png',
+    desc: 'Eine moderne, gekürzte Version des klassischen FAL. Sehr schwer und enorm kraftvoll.',
+    tactical: 'Zerstört Holztüren und durchschlägt schwere Deckungen mit Leichtigkeit.'
+  },
+  {
+    id: 'w_g36c', category: 'primary', name: 'G36C', type: 'Assault Rifles', caliber: '5.56x45mm NATO', capacity: '30 Schuss',
+    image: 'https://readyornot.wiki.gg/images/thumb/9/91/G36C.png/320px-G36C.png',
+    desc: 'Kompaktes deutsches Sturmgewehr aus Polymer, sehr leicht und zuverlässig.',
+    tactical: 'Gut kontrollierbarer Rückstoß, besonders bei Feuerstößen.'
+  },
+
+  // --- SUBMACHINE GUNS ---
+  {
+    id: 'w_mp5a3', category: 'primary', name: 'MP5A3', type: 'Submachine Guns', caliber: '9x19mm Parabellum', capacity: '30 Schuss',
+    image: 'https://readyornot.wiki.gg/images/thumb/2/23/MP5A3.png/320px-MP5A3.png',
+    desc: 'Die klassische SWAT-Maschinenpistole, berühmt für ihr Rollenverschluss-System.',
+    tactical: 'Die erste Wahl für Geiselsituationen ohne gepanzerte Feinde.'
+  },
+  {
+    id: 'w_mpx', category: 'primary', name: 'MPX', type: 'Submachine Guns', caliber: '9x19mm Parabellum', capacity: '30 Schuss',
+    image: 'https://readyornot.wiki.gg/images/thumb/e/ef/MPX.png/320px-MPX.png',
+    desc: 'Moderne Maschinenpistole mit AR-15 ähnlichen Bedienelementen.',
+    tactical: 'Sehr schnelle Feuerrate und extrem wenig Rückstoß.'
+  },
+  {
+    id: 'w_ump45', category: 'primary', name: 'UMP-45', type: 'Submachine Guns', caliber: '.45 ACP', capacity: '25 Schuss',
+    image: 'https://readyornot.wiki.gg/images/thumb/d/d7/UMP-45.png/320px-UMP-45.png',
+    desc: 'Eine leichte Maschinenpistole mit großem Kaliber.',
+    tactical: 'Hohe Stoppwirkung gegen ungeschützte Ziele.'
+  },
+
+  // --- SHOTGUNS ---
+  {
+    id: 'w_870cqb', category: 'primary', name: '870 CQB', type: 'Shotguns', caliber: '12 Gauge', capacity: '7 Schuss',
+    image: 'https://readyornot.wiki.gg/images/thumb/6/64/870_CQB.png/320px-870_CQB.png',
+    desc: 'Eine klassische, taktische Pump-Action Schrotflinte.',
+    tactical: 'Verheerend auf nächste Distanz. Nachladen dauert lange.'
+  },
+
+  // --- PISTOLS ---
+  {
+    id: 'w_g19', category: 'secondary', name: 'G19', type: 'Pistols', caliber: '9x19mm Parabellum', capacity: '15 Schuss',
+    image: 'https://readyornot.wiki.gg/images/thumb/7/77/G19.png/320px-G19.png',
+    desc: 'Eine kompakte, leichte und extrem zuverlässige Dienstpistole.',
+    tactical: 'Die beste Allround-Seitenwaffe im Spiel.'
+  },
+  {
+    id: 'w_m45a1', category: 'secondary', name: 'M45A1', type: 'Pistols', caliber: '.45 ACP', capacity: '7 Schuss',
+    image: 'https://readyornot.wiki.gg/images/thumb/6/6c/M45A1.png/320px-M45A1.png',
+    desc: 'Eine moderne, taktische Variante der legendären 1911er Plattform.',
+    tactical: 'Hoher Schaden pro Schuss. Geringe Kapazität.'
+  },
+  {
+    id: 'w_57usg', category: 'secondary', name: 'Five-seveN', type: 'Pistols', caliber: '5.7x28mm', capacity: '20 Schuss',
+    image: 'https://readyornot.wiki.gg/images/thumb/2/23/Five_seveN.png/320px-Five_seveN.png',
+    desc: 'Verschießt ein kleines, pfeilschnelles Kaliber.',
+    tactical: 'Waffe der Wahl gegen schwer gepanzerte Ziele.'
+  },
+
+  // --- LESS-THAN-LETHAL ---
+  {
+    id: 'w_beanbag', category: 'primary', name: 'Beanbag Shotgun', type: 'Less-Than-Lethal', caliber: '12 Gauge', capacity: '7 Schuss',
+    image: 'https://readyornot.wiki.gg/images/thumb/2/22/Beanbag_Shotgun.png/320px-Beanbag_Shotgun.png',
+    desc: 'Verschießt nicht-tödliche Beanbag-Geschosse.',
+    tactical: 'Achtung: Kopfschüsse sind tödlich! Auf Beine zielen.'
+  }
+];
+
+const RON_ATTACHMENTS = {
+  Optics: [
+    { id: 'opt_srs', name: 'SRS', image: 'https://readyornot.wiki.gg/images/thumb/8/87/SRS.png/120px-SRS.png', desc: 'Geschlossenes Red Dot Visier.' },
+    { id: 'opt_holo', name: 'Holo (EXPS3)', image: 'https://readyornot.wiki.gg/images/thumb/5/52/EXPS3.png/120px-EXPS3.png', desc: 'Holographisches Visier.' },
+    { id: 'opt_micro', name: 'Micro T2', image: 'https://readyornot.wiki.gg/images/thumb/0/07/Micro_T2.png/120px-Micro_T2.png', desc: 'Kompaktes Rotpunktvisier.' }
+  ],
+  Muzzle: [
+    { id: 'muz_socom', name: 'SOCOM556', image: 'https://readyornot.wiki.gg/images/thumb/e/ef/Suppressor_%285.56%29.png/120px-Suppressor_%285.56%29.png', desc: 'Schalldämpfer.' },
+    { id: 'muz_comp', name: 'Compensator', image: 'https://readyornot.wiki.gg/images/thumb/b/b3/Compensator.png/120px-Compensator.png', desc: 'Reduziert vertikalen Rückstoß.' }
+  ],
+  Underbarrel: [
+    { id: 'ub_vert', name: 'Vertical Grip', image: 'https://readyornot.wiki.gg/images/thumb/0/06/Control_Grip.png/120px-Control_Grip.png', desc: 'Sturmgriff.' },
+    { id: 'ub_angled', name: 'Angled Grip', image: 'https://readyornot.wiki.gg/images/thumb/5/5f/Speed_Grip.png/120px-Speed_Grip.png', desc: 'Abgewinkelter Griff.' }
+  ],
+  Overbarrel: [
+    { id: 'ob_flash', name: 'Flashlight', image: 'https://readyornot.wiki.gg/images/thumb/2/22/Flashlight.png/120px-Flashlight.png', desc: 'Helle Taschenlampe.' },
+    { id: 'ob_laser', name: 'Laser Pointer', image: 'https://readyornot.wiki.gg/images/thumb/4/41/Laser_Pointer.png/120px-Laser_Pointer.png', desc: 'Roter Laser.' }
+  ]
+};
+
+const RON_HEADWEAR_OPTIONS = [
+  {
+    id: 'helmet_ballistic', name: 'Ballistic Helmet', type: 'helmet', image: 'https://static.wikia.nocookie.net/ready-or-not/images/d/df/Ballistic_Helmet.png/revision/latest/scale-to-width-down/150', desc: 'Schützt vor Pistolenbeschuss.',
+    skins: [
+      { id: 'lspd_black', name: 'LSPD Black', image: 'https://static.wikia.nocookie.net/ready-or-not/images/d/df/Ballistic_Helmet.png/revision/latest/scale-to-width-down/150' },
+      { id: 'ranger_green', name: 'Ranger Green', image: 'https://static.wikia.nocookie.net/ready-or-not/images/d/df/Ballistic_Helmet.png/revision/latest/scale-to-width-down/150' },
+      { id: 'multicam', name: 'MultiCam', image: 'https://static.wikia.nocookie.net/ready-or-not/images/d/df/Ballistic_Helmet.png/revision/latest/scale-to-width-down/150' }
+    ]
+  },
+  {
+    id: 'helmet_bump', name: 'Bump Helmet', type: 'helmet', image: 'https://static.wikia.nocookie.net/ready-or-not/images/7/7b/Bump_Helmet.png/revision/latest/scale-to-width-down/150', desc: 'Leichter Helm ohne ballistischen Schutz.',
+    skins: [
+      { id: 'black', name: 'Black', image: 'https://static.wikia.nocookie.net/ready-or-not/images/7/7b/Bump_Helmet.png/revision/latest/scale-to-width-down/150' },
+      { id: 'tan', name: 'Tan', image: 'https://static.wikia.nocookie.net/ready-or-not/images/7/7b/Bump_Helmet.png/revision/latest/scale-to-width-down/150' }
+    ]
+  },
+  {
+    id: 'nvg', name: 'Night Vision (NVG)', type: 'nvg', image: 'https://static.wikia.nocookie.net/ready-or-not/images/f/f6/NVG.png/revision/latest/scale-to-width-down/150', desc: 'Sicht bei absoluter Dunkelheit.',
+    skins: [
+      { id: 'gpnvg_black', name: 'GPNVG-18 (Black)', image: 'https://static.wikia.nocookie.net/ready-or-not/images/f/f6/NVG.png/revision/latest/scale-to-width-down/150' },
+      { id: 'gpnvg_tan', name: 'GPNVG-18 (Tan)', image: 'https://static.wikia.nocookie.net/ready-or-not/images/f/f6/NVG.png/revision/latest/scale-to-width-down/150' },
+      { id: 'pvs15_black', name: 'PVS-15 (Black)', image: 'https://static.wikia.nocookie.net/ready-or-not/images/f/f6/NVG.png/revision/latest/scale-to-width-down/150' }
+    ]
+  },
+  {
+    id: 'gasmask', name: 'CBRN Gas Mask', type: 'gasmask', image: 'https://static.wikia.nocookie.net/ready-or-not/images/a/a9/Gas_Mask.png/revision/latest/scale-to-width-down/150', desc: 'Schützt komplett vor Tränengas (CS Gas).',
+    skins: [
+      { id: 'm50', name: 'M50 Standard', image: 'https://static.wikia.nocookie.net/ready-or-not/images/a/a9/Gas_Mask.png/revision/latest/scale-to-width-down/150' }
+    ]
+  },
+  {
+    id: 'flashgoggles', name: 'Anti-Flash Goggles', type: 'flashgoggles', image: 'https://static.wikia.nocookie.net/ready-or-not/images/3/3d/Anti-Flash_Goggles.png/revision/latest/scale-to-width-down/150', desc: 'Reduziert die Blendwirkung von Flashbangs deutlich.',
+    skins: [
+      { id: 'clear', name: 'Clear Lens', image: 'https://static.wikia.nocookie.net/ready-or-not/images/3/3d/Anti-Flash_Goggles.png/revision/latest/scale-to-width-down/150' },
+      { id: 'tinted', name: 'Tinted Lens', image: 'https://static.wikia.nocookie.net/ready-or-not/images/3/3d/Anti-Flash_Goggles.png/revision/latest/scale-to-width-down/150' }
+    ]
+  },
+  {
+    id: 'mask_ballistic', name: 'Ballistic Facemask', type: 'ballistic_mask', image: 'https://static.wikia.nocookie.net/ready-or-not/images/0/07/Ballistic_Mask.png/revision/latest/scale-to-width-down/150', desc: 'Kevlar-Gesichtsmaske, kann kleine Kaliber abwehren.',
+    skins: [
+      { id: 'black', name: 'Black Standard', image: 'https://static.wikia.nocookie.net/ready-or-not/images/0/07/Ballistic_Mask.png/revision/latest/scale-to-width-down/150' }
+    ]
+  }
+];
+
+const RON_ARMOR_OPTIONS = [
+  {
+    id: 'light', name: 'Light Armor', slots: 13, image: 'https://static.wikia.nocookie.net/ready-or-not/images/0/02/LSPD_Light_Armor.png/revision/latest/scale-to-width-down/200', desc: 'Leichte Weste für Mobilität. (13 Slots)',
+    skins: [
+      { id: 'lspd_black', name: 'LSPD Black', image: 'https://static.wikia.nocookie.net/ready-or-not/images/0/02/LSPD_Light_Armor.png/revision/latest/scale-to-width-down/200' },
+      { id: 'swat99', name: 'SWAT 99', image: 'https://static.wikia.nocookie.net/ready-or-not/images/0/02/LSPD_Light_Armor.png/revision/latest/scale-to-width-down/200' },
+      { id: 'ranger_green', name: 'Ranger Green', image: 'https://static.wikia.nocookie.net/ready-or-not/images/0/02/LSPD_Light_Armor.png/revision/latest/scale-to-width-down/200' }
+    ]
+  },
+  {
+    id: 'heavy', name: 'Heavy Armor', slots: 11, image: 'https://static.wikia.nocookie.net/ready-or-not/images/b/b4/LSPD_Heavy_Armor.png/revision/latest/scale-to-width-down/200', desc: 'Maximaler Schutz. (11 Slots)',
+    skins: [
+      { id: 'lspd_black', name: 'LSPD Black', image: 'https://static.wikia.nocookie.net/ready-or-not/images/b/b4/LSPD_Heavy_Armor.png/revision/latest/scale-to-width-down/200' },
+      { id: 'ranger_green', name: 'Ranger Green', image: 'https://static.wikia.nocookie.net/ready-or-not/images/b/b4/LSPD_Heavy_Armor.png/revision/latest/scale-to-width-down/200' },
+      { id: 'fib', name: 'FIB HRT', image: 'https://static.wikia.nocookie.net/ready-or-not/images/b/b4/LSPD_Heavy_Armor.png/revision/latest/scale-to-width-down/200' },
+      { id: 'multicam', name: 'MultiCam', image: 'https://static.wikia.nocookie.net/ready-or-not/images/b/b4/LSPD_Heavy_Armor.png/revision/latest/scale-to-width-down/200' }
+    ]
+  },
+  {
+    id: 'stab_vest', name: 'Stab Vest', slots: 15, image: 'https://static.wikia.nocookie.net/ready-or-not/images/c/c5/LSPD_No_Armor.png/revision/latest/scale-to-width-down/200', desc: 'Stichschutz mit extremer Magazin-Kapazität. (15 Slots)',
+    skins: [
+      { id: 'detective', name: 'Detective', image: 'https://static.wikia.nocookie.net/ready-or-not/images/c/c5/LSPD_No_Armor.png/revision/latest/scale-to-width-down/200' }
+    ]
+  },
+  {
+    id: 'none', name: 'No Armor', slots: 9, image: 'https://static.wikia.nocookie.net/ready-or-not/images/c/c5/LSPD_No_Armor.png/revision/latest/scale-to-width-down/200', desc: 'Kein Schutz. Minimale Slots. (9 Slots)',
+    skins: [
+      { id: 'cop', name: 'Beat Cop', image: 'https://static.wikia.nocookie.net/ready-or-not/images/c/c5/LSPD_No_Armor.png/revision/latest/scale-to-width-down/200' }
+    ]
+  }
+];
+
+const RON_UTILITIES = [
+  // Throwables
+  { id: 'util_flash', category: 'Throwable', slotType: 'throwable', image: 'https://static.wikia.nocookie.net/ready-or-not/images/8/87/Flashbang.png/revision/latest/scale-to-width-down/150', name: 'Flashbang', desc: 'Blendet temporär durch grellen Blitz und Knall.' },
+  { id: 'util_9bang', category: 'Throwable', slotType: 'throwable', image: 'https://static.wikia.nocookie.net/ready-or-not/images/a/a2/Stinger_Grenade.png/revision/latest/scale-to-width-down/150', name: '9-Bang', desc: 'Zündet extrem schnell hintereinander. Massive Desorientierung.' },
+  { id: 'util_cs', category: 'Throwable', slotType: 'throwable', image: 'https://static.wikia.nocookie.net/ready-or-not/images/b/b2/CS_Gas.png/revision/latest/scale-to-width-down/150', name: 'CS Gas', desc: 'Verursacht Husten. Zwingt zur Aufgabe. Gasmaske empfohlen.' },
+  { id: 'util_stinger', category: 'Throwable', slotType: 'throwable', image: 'https://static.wikia.nocookie.net/ready-or-not/images/a/a2/Stinger_Grenade.png/revision/latest/scale-to-width-down/150', name: 'Stinger Grenade', desc: 'Verteilt schmerzhaftes Gummischrot im ganzen Raum. Sehr effektiv.' },
+
+  // Tools
+  { id: 'util_c2', category: 'Breaching', slotType: 'device', image: 'https://static.wikia.nocookie.net/ready-or-not/images/6/62/C2_Explosive.png/revision/latest/scale-to-width-down/150', name: 'C2 Explosive', desc: 'Sprengt Türen mit enormer Wucht auf und betäubt Personen dahinter.' },
+  { id: 'util_taser', category: 'Tactical Device', slotType: 'device', image: 'https://static.wikia.nocookie.net/ready-or-not/images/7/75/Taser.png/revision/latest/scale-to-width-down/150', name: 'Taser', desc: 'Neutralisiert Verdächtige sofort auf kurze Distanz durch Elektroschock.' },
+  { id: 'util_lockpick', category: 'Tactical Device', slotType: 'device', image: 'https://static.wikia.nocookie.net/ready-or-not/images/4/4e/Lockpick_Gun.png/revision/latest/scale-to-width-down/150', name: 'Lockpick Gun', desc: 'Öffnet verschlossene Türen lautlos und doppelt so schnell.' },
+
+  // Long Tactical
+  { id: 'util_ram', category: 'Breaching', slotType: 'long_tactical', image: 'https://static.wikia.nocookie.net/ready-or-not/images/2/23/Battering_Ram.png/revision/latest/scale-to-width-down/150', name: 'Battering Ram', desc: 'Schwere Ramme zum manuellen Aufbrechen von Türen mit einem Schlag.' },
+  { id: 'util_breach_shotgun', category: 'Breaching', slotType: 'long_tactical', image: 'https://static.wikia.nocookie.net/ready-or-not/images/6/64/870_CQB.png/revision/latest/scale-to-width-down/150', name: 'Breach Shotgun', desc: 'Zerstört Türschlösser aus sicherer Entfernung. Schneller als Lockpicking.' },
+  { id: 'util_mirror', category: 'Long Tactical', slotType: 'long_tactical', image: 'https://static.wikia.nocookie.net/ready-or-not/images/9/91/Mirrorgun.png/revision/latest/scale-to-width-down/150', name: 'Mirrorgun', desc: 'Wird unter der Tür hindurchgeschoben. Erkennt Sprengfallen und Feindlage.' },
+  { id: 'util_shield', category: 'Long Tactical', slotType: 'long_tactical', image: 'https://static.wikia.nocookie.net/ready-or-not/images/c/cf/Ballistic_Shield.png/revision/latest/scale-to-width-down/150', name: 'Ballistic Shield', desc: 'Schützt den Träger von vorne. Zwingt zur Nutzung einer Handfeuerwaffe.' },
+  { id: 'util_rescue_shield', category: 'Long Tactical', slotType: 'long_tactical', image: 'https://static.wikia.nocookie.net/ready-or-not/images/c/cf/Ballistic_Shield.png/revision/latest/scale-to-width-down/150', name: 'Rescue Shield', desc: 'Umfassenderer, größerer Schild für Geiselrettungen, nimmt mehr Sicht weg.' },
+  { id: 'util_launcher', category: 'Long Tactical', slotType: 'long_tactical', image: 'https://static.wikia.nocookie.net/ready-or-not/images/1/1a/M320.png/revision/latest/scale-to-width-down/150', name: 'M320 Launcher', desc: 'Verschießt Granaten zielgenau über mittlere Distanzen.' },
+  { id: 'util_pepperball', category: 'Long Tactical', slotType: 'long_tactical', image: 'https://static.wikia.nocookie.net/ready-or-not/images/9/91/Pepperball_Launcher.png/revision/latest/scale-to-width-down/150', name: 'Pepperball', desc: 'Verschießt Pfefferkugeln zur Aufruhrkontrolle. Nicht-tödlich.' }
+];
+
+const DEFAULT_STANDARD_LOADOUT = {
+  primary: 'w_m4a1',
+  primaryAttachments: { Optics: 'opt_holo', Muzzle: null, Underbarrel: 'ub_vert', Overbarrel: 'ob_flash' },
+  primaryMagsAP: 3,
+  primaryMagsJHP: 1,
+  secondary: 'w_g19',
+  secondaryMagsAP: 2,
+  secondaryMagsJHP: 1,
+  armor: 'light',
+  headwear: ['helmet_ballistic'],
+  longTactical: 'util_mirror',
+  throwables: { util_flash: 2, util_cs: 0, util_stinger: 0, util_9bang: 0 },
+  devices: { util_c2: 1, util_taser: 1, util_lockpick: 0 },
+  preferredSkins: {
+    'heavy': 'lspd_black',
+    'light': 'lspd_black',
+    'stab_vest': 'detective',
+    'none': 'cop',
+    'helmet_ballistic': 'lspd_black',
+    'helmet_bump': 'black',
+    'nvg': 'gpnvg_black',
+    'gasmask': 'm50',
+    'flashgoggles': 'clear',
+    'mask_ballistic': 'black'
+  }
+};
 
 // --- DATA MOCKS ---
 
@@ -294,273 +534,117 @@ const RON_MAPS = [
   }
 ];
 
-const WEAPON_CATEGORIES = [
-  { id: 'Assault Rifles', label: 'Assault Rifles' },
-  { id: 'Submachine Guns', label: 'Submachine Guns' },
-  { id: 'Shotguns', label: 'Shotguns' },
-  { id: 'Pistols', label: 'Pistols' },
-  { id: 'Less-Than-Lethal', label: 'Less-Than-Lethal' }
-];
-
-const RON_WEAPONS = [
-  // --- ASSAULT RIFLES ---
-  {
-    id: 'w_m4a1', category: 'primary', name: 'M4A1', type: 'Assault Rifles', caliber: '5.56x45mm NATO', capacity: '30 Schuss',
-    image: 'https://readyornot.wiki.gg/images/thumb/7/7f/M4A1.png/320px-M4A1.png',
-    desc: 'Das M4A1 ist ein vollautomatisches Sturmgewehr, das sich durch hohe Modularität auszeichnet. Es ist der Standard für viele SWAT Einheiten.',
-    tactical: 'Extrem vielseitig. Ideal für Einsätze mit gemischten Distanzen. Dank der 5.56mm Munition gute Rüstungsdurchdringung, allerdings besteht bei ungepanzerten Zielen die Gefahr von Durchschüssen (Overpenetration), was Geiseln hinter den Wänden gefährden kann.'
-  },
-  {
-    id: 'w_mk18', category: 'primary', name: 'MK18', type: 'Assault Rifles', caliber: '5.56x45mm NATO', capacity: '30 Schuss',
-    image: 'https://readyornot.wiki.gg/images/thumb/4/4b/MK18.png/320px-MK18.png',
-    desc: 'Eine kompaktere Version des M4A1, entwickelt für den Nahkampf (CQB).',
-    tactical: 'Durch den kürzeren Lauf ist sie in extrem engen Umgebungen (wie Wohnungen in Brisa Cove) viel führiger als das Standard M4A1. Minimal geringere Reichweite, aber überragend in Innenräumen.'
-  },
-  {
-    id: 'w_arn180', category: 'primary', name: 'ARN-180', type: 'Assault Rifles', caliber: '.300 Blackout', capacity: '30 Schuss',
-    image: 'https://readyornot.wiki.gg/images/thumb/7/7b/ARN-180.png/320px-ARN-180.png?dc189c',
-    desc: 'Ein modernes, kompaktes Sturmgewehr für spezielle Ballistik optimiert.',
-    tactical: 'Die .300 Blackout Munition macht diese Waffe perfekt für Schalldämpfer-Einsätze. Hervorragende Stoppwirkung im CQB ohne übermäßige Durchschlagskraft, was sie in Häusern sehr sicher macht.'
-  },
-  {
-    id: 'w_sa58', category: 'primary', name: 'SA-58 OSW', type: 'Assault Rifles', caliber: '7.62x51mm NATO', capacity: '20 Schuss',
-    image: 'https://readyornot.wiki.gg/images/thumb/b/ba/SA-58.png/320px-SA-58.png',
-    desc: 'Eine moderne, gekürzte Version des klassischen FAL. Sehr schwer und enorm kraftvoll.',
-    tactical: 'Zerstört Holztüren und durchschlägt schwere Deckungen mit Leichtigkeit. Die absolut beste Wahl gegen Suspects mit schwerer Körperpanzerung. Achtung: Der Rückstoß ist enorm hoch.'
-  },
-  {
-    id: 'w_g36c', category: 'primary', name: 'G36C', type: 'Assault Rifles', caliber: '5.56x45mm NATO', capacity: '30 Schuss',
-    image: 'https://readyornot.wiki.gg/images/thumb/9/91/G36C.png/320px-G36C.png',
-    desc: 'Kompaktes deutsches Sturmgewehr aus Polymer, sehr leicht und zuverlässig.',
-    tactical: 'Gut kontrollierbarer Rückstoß, besonders bei Feuerstößen. Eine ausgezeichnete Alternative zum M4A1 für Spieler, die ein klares Sichtbild bevorzugen.'
-  },
-
-  // --- SUBMACHINE GUNS ---
-  {
-    id: 'w_mp5a3', category: 'primary', name: 'MP5A3', type: 'Submachine Guns', caliber: '9x19mm Parabellum', capacity: '30 Schuss',
-    image: 'https://readyornot.wiki.gg/images/thumb/2/23/MP5A3.png/320px-MP5A3.png',
-    desc: 'Die klassische SWAT-Maschinenpistole, berühmt für ihr Rollenverschluss-System.',
-    tactical: 'Die erste Wahl für Geiselsituationen ohne gepanzerte Feinde. Extrem geringer Rückstoß erlaubt sehr präzise Schüsse. Die geringere Durchschlagskraft minimiert Kollateralschäden extrem.'
-  },
-  {
-    id: 'w_mpx', category: 'primary', name: 'MPX', type: 'Submachine Guns', caliber: '9x19mm Parabellum', capacity: '30 Schuss',
-    image: 'https://readyornot.wiki.gg/images/thumb/e/ef/MPX.png/320px-MPX.png',
-    desc: 'Moderne Maschinenpistole mit AR-15 ähnlichen Bedienelementen.',
-    tactical: 'Sehr schnelle Feuerrate und extrem wenig Rückstoß. Ideal für schnelle Raumstürmungen, bei denen die Feinde keine Kevlar-Westen tragen.'
-  },
-  {
-    id: 'w_ump45', category: 'primary', name: 'UMP-45', type: 'Submachine Guns', caliber: '.45 ACP', capacity: '25 Schuss',
-    image: 'https://readyornot.wiki.gg/images/thumb/d/d7/UMP-45.png/320px-UMP-45.png',
-    desc: 'Eine leichte Maschinenpistole mit großem Kaliber, aber vergleichsweise langsamer Feuerrate.',
-    tactical: 'Hohe Stoppwirkung gegen ungeschützte Ziele. Gut kontrollierbar dank der langsamen Feuerrate. Etwas schwächer gegen militärische Schutzwesten.'
-  },
-  {
-    id: 'w_p90', category: 'primary', name: 'P90', type: 'Submachine Guns', caliber: '5.7x28mm', capacity: '50 Schuss',
-    image: 'https://readyornot.wiki.gg/images/thumb/e/e4/P90.png/320px-P90.png',
-    desc: 'Bullpup-Maschinenpistole mit massivem Magazin und panzerbrechender Munition.',
-    tactical: 'Das 50-Schuss Magazin erlaubt es, mehrere Gegner ohne Nachladen zu bekämpfen. Die 5.7mm Munition durchschlägt auch leichte Körperpanzerung besser als herkömmliche 9mm SMGs.'
-  },
-
-  // --- SHOTGUNS ---
-  {
-    id: 'w_870cqb', category: 'primary', name: '870 CQB', type: 'Shotguns', caliber: '12 Gauge', capacity: '7 Schuss',
-    image: 'https://readyornot.wiki.gg/images/thumb/6/64/870_CQB.png/320px-870_CQB.png',
-    desc: 'Eine klassische, taktische Pump-Action Schrotflinte, optimiert für den Nahkampf.',
-    tactical: 'Verheerend auf nächste Distanz. Ideal um ungeschützte Verdächtige sofort zu neutralisieren. Vorsicht: Nachladen dauert extrem lange (einzelne Patronen).'
-  },
-  {
-    id: 'w_m4super90', category: 'primary', name: 'M1014', type: 'Shotguns', caliber: '12 Gauge', capacity: '7 Schuss',
-    image: 'https://readyornot.wiki.gg/images/thumb/4/4e/M1014.png/320px-M1014.png',
-    desc: 'Eine halbautomatische Kampfflinte für schnelle Schussfolgen.',
-    tactical: 'Bietet die gleiche Zerstörungskraft wie die 870 CQB, schießt jedoch deutlich schneller. Hervorragend, wenn man in einem Raum direkt auf mehrere Gegner trifft.'
-  },
-
-  // --- PISTOLS ---
-  {
-    id: 'w_g19', category: 'secondary', name: 'G19', type: 'Pistols', caliber: '9x19mm Parabellum', capacity: '15 Schuss',
-    image: 'https://readyornot.wiki.gg/images/thumb/7/77/G19.png/320px-G19.png',
-    desc: 'Eine kompakte, leichte und extrem zuverlässige Dienstpistole aus Polymer.',
-    tactical: 'Die beste Allround-Seitenwaffe im Spiel. Ausreichend Munition, sehr moderater Rückstoß und schnelle Nachladezeit. Perfekt als Backup, wenn das Magazin der Primärwaffe leer ist.'
-  },
-  {
-    id: 'w_m45a1', category: 'secondary', name: 'M45A1', type: 'Pistols', caliber: '.45 ACP', capacity: '7 Schuss',
-    image: 'https://readyornot.wiki.gg/images/thumb/6/6c/M45A1.png/320px-M45A1.png',
-    desc: 'Eine moderne, taktische Variante der legendären 1911er Plattform.',
-    tactical: 'Hoher Schaden pro Schuss. Ideal für präzises Einzelfeuer und stark gegen ungepanzerte Ziele, aber die sehr geringe Magazinkapazität verzeiht keine Fehler in Stresssituationen.'
-  },
-  {
-    id: 'w_57usg', category: 'secondary', name: 'Five-seveN', type: 'Pistols', caliber: '5.7x28mm', capacity: '20 Schuss',
-    image: 'https://readyornot.wiki.gg/images/thumb/2/23/Five_seveN.png/320px-Five_seveN.png',
-    desc: 'Eine Spezialpistole, die ein sehr kleines, pfeilschnelles Kaliber verschießt, ähnlich dem von Sturmgewehren.',
-    tactical: 'Die Waffe der Wahl gegen schwer gepanzerte Ziele, wenn auf die Seitenwaffe gewechselt werden muss. Besitzt zudem das größte Magazin aller Pistolen.'
-  },
-  {
-    id: 'w_usp45', category: 'secondary', name: 'USP45', type: 'Pistols', caliber: '.45 ACP', capacity: '12 Schuss',
-    image: 'https://readyornot.wiki.gg/images/thumb/1/18/USP45.png/320px-USP45.png',
-    desc: 'Großkalibrige, deutsche Dienstpistole. Äußerst robust.',
-    tactical: 'Ein hervorragender Kompromiss aus der Stoppwirkung einer .45er und einer akzeptablen Magazinkapazität von 12 Schuss.'
-  },
-  {
-    id: 'w_357mag', category: 'secondary', name: '.357 Magnum', type: 'Pistols', caliber: '.357 Magnum', capacity: '6 Schuss',
-    image: 'https://readyornot.wiki.gg/images/thumb/2/28/.357_Magnum.png/320px-.357_Magnum.png',
-    desc: 'Ein klassischer Revolver, der eine immense kinetische Energie ins Ziel bringt.',
-    tactical: 'Ein Schuss, ein Treffer. Durchschlägt fast jede Deckung im Spiel. Das langsame Nachladen machen den Revolver jedoch zu einer Waffe für absolute Profis.'
-  },
-
-  // --- LESS-THAN-LETHAL ---
-  {
-    id: 'w_beanbag', category: 'primary', name: 'Beanbag Shotgun', type: 'Less-Than-Lethal', caliber: '12 Gauge (Beanbag)', capacity: '7 Schuss',
-    image: 'https://readyornot.wiki.gg/images/thumb/2/22/Beanbag_Shotgun.png/320px-Beanbag_Shotgun.png',
-    desc: 'Verschießt nicht-tödliche Beanbag-Geschosse, um Verdächtige auf Distanz handlungsunfähig zu machen.',
-    tactical: 'Achtung: Kopfschüsse sind auch hiermit tödlich! Immer auf den Torso oder die Beine zielen. Perfekt, um den S-Rank zu erreichen.'
-  },
-  {
-    id: 'w_taser', category: 'secondary', name: 'Taser', type: 'Less-Than-Lethal', caliber: 'Elektroschock', capacity: '1 Schuss',
-    image: 'https://readyornot.wiki.gg/images/thumb/7/75/Taser.png/320px-Taser.png',
-    desc: 'Ein Distanz-Elektroimpulsgerät. Neutralisiert Verdächtige sofort auf kurze Distanz.',
-    tactical: 'Die Nachladezeit ist sehr hoch und die Reichweite stark limitiert. Nur verwenden, wenn man ausreichende Deckung oder Backup durch das Team hat.'
-  }
-];
-
-const RON_ATTACHMENTS = {
-  Optics: [
-    { id: 'opt_srs', name: 'SRS', image: 'https://readyornot.wiki.gg/images/thumb/8/87/SRS.png/120px-SRS.png', desc: 'Geschlossenes Red Dot Visier. Bietet ein weites Sichtfeld und klare Zielerfassung.' },
-    { id: 'opt_holo', name: 'Holo (EXPS3)', image: 'https://readyornot.wiki.gg/images/thumb/5/52/EXPS3.png/120px-EXPS3.png', desc: 'Holographisches Visier. Perfekt für den Nahkampf (CQB) mit großem Absehen.' },
-    { id: 'opt_micro', name: 'Micro T2', image: 'https://readyornot.wiki.gg/images/thumb/0/07/Micro_T2.png/120px-Micro_T2.png', desc: 'Kompaktes Rotpunktvisier. Nimmt extrem wenig Platz auf der Schiene ein.' },
-    { id: 'opt_m5b', name: 'M5B', image: 'https://readyornot.wiki.gg/images/thumb/1/1b/M5B.png/120px-M5B.png', desc: 'Kompaktes Red Dot mit minimalem Rahmen.' },
-    { id: 'opt_atakr', name: 'ATAK-R', image: 'https://readyornot.wiki.gg/images/thumb/a/a2/ATAK-R.png/120px-ATAK-R.png', desc: 'Variables Zielfernrohr (1-4x). Ideal für längere Distanzen, z.B. auf Brisa Cove.' },
-    { id: 'opt_sdr', name: 'SDR', image: 'https://readyornot.wiki.gg/images/thumb/2/25/SDR.png/120px-SDR.png', desc: 'Combat-Visier mit fester Vergrößerung. Ein guter Mittelweg.' }
-  ],
-  Muzzle: [
-    { id: 'muz_socom', name: 'SOCOM556', image: 'https://readyornot.wiki.gg/images/thumb/e/ef/Suppressor_%285.56%29.png/120px-Suppressor_%285.56%29.png', desc: 'Schalldämpfer. Reduziert den Mündungsknall drastisch, verringert aber leicht die Führigkeit.' },
-    { id: 'muz_osprey', name: 'Osprey', image: 'https://readyornot.wiki.gg/images/thumb/3/36/Suppressor_%28.45%29.png/120px-Suppressor_%28.45%29.png', desc: 'Rechteckiger Schalldämpfer für Pistolen und Maschinenpistolen. Sehr leise.' },
-    { id: 'muz_comp', name: 'Compensator', image: 'https://readyornot.wiki.gg/images/thumb/b/b3/Compensator.png/120px-Compensator.png', desc: 'Leitet Gase nach oben ab, um den vertikalen Rückstoß bei Dauerfeuer zu verringern.' },
-    { id: 'muz_flash', name: 'Flash Hider', image: 'https://readyornot.wiki.gg/images/thumb/4/4b/Flash_Hider.png/120px-Flash_Hider.png', desc: 'Eliminiert den Mündungsblitz komplett. Verhindert Blendung bei Nutzung von Nachtsicht.' }
-  ],
-  Underbarrel: [
-    { id: 'ub_vert', name: 'Vertical Grip', image: 'https://readyornot.wiki.gg/images/thumb/0/06/Control_Grip.png/120px-Control_Grip.png', desc: 'Klassischer Sturmgriff. Maximale Reduzierung des vertikalen Rückstoßes.' },
-    { id: 'ub_angled', name: 'Angled Grip', image: 'https://readyornot.wiki.gg/images/thumb/5/5f/Speed_Grip.png/120px-Speed_Grip.png', desc: 'Abgewinkelter Griff. Verbessert die ADS-Zeit (Aim Down Sights) erheblich.' },
-    { id: 'ub_combat', name: 'Combat Grip', image: 'https://readyornot.wiki.gg/images/thumb/1/1d/Combat_Grip.png/120px-Combat_Grip.png', desc: 'Ein Hybridgriff für ausgewogene Rückstoßkontrolle und Handhabung.' }
-  ],
-  Overbarrel: [
-    { id: 'ob_flash', name: 'Flashlight', image: 'https://readyornot.wiki.gg/images/thumb/2/22/Flashlight.png/120px-Flashlight.png', desc: 'Helle Weißlicht-Taschenlampe. Blendet Verdächtige leicht und leuchtet dunkle Ecken aus.' },
-    { id: 'ob_laser', name: 'Laser Pointer', image: 'https://readyornot.wiki.gg/images/thumb/4/41/Laser_Pointer.png/120px-Laser_Pointer.png', desc: 'Roter Laser. Zeigt exakt dorthin, wo der Schuss landet. Gut für Hüftfeuer.' },
-    { id: 'ob_peq', name: 'PEQ-15', image: 'https://readyornot.wiki.gg/images/thumb/3/30/PEQ-15.png/120px-PEQ-15.png', desc: 'IR-Laser und IR-Strahler. Unsichtbar für das bloße Auge, nur mit NVG (Nachtsicht) sichtbar.' },
-    { id: 'ob_mawl', name: 'MAWL', image: 'https://readyornot.wiki.gg/images/thumb/e/e6/MAWL.png/120px-MAWL.png', desc: 'Fortschrittlicher Laser/Illuminator. Bessere Ergonomie als der PEQ-15.' }
-  ]
-};
-
 const PUBG_MAPS = [
-  {
-    id: 'pubg_erangel', game: 'pubg', name: 'Erangel', size: '8x8 km',
-    image: 'https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&q=80&w=800',
-    info: 'Die originale Battle Royale Karte. Eine russisch angehauchte Insel.',
-    secrets: 'Geheime Kellerräume befinden sich unter bestimmten Gebäuden.',
-    locations: 'Typische Keller-Standorte: Rozhok, südlich von Yasnaya Polyana.'
-  }
+  { id: 'pubg_erangel', game: 'pubg', name: 'Erangel', size: '8x8 km', image: 'https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&q=80&w=800', info: 'Die originale Battle Royale Karte.', secrets: 'Geheime Kellerräume befinden sich unter bestimmten Gebäuden.', locations: 'Typische Keller-Standorte: Rozhok, südlich von Yasnaya Polyana.' }
 ];
-
-const RON_THROWABLES = [
-  { id: 'flashbang', name: 'Flashbang (9-Bang)', desc: 'Blendet und desorientiert Personen im Raum.' },
-  { id: 'cs_gas', name: 'CS Gas (Tränengas)', desc: 'Zwingt ungeschützte Personen zum Husten und Waffe fallen lassen.' },
-  { id: 'stinger', name: 'Stinger (Gummischrot)', desc: 'Explodiert und verteilt schmerzhaftes Gummischrot im Raum.' },
-  { id: 'c2', name: 'C2 Sprengladung', desc: 'Sprengt Türen auf und betäubt Personen direkt dahinter.' }
-];
-
-const RON_HEADWEAR_OPTIONS = [
-  { id: 'ballistic', name: 'Ballistic Helmet', type: 'helmet' },
-  { id: 'bump', name: 'Bump Helmet', type: 'helmet' },
-  { id: 'nvg', name: 'Night Vision Goggles (NVG)', type: 'facewear' },
-  { id: 'gasmask', name: 'CBRN Gas Mask', type: 'facewear' },
-  { id: 'flashgoggles', name: 'Anti-Flash Goggles', type: 'facewear' },
-  { id: 'ballistic_mask', name: 'Ballistic Facemask', type: 'facewear' }
-];
-
-const RON_ARMOR_OPTIONS = [
-  { id: 'heavy_steel', name: 'Heavy Armor (Steel)', desc: 'Maximaler Schutz, stoppt fast alles. Sehr schwer und langsam.' },
-  { id: 'heavy_ceramic', name: 'Heavy Armor (Ceramic)', desc: 'Bricht nach einigen Treffern, schützt aber vor starken Kalibern. Leichter als Stahl.' },
-  { id: 'light', name: 'Light Armor (Kevlar)', desc: 'Schützt vor Pistolenkalibern. Sehr mobil.' },
-  { id: 'none', name: 'No Armor (Stab Vest)', desc: 'Nur Stichschutz. Maximale Bewegungsfreiheit.' }
-];
-
-const RON_UTILITIES = [
-  // Throwables
-  { id: 'util_flash', category: 'Throwable', name: 'Flashbang', desc: 'Blendet und desorientiert Verdächtige und Zivilisten im Wirkungsbereich temporär durch einen grellen Blitz und lauten Knall.' },
-  { id: 'util_9bang', category: 'Throwable', name: '9-Bang', desc: 'Zündet neunmal extrem schnell hintereinander. Erzeugt langanhaltende und massive Desorientierung im Raum.' },
-  { id: 'util_cs', category: 'Throwable', name: 'CS Gas', desc: 'Verursacht Husten, Atemnot und tränende Augen. Zwingt zur Aufgabe. Erfordert eine Gasmaske für den Operator.' },
-  { id: 'util_stinger', category: 'Throwable', name: 'Stinger Grenade', desc: 'Explodiert und verteilt schmerzhaftes Gummischrot im ganzen Raum. Sehr effektiv für Schockwirkung.' },
-
-  // Breaching
-  { id: 'util_c2', category: 'Breaching', name: 'C2 Explosive', desc: 'Sprengt Türen mit enormer Wucht auf und betäubt alle Personen, die direkt dahinter stehen. Hohe Kollateralschaden-Gefahr.' },
-  { id: 'util_ram', category: 'Breaching', name: 'Battering Ram', desc: 'Schwere Ramme zum schnellen, manuellen Aufbrechen von Türen. Kann verschlossene Türen mit einem Schlag öffnen.' },
-  { id: 'util_breach_shotgun', category: 'Breaching', name: 'Breaching Shotgun', desc: 'Zerstört Türschlösser aus sicherer Entfernung mit spezieller Munition. Schneller als Lockpicking.' },
-
-  // Long Tactical
-  { id: 'util_mirror', category: 'Long Tactical', name: 'Mirrorgun', desc: 'Wird unter der Tür hindurchgeschoben. Erkennt Sprengfallen und die Feindlage im Raum, bevor man eindringt.' },
-  { id: 'util_shield', category: 'Long Tactical', name: 'Ballistic Shield', desc: 'Schützt den Träger von vorne vor fast allem Beschuss. Zwingt den Operator zur Nutzung einer Handfeuerwaffe.' },
-  { id: 'util_rescue_shield', category: 'Long Tactical', name: 'Rescue Shield', desc: 'Umfassenderer, größerer Schild für Geiselrettungen, nimmt aber deutlich mehr Sicht weg.' },
-  { id: 'util_launcher', category: 'Long Tactical', name: 'M320 Grenade Launcher', desc: 'Verschießt Flash-, Stinger- oder Gas-Granaten zielgenau über mittlere Distanzen.' },
-  { id: 'util_pepperball', category: 'Long Tactical', name: 'Pepperball Launcher', desc: 'Verschießt Pfefferkugeln ähnlich einem Paintball-Markierer zur Aufruhrkontrolle. Komplett nicht-tödlich.' }
-];
-
-// Automatische Platzhalter für alle Maps ohne detaillierte Daten generieren
+// Fallback generator
 RON_MAPS.forEach(map => {
-  if (map.id !== 'ron_gas') {
-    map.objectives = map.objectives || ['Bring Order to Chaos', 'Rescue all of the Civilians', 'Arrest Main Suspects', 'Secure Evidence', 'Report Status to TOC'];
-    map.blueprints = map.blueprints || [{ name: 'Main Floor', url: 'https://placehold.co/1200x800/111/FFF?text=Classified+Blueprint' }];
-    map.audioLogs = map.audioLogs || [
-      { title: 'TOC Briefing', type: 'briefing', url: '', transcript: 'TOC: Listen up. We have a rapidly developing situation. Proceed with extreme caution and check your corners.' },
-      { title: 'Emergency Call', type: '911', url: '', transcript: 'Operator: 911, what is your emergency?\nCaller: They have guns! Please hurry!' }
-    ];
-    map.poi = map.poi || {
-      civilians: [{ name: 'Unknown Civilian', image: 'https://placehold.co/250x250/222/FFF?text=CIV', sex: 'Unknown', height: 'N/A', weight: 'N/A', build: 'N/A', dob: 'Classified', desc: 'No prior intel available on civilian presence in this sector.' }],
-      suspects: [{ name: 'Unknown Suspect', image: 'https://placehold.co/250x250/222/F00?text=SUS', sex: 'Unknown', height: 'N/A', weight: 'N/A', build: 'N/A', dob: 'Classified', desc: 'Armed and considered highly dangerous. Proceed with caution.' }]
-    };
-    map.media = map.media || ['https://placehold.co/1000x562/111/FFF?text=Media+Coverage+1', 'https://placehold.co/1000x562/111/FFF?text=Media+Coverage+2'];
-    map.screenshots = map.screenshots || ['https://placehold.co/1000x562/111/FFF?text=Intel+Footage+1', 'https://placehold.co/1000x562/111/FFF?text=Intel+Footage+2'];
-    map.recommendedLoadout = map.recommendedLoadout || {
-      primary: 'w_m4a1',
-      primaryAttachments: { Optics: 'opt_holo', Muzzle: 'muz_comp', Underbarrel: 'ub_vert', Overbarrel: 'ob_laser' },
-      secondary: 'w_g19',
-      armor: 'heavy_ceramic',
-      headwear: ['ballistic', 'flashgoggles'],
-      mags: 5,
-      throwable: 'flashbang',
-      throwableCount: 4
-    };
-  }
+  if (!map.objectives) map.objectives = ['Bring Order to Chaos', 'Rescue all of the Civilians', 'Arrest Main Suspects', 'Secure Evidence', 'Report Status to TOC'];
+  if (!map.blueprints) map.blueprints = [{ name: 'Main Floor', url: 'https://placehold.co/1200x800/111/FFF?text=Classified+Blueprint' }];
+  if (!map.audioLogs) map.audioLogs = [];
+  if (!map.poi) map.poi = { civilians: [], suspects: [] };
+  if (!map.media) map.media = [];
+  if (!map.screenshots) map.screenshots = [];
 });
 
+const SIM_SERVER_TIME = Date.now();
 const NEWS_POOL = [
-  {
-    id: 'n1', mapId: 'ron_elephant', type: 'CRITICAL', headline: 'Watt Community College: Active Shooter gemeldet',
-    fact: 'Die Verdächtigen haben selbstgebaute Sprengsätze platziert. Höchster Zeitdruck.',
-    content: 'Code 3! Mehrere Notrufe bestätigen einen Amoklauf. Ersteingreifende Kräfte melden IEDs. Das SWAT-Team muss Zivilisten ignorieren und direkt auf die Bedrohung vorrücken.'
-  },
-  {
-    id: 'n2', mapId: 'ron_neon', type: 'FLASH', headline: 'Neon Nightclub: Terroranschlag von "Die Hand"',
-    fact: 'Berichte über Selbstmordattentäter mit Sprengstoffwesten. Mindestabstand einhalten!',
-    content: 'Katastrophe im Club Neon Tomb. Täter nutzen die Dunkelheit. Wenn ein Verdächtiger einen Zünder hält, ist ein finaler Rettungsschuss authorisiert.'
-  },
-  {
-    id: 'n3', mapId: 'ron_ides', type: 'UPDATE', headline: 'Brisa Cove: Schwer bewaffnete Veteranen verbarrikadiert',
-    fact: 'Die Gruppe "The Left Behind" trägt Level-IV-Panzerwesten, die Standardmunition absorbieren.',
-    content: 'Sie haben Stolperdrähte an fast allen Türen angebracht. Spiegeln ist Pflicht! Frontale Feuergefechte sind tödlich.'
-  }
+  { id: 'n1', mapId: 'ron_elephant', type: 'CRITICAL', headline: 'Watt Community College: Active Shooter gemeldet', fact: 'Die Verdächtigen haben selbstgebaute Sprengsätze platziert. Höchster Zeitdruck.', content: 'Code 3! Mehrere Notrufe bestätigen einen Amoklauf. Ersteingreifende Kräfte melden IEDs. Das SWAT-Team muss Zivilisten ignorieren und direkt auf die Bedrohung vorrücken.', timestamp: new Date(SIM_SERVER_TIME - 1000 * 60 * 12) },
+  { id: 'n2', mapId: 'ron_neon', type: 'FLASH', headline: 'Neon Nightclub: Terroranschlag von "Die Hand"', fact: 'Berichte über Selbstmordattentäter mit Sprengstoffwesten. Mindestabstand einhalten!', content: 'Katastrophe im Club Neon Tomb. Täter nutzen die Dunkelheit. Wenn ein Verdächtiger einen Zünder hält, ist ein finaler Rettungsschuss authorisiert.', timestamp: new Date(SIM_SERVER_TIME - 1000 * 60 * 45) },
+  { id: 'n3', mapId: 'ron_ides', type: 'UPDATE', headline: 'Brisa Cove: Schwer bewaffnete Veteranen verbarrikadiert', fact: 'Die Gruppe "The Left Behind" trägt Level-IV-Panzerwesten, die Standardmunition absorbieren.', content: 'Sie haben Stolperdrähte an fast allen Türen angebracht. Spiegeln ist Pflicht! Frontale Feuergefechte sind tödlich.', timestamp: new Date(SIM_SERVER_TIME - 1000 * 60 * 120) }
 ];
+
+// --- HELPER LOGIC FOR CAPACITIES AND VALIDATION ---
+
+const getArmorSlots = (armorId) => {
+  switch (armorId) {
+    case 'stab_vest': return 15;
+    case 'light': return 13;
+    case 'heavy': return 11;
+    case 'none': return 9;
+    default: return 11;
+  }
+};
+
+const getUsedSlots = (loadout) => {
+  const throwablesTotal = Object.values(loadout.throwables || {}).reduce((a, b) => a + b, 0);
+  const devicesTotal = Object.values(loadout.devices || {}).reduce((a, b) => a + b, 0);
+  return (loadout.primaryMagsAP || 0) + (loadout.primaryMagsJHP || 0) +
+    (loadout.secondaryMagsAP || 0) + (loadout.secondaryMagsJHP || 0) +
+    throwablesTotal + devicesTotal;
+};
+
+const autoAdjustSlots = (loadout, maxSlots) => {
+  let newLoadout = JSON.parse(JSON.stringify(loadout));
+  if (!newLoadout.devices) newLoadout.devices = { util_c2: 0, util_taser: 0, util_lockpick: 0 };
+  if (!newLoadout.throwables) newLoadout.throwables = { util_flash: 0, util_cs: 0, util_stinger: 0, util_9bang: 0 };
+
+  const reductionOrder = [
+    { obj: newLoadout.devices, key: 'util_lockpick' },
+    { obj: newLoadout.devices, key: 'util_taser' },
+    { obj: newLoadout.devices, key: 'util_c2' },
+    { obj: newLoadout.throwables, key: 'util_stinger' },
+    { obj: newLoadout.throwables, key: 'util_9bang' },
+    { obj: newLoadout.throwables, key: 'util_cs' },
+    { obj: newLoadout.throwables, key: 'util_flash' },
+    { obj: newLoadout, key: 'secondaryMagsJHP' },
+    { obj: newLoadout, key: 'secondaryMagsAP' },
+    { obj: newLoadout, key: 'primaryMagsJHP' },
+    { obj: newLoadout, key: 'primaryMagsAP' }
+  ];
+
+  while (getUsedSlots(newLoadout) > maxSlots) {
+    let reduced = false;
+    for (let item of reductionOrder) {
+      if (item.obj[item.key] > 0) {
+        item.obj[item.key]--;
+        reduced = true;
+        break;
+      }
+    }
+    if (!reduced) break;
+  }
+  return newLoadout;
+};
+
+const validateHeadwear = (currentList, toggledId) => {
+  const isHelmet = id => id.includes('helmet');
+  const isNVG = id => id.includes('nvg');
+  const isGasmask = id => id.includes('gasmask');
+  const isFlash = id => id.includes('flashgoggles');
+  const isMask = id => id.includes('ballistic_mask') || id.includes('mask_ballistic');
+
+  let result = [...currentList];
+
+  if (result.includes(toggledId)) {
+    return result.filter(id => id !== toggledId);
+  }
+
+  result.push(toggledId);
+
+  if (isHelmet(toggledId)) {
+    result = result.filter(id => !isHelmet(id) || id === toggledId);
+  }
+  if (isNVG(toggledId)) {
+    result = result.filter(id => !isNVG(id) || id === toggledId);
+  }
+  if (isGasmask(toggledId)) {
+    result = result.filter(id => !isFlash(id) && !isMask(id) && (!isGasmask(id) || id === toggledId));
+  }
+  if (isFlash(toggledId) || isMask(toggledId)) {
+    if (isFlash(toggledId)) result = result.filter(id => !isGasmask(id) && !isMask(id) && (!isFlash(id) || id === toggledId));
+    if (isMask(toggledId)) result = result.filter(id => !isGasmask(id) && !isFlash(id) && (!isMask(id) || id === toggledId));
+  }
+
+  return result;
+};
 
 // --- STYLES & ANIMATIONS ---
 
 const pageTransition = {
-  initial: { opacity: 0, y: 20 },
-  animate: { opacity: 1, y: 0 },
-  exit: { opacity: 0, y: -20 },
-  transition: { duration: 0.4, ease: "easeOut" }
+  initial: { opacity: 0, y: 20 }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0, y: -20 }, transition: { duration: 0.4, ease: "easeOut" }
 };
-
-const springTransition = {
-  type: "spring", stiffness: 450, damping: 35
-};
+const springTransition = { type: "spring", stiffness: 450, damping: 35 };
 
 const getRelativeTime = (date) => {
   const diff = Math.floor((new Date() - date) / 1000 / 60);
@@ -571,8 +655,8 @@ const getRelativeTime = (date) => {
 
 // --- CONSTANTS ---
 const SESSION_TIMEOUT = 10 * 60 * 1000;
-const STORAGE_KEY_STATE = 'inTactics_app_state_v8';
-const STORAGE_KEY_TIME = 'inTactics_last_active_v8';
+const STORAGE_KEY_STATE = 'inTactics_app_state_v12';
+const STORAGE_KEY_TIME = 'inTactics_last_active_v12';
 
 // --- COMPONENTS ---
 
@@ -590,13 +674,8 @@ const GlassCard = ({ children, className = '', onClick }) => (
 const DynamicNavItem = ({ id, icon: Icon, label, activeTab, setActiveTab }) => {
   const isActive = activeTab === id;
   return (
-    <button
-      onClick={() => setActiveTab(id)}
-      className="relative flex-1 md:flex-none px-4 md:px-8 py-4 md:py-3 rounded-full flex md:flex-row items-center justify-center gap-2 group outline-none z-10"
-    >
-      {isActive && (
-        <motion.div layoutId="nav-active-pill" className="absolute inset-0 bg-white/10 backdrop-blur-3xl border border-white/20 rounded-xl md:rounded-full" transition={springTransition} />
-      )}
+    <button onClick={() => setActiveTab(id)} className="relative flex-1 md:flex-none px-4 md:px-8 py-4 md:py-3 rounded-full flex md:flex-row items-center justify-center gap-2 group outline-none z-10">
+      {isActive && <motion.div layoutId="nav-active-pill" className="absolute inset-0 bg-white/10 backdrop-blur-3xl border border-white/20 rounded-xl md:rounded-full" transition={springTransition} />}
       <Icon size={20} className={`relative z-10 transition-colors duration-500 ${isActive ? 'text-blue-400' : 'text-gray-400 group-hover:text-gray-200'}`} />
       <span className={`relative z-10 font-bold tracking-tight text-[10px] md:text-sm ${isActive ? 'text-white' : 'text-gray-400 group-hover:text-gray-200'}`}>{label}</span>
     </button>
@@ -625,71 +704,45 @@ const BlueprintViewer = ({ mapId, blueprints, dbUser, userBlueprints }) => {
   const [activeFloor, setActiveFloor] = useState(0);
   const [scale, setScale] = useState(1);
   const [isFullscreen, setIsFullscreen] = useState(false);
-
   const [activePlan, setActivePlan] = useState('Plan A');
   const [markerType, setMarkerType] = useState('move');
-
-  // Initialize with DB Data or default
   const [markersData, setMarkersData] = useState({});
+  const dragStart = useRef(null);
 
   useEffect(() => {
     if (userBlueprints && userBlueprints[mapId]) {
       const docData = userBlueprints[mapId];
       if (docData && docData.data) {
-        try {
-          setMarkersData(JSON.parse(docData.data));
-        } catch (e) {
-          console.error("Error parsing blueprint markers", e);
-        }
+        try { setMarkersData(JSON.parse(docData.data)); } catch (e) { console.error("Error parsing blueprint markers", e); }
       } else {
         setMarkersData(docData);
       }
     }
   }, [userBlueprints, mapId]);
 
-  const dragStart = useRef(null);
-
+  
   const currentFloorKey = `${activePlan}_${activeFloor}`;
   const floorData = markersData[currentFloorKey] || { past: [], present: [], future: [] };
   const currentMarkers = floorData.present;
-
   const canUndo = floorData.past.length > 0;
   const canRedo = floorData.future.length > 0;
 
   const saveToDb = (newData) => {
     if (db && dbUser) {
-      // Serialize to JSON to prevent Firestore "Nested arrays are not supported" error
-      const serializedData = JSON.stringify(newData);
-      setDoc(doc(db, 'artifacts', appId, 'users', dbUser.uid, 'blueprintMarkers', mapId), { data: serializedData }).catch(console.error);
+      setDoc(doc(db, 'artifacts', appId, 'users', dbUser.uid, 'blueprintMarkers', mapId), { data: JSON.stringify(newData) }).catch(console.error);
     }
   };
 
-  const handlePointerDown = (e) => {
-    dragStart.current = { x: e.clientX, y: e.clientY };
-  };
-
+  const handlePointerDown = (e) => { dragStart.current = { x: e.clientX, y: e.clientY }; };
   const handlePointerUp = (e) => {
     if (!isFullscreen || !dragStart.current) return;
-
-    const dx = e.clientX - dragStart.current.x;
-    const dy = e.clientY - dragStart.current.y;
-
-    // Setzt nur einen Punkt, wenn nicht gezogen (ge-pannt) wurde (< 5px Abweichung)
+    const dx = e.clientX - dragStart.current.x, dy = e.clientY - dragStart.current.y;
     if (Math.sqrt(dx * dx + dy * dy) < 5) {
       const rect = e.currentTarget.getBoundingClientRect();
-      const x = ((e.clientX - rect.left) / rect.width) * 100;
-      const y = ((e.clientY - rect.top) / rect.height) * 100;
-
+      const x = ((e.clientX - rect.left) / rect.width) * 100, y = ((e.clientY - rect.top) / rect.height) * 100;
       setMarkersData(prev => {
         const fd = prev[currentFloorKey] || { past: [], present: [], future: [] };
-        const newData = {
-          ...prev,
-          [currentFloorKey]: {
-            past: [...fd.past, fd.present],
-            present: [...fd.present, { x, y, type: markerType }],
-            future: []
-          }
-        };
+        const newData = { ...prev, [currentFloorKey]: { past: [...fd.past, fd.present], present: [...fd.present, { x, y, type: markerType }], future: [] } };
         saveToDb(newData);
         return newData;
       });
@@ -702,11 +755,7 @@ const BlueprintViewer = ({ mapId, blueprints, dbUser, userBlueprints }) => {
       const fd = prev[currentFloorKey];
       if (!fd || fd.past.length === 0) return prev;
       const newPast = [...fd.past];
-      const newPresent = newPast.pop();
-      const newData = {
-        ...prev,
-        [currentFloorKey]: { past: newPast, present: newPresent, future: [fd.present, ...fd.future] }
-      };
+      const newData = { ...prev, [currentFloorKey]: { past: newPast, present: newPast.pop(), future: [fd.present, ...fd.future] } };
       saveToDb(newData);
       return newData;
     });
@@ -717,11 +766,7 @@ const BlueprintViewer = ({ mapId, blueprints, dbUser, userBlueprints }) => {
       const fd = prev[currentFloorKey];
       if (!fd || fd.future.length === 0) return prev;
       const newFuture = [...fd.future];
-      const newPresent = newFuture.shift();
-      const newData = {
-        ...prev,
-        [currentFloorKey]: { past: [...fd.past, fd.present], present: newPresent, future: newFuture }
-      };
+      const newData = { ...prev, [currentFloorKey]: { past: [...fd.past, fd.present], present: newFuture.shift(), future: newFuture } };
       saveToDb(newData);
       return newData;
     });
@@ -731,10 +776,7 @@ const BlueprintViewer = ({ mapId, blueprints, dbUser, userBlueprints }) => {
     setMarkersData(prev => {
       const fd = prev[currentFloorKey];
       if (!fd || fd.present.length === 0) return prev;
-      const newData = {
-        ...prev,
-        [currentFloorKey]: { past: [...fd.past, fd.present], present: [], future: [] }
-      };
+      const newData = { ...prev, [currentFloorKey]: { past: [...fd.past, fd.present], present: [], future: [] } };
       saveToDb(newData);
       return newData;
     });
@@ -743,11 +785,7 @@ const BlueprintViewer = ({ mapId, blueprints, dbUser, userBlueprints }) => {
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (!isFullscreen) return;
-      if (e.ctrlKey && e.key.toLowerCase() === 'z') {
-        e.preventDefault();
-        if (e.shiftKey) redo();
-        else undo();
-      }
+      if (e.ctrlKey && e.key.toLowerCase() === 'z') { e.preventDefault(); if (e.shiftKey) redo(); else undo(); }
       if (e.key === 'Escape') setIsFullscreen(false);
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -768,55 +806,24 @@ const BlueprintViewer = ({ mapId, blueprints, dbUser, userBlueprints }) => {
   const renderMapArea = (interactive) => (
     <div className="absolute inset-0 overflow-auto no-scrollbar touch-pan-x touch-pan-y" style={{ WebkitOverflowScrolling: 'touch' }}>
       <div className="min-w-full min-h-full flex items-center justify-center p-4">
-        <motion.div
-          animate={{ scale: scale }}
-          transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          className="relative origin-center max-w-4xl w-full select-none"
-        >
-          <img
-            src={blueprints[activeFloor].url}
-            className="w-full h-auto pointer-events-none"
-            style={{ filter: 'invert(1) hue-rotate(180deg)' }}
-            alt="Tactical Map"
-            draggable={false}
-          />
-
+        <motion.div animate={{ scale: scale }} transition={{ type: "spring", stiffness: 300, damping: 30 }} className="relative origin-center max-w-4xl w-full select-none">
+          <img src={blueprints[activeFloor].url} className="w-full h-auto pointer-events-none" style={{ filter: 'invert(1) hue-rotate(180deg)' }} alt="Tactical Map" draggable={false} />
           <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 15 }}>
             {currentMarkers.map((m, i) => {
               if (i === 0) return null;
               const prev = currentMarkers[i - 1];
               return (
-                <line
-                  key={`line-${i}`}
-                  x1={`${prev.x}%`} y1={`${prev.y}%`}
-                  x2={`${m.x}%`} y2={`${m.y}%`}
-                  stroke="rgba(255, 255, 255, 0.6)"
-                  strokeWidth="3"
-                  strokeDasharray="6,6"
-                  style={{ filter: 'drop-shadow(0px 2px 4px rgba(0,0,0,0.8))' }}
-                />
+                <line key={`line-${i}`} x1={`${prev.x}%`} y1={`${prev.y}%`} x2={`${m.x}%`} y2={`${m.y}%`} stroke="rgba(255, 255, 255, 0.6)" strokeWidth="3" strokeDasharray="6,6" style={{ filter: 'drop-shadow(0px 2px 4px rgba(0,0,0,0.8))' }} />
               );
             })}
           </svg>
-
           {currentMarkers.map((m, i) => (
-            <motion.div
-              key={i}
-              initial={{ scale: 0, opacity: 0, y: -10 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              className="absolute z-20 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
-              style={{ left: `${m.x}%`, top: `${m.y}%` }}
-            >
+            <motion.div key={i} initial={{ scale: 0, opacity: 0, y: -10 }} animate={{ scale: 1, opacity: 1, y: 0 }} className="absolute z-20 -translate-x-1/2 -translate-y-1/2 pointer-events-none" style={{ left: `${m.x}%`, top: `${m.y}%` }}>
               {renderMarkerIcon(m.type)}
             </motion.div>
           ))}
-
           {interactive && (
-            <div
-              className="absolute inset-0 z-30 cursor-crosshair touch-none"
-              onPointerDown={handlePointerDown}
-              onPointerUp={handlePointerUp}
-            ></div>
+            <div className="absolute inset-0 z-30 cursor-crosshair touch-none" onPointerDown={handlePointerDown} onPointerUp={handlePointerUp}></div>
           )}
         </motion.div>
       </div>
@@ -827,7 +834,6 @@ const BlueprintViewer = ({ mapId, blueprints, dbUser, userBlueprints }) => {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-xl md:text-2xl font-black uppercase italic tracking-tighter border-l-4 border-red-600 pl-4">Tactical Blueprint</h3>
-
         {blueprints.length > 1 && (
           <div className="flex gap-2 bg-black/50 p-1 rounded-lg border border-white/10">
             {blueprints.map((bp, idx) => (
@@ -838,56 +844,33 @@ const BlueprintViewer = ({ mapId, blueprints, dbUser, userBlueprints }) => {
           </div>
         )}
       </div>
-
       <GlassCard className="relative bg-[#0a0a0a] border-red-500/20 overflow-hidden h-[400px] md:h-[600px] group">
         {renderMapArea(false)}
-
         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-40 pointer-events-none">
-          <button
-            onClick={() => setIsFullscreen(true)}
-            className="flex items-center gap-2 bg-red-600 hover:bg-red-500 text-white px-6 py-3 rounded-full font-black uppercase tracking-widest shadow-2xl pointer-events-auto transition-transform hover:scale-105"
-          >
+          <button onClick={() => setIsFullscreen(true)} className="flex items-center gap-2 bg-red-600 hover:bg-red-500 text-white px-6 py-3 rounded-full font-black uppercase tracking-widest shadow-2xl pointer-events-auto transition-transform hover:scale-105">
             <Maximize size={18} /> Route Planen
           </button>
         </div>
-
         <div className="absolute bottom-4 right-4 flex flex-col gap-2 z-30">
           <button onClick={() => setScale(s => Math.min(s + 0.5, 4))} className="p-3 bg-black/80 backdrop-blur border border-white/20 rounded-full text-white shadow-xl hover:bg-white/20"><ZoomIn size={20} /></button>
           <button onClick={() => setScale(s => Math.max(s - 0.5, 0.5))} className="p-3 bg-black/80 backdrop-blur border border-white/20 rounded-full text-white shadow-xl hover:bg-white/20"><ZoomOut size={20} /></button>
         </div>
       </GlassCard>
-
       <AnimatePresence>
         {isFullscreen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] bg-[#050505] flex flex-col"
-          >
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-[#050505] flex flex-col">
             <div className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-2 p-2 bg-black/80 backdrop-blur-xl border border-white/10 rounded-2xl z-[110] shadow-2xl overflow-x-auto max-w-[95vw]">
-
-              <select
-                value={activePlan}
-                onChange={(e) => setActivePlan(e.target.value)}
-                className="bg-white/10 border border-white/10 text-white text-[10px] md:text-xs font-bold uppercase rounded px-2 md:px-3 py-1.5 outline-none hover:bg-white/20 cursor-pointer shrink-0"
-              >
+              <select value={activePlan} onChange={(e) => setActivePlan(e.target.value)} className="bg-white/10 border border-white/10 text-white text-[10px] md:text-xs font-bold uppercase rounded px-2 md:px-3 py-1.5 outline-none hover:bg-white/20 cursor-pointer shrink-0">
                 <option className="bg-black text-white" value="Plan A">Plan A (Main)</option>
                 <option className="bg-black text-white" value="Plan B">Plan B (Alt)</option>
                 <option className="bg-black text-white" value="Plan C">Plan C (Dynamic)</option>
               </select>
-
               <div className="h-6 w-px bg-white/20 mx-1 shrink-0" />
-
               {blueprints.length > 1 && (
                 <>
                   <div className="flex gap-1 shrink-0">
                     {blueprints.map((bp, idx) => (
-                      <button
-                        key={idx}
-                        onClick={() => { setActiveFloor(idx); setScale(1); }}
-                        className={`px-2 md:px-3 py-1.5 text-[10px] md:text-xs font-bold uppercase rounded transition-colors ${activeFloor === idx ? 'bg-red-600 text-white shadow-inner' : 'text-white/40 hover:text-white hover:bg-white/10'}`}
-                      >
+                      <button key={idx} onClick={() => { setActiveFloor(idx); setScale(1); }} className={`px-2 md:px-3 py-1.5 text-[10px] md:text-xs font-bold uppercase rounded transition-colors ${activeFloor === idx ? 'bg-red-600 text-white shadow-inner' : 'text-white/40 hover:text-white hover:bg-white/10'}`}>
                         {bp.name}
                       </button>
                     ))}
@@ -895,45 +878,19 @@ const BlueprintViewer = ({ mapId, blueprints, dbUser, userBlueprints }) => {
                   <div className="h-6 w-px bg-white/20 mx-1 shrink-0" />
                 </>
               )}
-
-              {[
-                { id: 'move', icon: MapPin, color: 'text-green-500' },
-                { id: 'breach', icon: Target, color: 'text-red-500' },
-                { id: 'hold', icon: Shield, color: 'text-blue-500' },
-                { id: 'suspect', icon: Skull, color: 'text-orange-500' }
-              ].map(m => (
-                <button
-                  key={m.id}
-                  onClick={() => setMarkerType(m.id)}
-                  className={`flex items-center shrink-0 p-2 rounded-lg transition-all ${markerType === m.id ? 'bg-white/20 shadow-inner' : 'hover:bg-white/10'}`}
-                  title={m.id.toUpperCase()}
-                >
+              {[{ id: 'move', icon: MapPin, color: 'text-green-500' }, { id: 'breach', icon: Target, color: 'text-red-500' }, { id: 'hold', icon: Shield, color: 'text-blue-500' }, { id: 'suspect', icon: Skull, color: 'text-orange-500' }].map(m => (
+                <button key={m.id} onClick={() => setMarkerType(m.id)} className={`flex items-center shrink-0 p-2 rounded-lg transition-all ${markerType === m.id ? 'bg-white/20 shadow-inner' : 'hover:bg-white/10'}`} title={m.id.toUpperCase()}>
                   <m.icon size={16} className={m.color} />
                 </button>
               ))}
-
               <div className="h-6 w-px bg-white/20 mx-1 shrink-0" />
-
-              <button onClick={undo} disabled={!canUndo} className={`p-2 rounded-lg transition-all shrink-0 ${canUndo ? 'text-white hover:bg-white/20' : 'text-white/20 cursor-not-allowed'}`} title="Rückgängig (Ctrl+Z)">
-                <Undo size={16} />
-              </button>
-              <button onClick={redo} disabled={!canRedo} className={`p-2 rounded-lg transition-all shrink-0 ${canRedo ? 'text-white hover:bg-white/20' : 'text-white/20 cursor-not-allowed'}`} title="Wiederholen (Ctrl+Shift+Z)">
-                <Redo size={16} />
-              </button>
-
+              <button onClick={undo} disabled={!canUndo} className={`p-2 rounded-lg transition-all shrink-0 ${canUndo ? 'text-white hover:bg-white/20' : 'text-white/20 cursor-not-allowed'}`} title="Rückgängig (Ctrl+Z)"><Undo size={16} /></button>
+              <button onClick={redo} disabled={!canRedo} className={`p-2 rounded-lg transition-all shrink-0 ${canRedo ? 'text-white hover:bg-white/20' : 'text-white/20 cursor-not-allowed'}`} title="Wiederholen (Ctrl+Shift+Z)"><Redo size={16} /></button>
               <div className="h-6 w-px bg-white/20 mx-1 shrink-0" />
-
-              <button onClick={clearMarkers} className="p-2 rounded-lg text-red-500 hover:bg-red-500/20 transition-all shrink-0" title="Route löschen">
-                <X size={16} />
-              </button>
+              <button onClick={clearMarkers} className="p-2 rounded-lg text-red-500 hover:bg-red-500/20 transition-all shrink-0" title="Route löschen"><X size={16} /></button>
             </div>
-
-            <button onClick={() => setIsFullscreen(false)} className="absolute top-4 right-4 p-3 bg-black/80 hover:bg-white/20 text-white rounded-full z-[110] transition-colors border border-white/10">
-              <Minimize size={20} />
-            </button>
-
+            <button onClick={() => setIsFullscreen(false)} className="absolute top-4 right-4 p-3 bg-black/80 hover:bg-white/20 text-white rounded-full z-[110] transition-colors border border-white/10"><Minimize size={20} /></button>
             {renderMapArea(true)}
-
             <div className="absolute bottom-6 right-6 flex flex-col gap-2 z-[110]">
               <button onClick={() => setScale(s => Math.min(s + 0.5, 4))} className="p-4 bg-black/80 backdrop-blur border border-white/20 rounded-full text-white shadow-xl hover:bg-white/20"><ZoomIn size={24} /></button>
               <button onClick={() => setScale(s => Math.max(s - 0.5, 0.5))} className="p-4 bg-black/80 backdrop-blur border border-white/20 rounded-full text-white shadow-xl hover:bg-white/20"><ZoomOut size={24} /></button>
@@ -1026,7 +983,6 @@ const AudioLogViewer = ({ logs }) => {
   );
 }
 
-// --- NEW COMPONENT: MISSION OBJECTIVES ---
 const MissionObjectives = ({ mapId, objectives, dbUser, userObjectives }) => {
   const [checkedItems, setCheckedItems] = useState([]);
 
@@ -1073,288 +1029,382 @@ const MissionObjectives = ({ mapId, objectives, dbUser, userObjectives }) => {
   );
 };
 
-// --- NEW COMPONENT: MAP LOADOUT EDITOR ---
-const MapLoadoutEditor = ({ map, dbUser, userMapLoadouts }) => {
-  const defaultLoadout = map.recommendedLoadout || {
-    primary: 'w_m4a1',
-    primaryAttachments: { Optics: null, Muzzle: null, Underbarrel: null, Overbarrel: null },
-    secondary: 'w_g19',
-    armor: 'heavy_ceramic',
-    headwear: ['ballistic'],
-    mags: 4,
-    throwable: 'flashbang',
-    throwableCount: 3
+const SkinSelectionModal = ({ isOpen, onClose, item, preferredSkinId, onSelectSkin }) => {
+  if (!isOpen || !item || !item.skins) return null;
+  return (
+    <motion.div
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[250] bg-black/90 backdrop-blur-xl flex flex-col"
+    >
+      <div className="flex items-center justify-between p-6 border-b border-white/10 bg-black/50">
+        <h2 className="text-xl md:text-2xl font-black uppercase italic tracking-tighter text-white">
+          Skin Variation // {item.name}
+        </h2>
+        <button onClick={onClose} className="p-2 bg-white/10 hover:bg-red-500 text-white rounded-full transition-colors">
+          <X size={24} />
+        </button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-6 md:p-10">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+          {item.skins.map(skin => (
+            <GlassCard
+              key={skin.id}
+              onClick={() => { onSelectSkin(item.id, skin.id); onClose(); }}
+              className={`flex flex-col h-[220px] border cursor-pointer group transition-all ${preferredSkinId === skin.id ? 'bg-green-500/20 border-green-500 shadow-[0_0_20px_rgba(34,197,94,0.3)]' : 'bg-black/60 border-white/5 hover:bg-white/10 hover:border-white/20'}`}
+            >
+              <div className="h-2/3 p-4 flex items-center justify-center bg-white/5">
+                <img src={skin.image} alt={skin.name} className="max-h-full max-w-full object-contain transition-transform group-hover:scale-110" style={{ filter: 'drop-shadow(0px 5px 10px rgba(0,0,0,0.5))' }} />
+              </div>
+              <div className="h-1/3 p-3 flex flex-col justify-center text-center border-t border-white/5 relative">
+                <p className="text-xs font-bold uppercase text-white truncate px-2">{skin.name}</p>
+                {preferredSkinId === skin.id && <CheckSquare size={16} className="text-green-500 absolute top-2 right-2" />}
+              </div>
+            </GlassCard>
+          ))}
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+// --- VISUAL UI HELPERS FOR LOADOUT ---
+
+const ItemSelectionModal = ({ isOpen, onClose, items, selectedId, onSelect, title, isWeapon = false, preferredSkins }) => {
+  if (!isOpen) return null;
+
+  const groupedItems = isWeapon ? items.reduce((acc, item) => {
+    if (!acc[item.type]) acc[item.type] = [];
+    acc[item.type].push(item);
+    return acc;
+  }, {}) : { 'All Items': items };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[200] bg-black/90 backdrop-blur-xl flex flex-col"
+    >
+      <div className="flex items-center justify-between p-6 border-b border-white/10 bg-black/50">
+        <h2 className="text-2xl font-black uppercase italic tracking-tighter text-white flex items-center gap-3">
+          <Edit3 className="text-blue-500" /> {title}
+        </h2>
+        <button onClick={onClose} className="p-2 bg-white/10 hover:bg-red-500 text-white rounded-full transition-colors">
+          <X size={24} />
+        </button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-6 md:p-10 space-y-12">
+        {Object.entries(groupedItems).map(([groupName, groupItems]) => (
+          <div key={groupName}>
+            {isWeapon && <h3 className="text-sm font-bold uppercase tracking-[0.2em] text-white/40 mb-6 border-l-2 border-blue-500 pl-3">{groupName}</h3>}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+              {groupItems.map(item => {
+                const activeSkinId = preferredSkins?.[item.id] || item.skins?.[0]?.id;
+                const displayImage = item.skins?.find(s => s.id === activeSkinId)?.image || item.image;
+                return (
+                  <GlassCard
+                    key={item.id}
+                    onClick={() => { onSelect(item.id); onClose(); }}
+                    className={`flex flex-col h-[200px] border cursor-pointer group transition-all ${selectedId === item.id ? 'bg-blue-600/20 border-blue-500 shadow-[0_0_20px_rgba(59,130,246,0.3)]' : 'bg-black/60 border-white/5 hover:bg-white/10 hover:border-white/20'}`}
+                  >
+                    <div className="h-2/3 p-4 flex items-center justify-center bg-white/5">
+                      <img src={displayImage} alt={item.name} className="max-h-full max-w-full object-contain transition-transform group-hover:scale-110" style={{ filter: 'drop-shadow(0px 5px 10px rgba(0,0,0,0.5))' }} />
+                    </div>
+                    <div className="h-1/3 p-3 flex flex-col justify-center text-center border-t border-white/5 relative">
+                      <p className="text-[10px] md:text-xs font-bold uppercase text-white truncate px-2">{item.name}</p>
+                      {item.slots && <p className="text-[9px] text-white/40 uppercase mt-1">{item.slots} Slots</p>}
+                      {selectedId === item.id && <CheckSquare size={16} className="text-blue-500 absolute top-2 right-2" />}
+                    </div>
+                  </GlassCard>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+    </motion.div>
+  );
+};
+
+const ClickableItemCard = ({ label, item, onClick, displayImageOverride }) => (
+  <div onClick={onClick} className="flex items-center gap-4 bg-black/40 border border-white/10 hover:border-white/30 rounded-xl p-3 cursor-pointer transition-all shadow-lg group">
+    <div className="w-24 h-16 bg-white/5 rounded-lg p-2 flex items-center justify-center border border-white/5">
+      {item ? <img src={displayImageOverride || item.image} className="max-h-full max-w-full object-contain transition-transform group-hover:scale-110" style={{ filter: 'drop-shadow(0px 3px 6px rgba(0,0,0,0.5))' }} alt={item.name} /> : <span className="text-white/20 text-xs uppercase font-bold">Kein Item</span>}
+    </div>
+    <div className="flex-1 overflow-hidden">
+      <p className="text-[10px] text-white/40 uppercase font-black tracking-widest mb-0.5 truncate">{label}</p>
+      <p className="text-sm font-bold text-white uppercase truncate">{item ? item.name : 'Nicht ausgerüstet'}</p>
+    </div>
+    <ChevronRight className="text-white/20 group-hover:text-white/60 transition-colors mr-2" />
+  </div>
+);
+
+const VisualMultiSelectGrid = ({ items, selectedIds, preferredSkins, onToggle, className = "" }) => (
+  <div className={`grid grid-cols-2 gap-3 ${className}`}>
+    {items.map(item => {
+      const isChecked = selectedIds.includes(item.id);
+      const activeSkinId = preferredSkins?.[item.id] || item.skins?.[0]?.id;
+      const displayImage = item.skins?.find(s => s.id === activeSkinId)?.image || item.image;
+      return (
+        <div
+          key={item.id}
+          onClick={() => onToggle(item.id)}
+          className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${isChecked ? 'bg-blue-600/20 border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.3)]' : 'bg-black/40 border-white/5 hover:border-white/20 hover:bg-white/5'}`}
+        >
+          <div className="w-10 h-10 p-1.5 shrink-0 bg-white/5 rounded-lg flex items-center justify-center border border-white/5">
+            <img src={displayImage} alt={item.name} className="max-h-full max-w-full object-contain" />
+          </div>
+          <p className={`text-[10px] font-bold uppercase leading-tight flex-1 ${isChecked ? 'text-white' : 'text-white/60'}`}>{item.name}</p>
+          {isChecked && <CheckSquare size={16} className="text-blue-500 shrink-0" />}
+        </div>
+      );
+    })}
+  </div>
+);
+
+const VisualCounterGrid = ({ items, loadout, fieldObj, maxSlots, usedSlots, onChange }) => {
+  const handleInc = (id) => {
+    if (usedSlots < maxSlots) {
+      if (fieldObj) onChange(fieldObj, { ...loadout[fieldObj], [id]: (loadout[fieldObj]?.[id] || 0) + 1 });
+      else onChange(id, (loadout[id] || 0) + 1);
+    }
+  };
+  const handleDec = (id) => {
+    const current = fieldObj ? (loadout[fieldObj]?.[id] || 0) : (loadout[id] || 0);
+    if (current > 0) {
+      if (fieldObj) onChange(fieldObj, { ...loadout[fieldObj], [id]: current - 1 });
+      else onChange(id, current - 1);
+    }
   };
 
-  const [primary, setPrimary] = useState(defaultLoadout.primary);
-  const [primaryAtt, setPrimaryAtt] = useState({ Optics: null, Muzzle: null, Underbarrel: null, Overbarrel: null });
-  const [secondary, setSecondary] = useState(defaultLoadout.secondary);
-  const [armor, setArmor] = useState(defaultLoadout.armor);
-  const [headwear, setHeadwear] = useState(defaultLoadout.headwear);
-  const [mags, setMags] = useState(defaultLoadout.mags);
-  const [throwable, setThrowable] = useState(defaultLoadout.throwable);
-  const [throwableCount, setThrowableCount] = useState(defaultLoadout.throwableCount);
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3">
+      {items.map(item => {
+        const val = fieldObj ? (loadout[fieldObj]?.[item.id] || 0) : (loadout[item.id] || 0);
+        return (
+          <div key={item.id} className="flex flex-col bg-black/40 rounded-xl border border-white/5 overflow-hidden">
+            <div className="h-16 p-2 flex items-center justify-center bg-white/5 relative border-b border-white/5">
+              <img src={item.image} alt={item.name} className="max-h-full max-w-full object-contain" style={{ filter: 'drop-shadow(0px 2px 4px rgba(0,0,0,0.5))' }} />
+              {val > 0 && <div className="absolute top-1 right-1 bg-green-500 text-black text-[9px] font-black px-1.5 py-0.5 rounded shadow-lg">{val}x</div>}
+            </div>
+            <div className="p-2 flex flex-col items-center gap-2">
+              <p className="text-[9px] font-bold uppercase text-white/60 truncate w-full text-center">{item.name}</p>
+              <div className="flex items-center justify-between w-full bg-black/60 rounded-lg p-1 border border-white/5">
+                <button onClick={() => handleDec(item.id)} className="p-1.5 hover:bg-white/20 rounded text-white/70 hover:text-white transition-colors"><Minus size={12} /></button>
+                <span className="text-xs font-mono font-bold text-white px-2">{val}</span>
+                <button onClick={() => handleInc(item.id)} className={`p-1.5 rounded transition-colors ${usedSlots < maxSlots ? 'hover:bg-white/20 text-white/70 hover:text-white' : 'text-white/10'}`}><Plus size={12} /></button>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
 
-  // Initialize from DB if exists
-  useEffect(() => {
-    if (userMapLoadouts && userMapLoadouts[map.id]) {
-      const data = userMapLoadouts[map.id];
-      setPrimary(data.primary || defaultLoadout.primary);
-      setSecondary(data.secondary || defaultLoadout.secondary);
-      setArmor(data.armor || defaultLoadout.armor);
-      setHeadwear(data.headwear || defaultLoadout.headwear);
-      setMags(data.mags || defaultLoadout.mags);
-      setThrowable(data.throwable || defaultLoadout.throwable);
-      setThrowableCount(data.throwableCount || defaultLoadout.throwableCount);
+const MagCounter = ({ label, type, val, onInc, onDec, disabled }) => (
+  <div className="flex flex-col bg-black/40 rounded-xl border border-white/5 overflow-hidden flex-1 shadow-lg">
+    <div className="h-8 flex items-center justify-center bg-white/5 gap-2 border-b border-white/5">
+      <div className={`w-2 h-3 rounded-t-full ${type === 'AP' ? 'bg-red-500' : 'bg-blue-400'}`}></div>
+      <span className="text-[10px] font-black uppercase tracking-widest text-white/80">{label}</span>
+    </div>
+    <div className="p-2">
+      <div className="flex items-center justify-between bg-black/60 rounded-lg p-1 border border-white/5">
+        <button onClick={onDec} className="p-1.5 hover:bg-white/20 rounded text-white/70 hover:text-white transition-colors"><Minus size={12} /></button>
+        <span className="text-xs font-mono font-bold text-white px-2">{val}</span>
+        <button onClick={onInc} className={`p-1.5 rounded transition-colors ${!disabled ? 'hover:bg-white/20 text-white/70 hover:text-white' : 'text-white/10'}`}><Plus size={12} /></button>
+      </div>
+    </div>
+  </div>
+);
 
-      const attObj = { Optics: null, Muzzle: null, Underbarrel: null, Overbarrel: null };
-      if (data.primaryAttachments) {
-        Object.keys(data.primaryAttachments).forEach(slot => {
-          const attId = data.primaryAttachments[slot];
-          if (attId && RON_ATTACHMENTS[slot]) {
-            attObj[slot] = RON_ATTACHMENTS[slot].find(a => a.id === attId) || null;
-          }
-        });
-      }
-      setPrimaryAtt(attObj);
-    } else {
-      // Wenn nichts vorliegt, bleiben die defaults bzw. die von recommended.
-      // Parsen der recommended attachments
-      const attObj = { Optics: null, Muzzle: null, Underbarrel: null, Overbarrel: null };
-      if (map.recommendedLoadout) {
-        Object.keys(map.recommendedLoadout.primaryAttachments).forEach(slot => {
-          const attId = map.recommendedLoadout.primaryAttachments[slot];
-          if (attId && RON_ATTACHMENTS[slot]) {
-            attObj[slot] = RON_ATTACHMENTS[slot].find(a => a.id === attId) || null;
-          }
-        });
-      }
-      setPrimaryAtt(attObj);
-    }
-  }, [userMapLoadouts, map.id]);
+
+const UnifiedLoadoutEditor = ({ loadout, onChange, title, showRecommendationBtn, onLoadRecommendation, preferredSkins = {} }) => {
+  const maxSlots = getArmorSlots(loadout.armor);
+  const usedSlots = getUsedSlots(loadout);
 
   const primaries = RON_WEAPONS.filter(w => w.category === 'primary');
   const secondaries = RON_WEAPONS.filter(w => w.category === 'secondary');
 
-  const saveToDb = (field, value) => {
-    if (!db || !dbUser) return;
+  const throwablesList = RON_UTILITIES.filter(u => u.slotType === 'throwable');
+  const devicesList = RON_UTILITIES.filter(u => u.slotType === 'device');
+  const longTacticals = RON_UTILITIES.filter(u => u.slotType === 'long_tactical');
 
-    // Aktuellen Stand sichern, damit überschrieben werden kann
-    const currentState = {
-      primary, secondary, armor, headwear, mags, throwable, throwableCount,
-      primaryAttachments: {
-        Optics: primaryAtt.Optics?.id || null,
-        Muzzle: primaryAtt.Muzzle?.id || null,
-        Underbarrel: primaryAtt.Underbarrel?.id || null,
-        Overbarrel: primaryAtt.Overbarrel?.id || null
-      }
-    };
-    currentState[field] = value;
+  const [modalState, setModalState] = useState({ isOpen: false, type: null });
 
-    setDoc(doc(db, 'artifacts', appId, 'users', dbUser.uid, 'mapLoadouts', map.id), currentState).catch(console.error);
-  };
-
-  const loadRecommendation = () => {
-    if (!map || !map.recommendedLoadout) return;
-    const rec = map.recommendedLoadout;
-    setPrimary(rec.primary);
-    setSecondary(rec.secondary);
-    setArmor(rec.armor);
-    setHeadwear(rec.headwear);
-    setMags(rec.mags);
-    setThrowable(rec.throwable);
-    setThrowableCount(rec.throwableCount);
-
-    const attObj = { Optics: null, Muzzle: null, Underbarrel: null, Overbarrel: null };
-    Object.keys(rec.primaryAttachments).forEach(slot => {
-      const attId = rec.primaryAttachments[slot];
-      if (attId && RON_ATTACHMENTS[slot]) {
-        attObj[slot] = RON_ATTACHMENTS[slot].find(a => a.id === attId) || null;
-      }
-    });
-    setPrimaryAtt(attObj);
-
-    if (db && dbUser) {
-      setDoc(doc(db, 'artifacts', appId, 'users', dbUser.uid, 'mapLoadouts', map.id), {
-        primary: rec.primary, secondary: rec.secondary, armor: rec.armor, headwear: rec.headwear, mags: rec.mags, throwable: rec.throwable, throwableCount: rec.throwableCount, primaryAttachments: rec.primaryAttachments
-      }).catch(console.error);
+  const handleMagChange = (field, delta) => {
+    const newVal = (loadout[field] || 0) + delta;
+    if (newVal >= 0 && (delta < 0 || usedSlots < maxSlots)) {
+      onChange(field, newVal);
     }
   };
 
-  const toggleHeadwear = (id) => {
-    const newHeadwear = headwear.includes(id) ? headwear.filter(h => h !== id) : [...headwear, id];
-    setHeadwear(newHeadwear);
-    saveToDb('headwear', newHeadwear);
-  };
+  const getSelectedItem = (list, id) => list.find(i => i.id === id);
+
+  const activeArmorSkinId = preferredSkins?.[loadout.armor] || getSelectedItem(RON_ARMOR_OPTIONS, loadout.armor)?.skins?.[0]?.id;
+  const activeArmorImage = getSelectedItem(RON_ARMOR_OPTIONS, loadout.armor)?.skins?.find(s => s.id === activeArmorSkinId)?.image || getSelectedItem(RON_ARMOR_OPTIONS, loadout.armor)?.image;
 
   return (
     <GlassCard className="p-6 md:p-10 bg-black/40 border-white/5 relative overflow-hidden">
-      <div className="absolute top-0 right-0 p-6 z-10">
-        <button onClick={loadRecommendation} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-full text-[10px] md:text-xs font-black uppercase tracking-widest transition-all shadow-[0_0_20px_rgba(37,99,235,0.4)]">
-          <Zap size={14} /> Empfohlenes Loadout laden
-        </button>
+      {showRecommendationBtn && (
+        <div className="absolute top-0 right-0 p-4 md:p-6 z-10">
+          <button onClick={onLoadRecommendation} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-full text-[10px] md:text-xs font-black uppercase tracking-widest transition-all shadow-[0_0_20px_rgba(37,99,235,0.4)]">
+            <Zap size={14} /> Empfohlen
+          </button>
+        </div>
+      )}
+
+      <h3 className="text-xl md:text-2xl font-black uppercase italic tracking-tighter border-l-4 border-green-500 pl-4 mb-8 mt-10 md:mt-0">{title}</h3>
+
+      <div className="mb-8 border border-white/10 pb-0 flex flex-col md:flex-row justify-between items-start md:items-center bg-black/30 p-4 md:p-6 rounded-2xl gap-4">
+        <div>
+          <p className="text-xs uppercase font-black tracking-[0.2em] text-white/50 mb-1">Equipment Capacity</p>
+          <p className="text-[10px] text-white/40 leading-relaxed max-w-sm">Basis-Slots werden durch die ausgerüstete Plate/Armor definiert. Headwear und Long Tacticals belegen keine Slots.</p>
+        </div>
+        <div className={`text-2xl md:text-3xl font-mono font-black px-6 py-3 rounded-2xl border flex items-center gap-3 ${usedSlots === maxSlots ? 'bg-orange-500/10 text-orange-500 border-orange-500/30 shadow-[0_0_20px_rgba(249,115,22,0.2)]' : 'bg-green-500/10 text-green-500 border-green-500/30 shadow-[0_0_20px_rgba(34,197,94,0.2)]'}`}>
+          <Layers size={24} /> {usedSlots} / {maxSlots}
+        </div>
       </div>
 
-      <h3 className="text-xl md:text-2xl font-black uppercase italic tracking-tighter border-l-4 border-green-500 pl-4 mb-8 mt-10 md:mt-0">Tactical Loadout</h3>
+      {/* NEW COLUMN LAYOUT */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 md:gap-12">
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
+        {/* COL 1: WEAPONS */}
+        <div className="flex flex-col gap-8">
+          <div className="space-y-3">
+            <h4 className="text-[10px] uppercase font-black tracking-[0.2em] text-white/40 border-b border-white/10 pb-2">Primary Weapon</h4>
+            <ClickableItemCard
+              label="Select Primary"
+              item={getSelectedItem(primaries, loadout.primary)}
+              onClick={() => setModalState({ isOpen: true, type: 'primary' })}
+            />
+            <div className="flex gap-3">
+              <MagCounter label="AP Ammo" type="AP" val={loadout.primaryMagsAP} onDec={() => handleMagChange('primaryMagsAP', -1)} onInc={() => handleMagChange('primaryMagsAP', 1)} disabled={usedSlots >= maxSlots} />
+              <MagCounter label="JHP Ammo" type="JHP" val={loadout.primaryMagsJHP} onDec={() => handleMagChange('primaryMagsJHP', -1)} onInc={() => handleMagChange('primaryMagsJHP', 1)} disabled={usedSlots >= maxSlots} />
+            </div>
+          </div>
 
-        <div className="flex flex-col gap-3">
-          <div className="flex items-center justify-between border-b border-white/10 pb-2">
-            <label className="text-[10px] uppercase font-bold tracking-widest text-white/40">Primärwaffe</label>
-            <span className="text-[10px] text-green-500 font-mono font-bold bg-green-500/10 px-2 py-0.5 rounded">{mags} Mags</span>
-          </div>
-          <select value={primary} onChange={(e) => { setPrimary(e.target.value); saveToDb('primary', e.target.value); }} className="bg-white/5 border border-white/10 text-white text-sm md:text-base font-bold p-3 rounded-xl outline-none hover:bg-white/10 transition-colors focus:border-green-500/50">
-            {primaries.map(w => <option key={w.id} className="bg-black text-white" value={w.id}>{w.name} ({w.type})</option>)}
-          </select>
-          <div className="flex items-center gap-2 mt-1">
-            <label className="text-[10px] text-white/30 uppercase w-12">Mags:</label>
-            <input type="range" min="1" max="8" value={mags} onChange={(e) => { setMags(parseInt(e.target.value)); saveToDb('mags', parseInt(e.target.value)); }} className="flex-1 accent-green-500" />
-          </div>
-          {/* Zeigt Attachments an, falls geladen */}
-          <div className="flex flex-wrap gap-1 mt-2">
-            {Object.entries(primaryAtt).map(([slot, att]) => att && (
-              <span key={slot} className="text-[8px] uppercase tracking-widest bg-white/10 text-white/70 px-1.5 py-0.5 rounded border border-white/5">{att.name}</span>
-            ))}
+          <div className="space-y-3">
+            <h4 className="text-[10px] uppercase font-black tracking-[0.2em] text-white/40 border-b border-white/10 pb-2">Secondary Weapon</h4>
+            <ClickableItemCard
+              label="Select Secondary"
+              item={getSelectedItem(secondaries, loadout.secondary)}
+              onClick={() => setModalState({ isOpen: true, type: 'secondary' })}
+            />
+            <div className="flex gap-3">
+              <MagCounter label="AP Ammo" type="AP" val={loadout.secondaryMagsAP} onDec={() => handleMagChange('secondaryMagsAP', -1)} onInc={() => handleMagChange('secondaryMagsAP', 1)} disabled={usedSlots >= maxSlots} />
+              <MagCounter label="JHP Ammo" type="JHP" val={loadout.secondaryMagsJHP} onDec={() => handleMagChange('secondaryMagsJHP', -1)} onInc={() => handleMagChange('secondaryMagsJHP', 1)} disabled={usedSlots >= maxSlots} />
+            </div>
           </div>
         </div>
 
-        <div className="flex flex-col gap-3">
-          <div className="flex items-center justify-between border-b border-white/10 pb-2">
-            <label className="text-[10px] uppercase font-bold tracking-widest text-white/40">Sekundärwaffe & Gear</label>
-            <span className="text-[10px] text-orange-500 font-mono font-bold bg-orange-500/10 px-2 py-0.5 rounded">{throwableCount}x Utils</span>
+        {/* COL 2: ARMOR & THROWABLES */}
+        <div className="flex flex-col gap-8">
+          <div className="space-y-3">
+            <h4 className="text-[10px] uppercase font-black tracking-[0.2em] text-white/40 border-b border-white/10 pb-2">Plate / Armor</h4>
+            <ClickableItemCard
+              label="Select Armor"
+              item={getSelectedItem(RON_ARMOR_OPTIONS, loadout.armor)}
+              displayImageOverride={activeArmorImage}
+              onClick={() => setModalState({ isOpen: true, type: 'armor' })}
+            />
           </div>
-          <select value={secondary} onChange={(e) => { setSecondary(e.target.value); saveToDb('secondary', e.target.value); }} className="bg-white/5 border border-white/10 text-white text-sm md:text-base font-bold p-3 rounded-xl outline-none hover:bg-white/10 transition-colors focus:border-green-500/50">
-            {secondaries.map(w => <option key={w.id} className="bg-black text-white" value={w.id}>{w.name}</option>)}
-          </select>
-          <select value={throwable} onChange={(e) => { setThrowable(e.target.value); saveToDb('throwable', e.target.value); }} className="bg-white/5 border border-white/10 text-white text-xs md:text-sm font-bold p-2.5 rounded-xl outline-none hover:bg-white/10 transition-colors mt-1">
-            {RON_THROWABLES.map(t => <option key={t.id} className="bg-black text-white" value={t.id}>{t.name}</option>)}
-          </select>
-          <div className="flex items-center gap-2 mt-1">
-            <label className="text-[10px] text-white/30 uppercase w-12">Count:</label>
-            <input type="range" min="1" max="8" value={throwableCount} onChange={(e) => { setThrowableCount(parseInt(e.target.value)); saveToDb('throwableCount', parseInt(e.target.value)); }} className="flex-1 accent-orange-500" />
+
+          <div className="space-y-3">
+            <h4 className="text-[10px] uppercase font-black tracking-[0.2em] text-white/40 border-b border-white/10 pb-2">Throwables (Slots)</h4>
+            <VisualCounterGrid items={throwablesList} loadout={loadout} fieldObj="throwables" maxSlots={maxSlots} usedSlots={usedSlots} onChange={onChange} />
           </div>
         </div>
 
-        <div className="flex flex-col gap-3">
-          <label className="text-[10px] uppercase font-bold tracking-widest text-white/40 border-b border-white/10 pb-2">Rüstung (Armor)</label>
-          <div className="flex flex-col gap-2">
-            {RON_ARMOR_OPTIONS.map(a => (
-              <button
-                key={a.id}
-                onClick={() => { setArmor(a.id); saveToDb('armor', a.id); }}
-                className={`text-left p-2.5 rounded-xl border text-xs transition-all ${armor === a.id ? 'bg-blue-600/20 border-blue-500/50 text-white font-bold' : 'bg-white/5 border-white/5 text-white/60 hover:bg-white/10'}`}
-              >
-                {a.name}
-              </button>
-            ))}
+        {/* COL 3: HEADWEAR, LONG TAC, DEVICES */}
+        <div className="flex flex-col gap-8">
+          <div className="space-y-3">
+            <h4 className="text-[10px] uppercase font-black tracking-[0.2em] text-white/40 border-b border-white/10 pb-2">Headwear (Kombinierbar)</h4>
+            <VisualMultiSelectGrid items={RON_HEADWEAR_OPTIONS} selectedIds={loadout.headwear} preferredSkins={preferredSkins} onToggle={(id) => onChange('headwear', validateHeadwear(loadout.headwear, id))} />
           </div>
-        </div>
 
-        <div className="flex flex-col gap-3">
-          <label className="text-[10px] uppercase font-bold tracking-widest text-white/40 border-b border-white/10 pb-2">Kopfbedeckung (Kombinierbar)</label>
-          <div className="flex flex-col gap-2">
-            {RON_HEADWEAR_OPTIONS.map(h => {
-              const isChecked = headwear.includes(h.id);
-              return (
-                <button
-                  key={h.id}
-                  onClick={() => toggleHeadwear(h.id)}
-                  className={`flex items-center gap-3 text-left p-2 rounded-xl border text-xs transition-all ${isChecked ? 'bg-white/10 border-white/30 text-white font-bold' : 'bg-transparent border-transparent text-white/50 hover:bg-white/5'}`}
-                >
-                  {isChecked ? <CheckSquare size={16} className="text-green-500 shrink-0" /> : <Square size={16} className="shrink-0" />}
-                  {h.name}
-                </button>
-              );
-            })}
+          <div className="space-y-3">
+            <h4 className="text-[10px] uppercase font-black tracking-[0.2em] text-white/40 border-b border-white/10 pb-2">Long Tactical</h4>
+            <ClickableItemCard
+              label="Select Equipment"
+              item={getSelectedItem(longTacticals, loadout.longTactical)}
+              onClick={() => setModalState({ isOpen: true, type: 'long_tactical' })}
+            />
+          </div>
+
+          <div className="space-y-3">
+            <h4 className="text-[10px] uppercase font-black tracking-[0.2em] text-white/40 border-b border-white/10 pb-2">Devices (Slots)</h4>
+            <VisualCounterGrid items={devicesList} loadout={loadout} fieldObj="devices" maxSlots={maxSlots} usedSlots={usedSlots} onChange={onChange} />
           </div>
         </div>
 
       </div>
+
+      {/* --- MODALS FOR SELECTION --- */}
+      <AnimatePresence>
+        {modalState.isOpen && modalState.type === 'primary' && (
+          <ItemSelectionModal isOpen={true} onClose={() => setModalState({ isOpen: false, type: null })} items={primaries} selectedId={loadout.primary} onSelect={(id) => onChange('primary', id)} title="Primary Weapon" isWeapon={true} />
+        )}
+        {modalState.isOpen && modalState.type === 'secondary' && (
+          <ItemSelectionModal isOpen={true} onClose={() => setModalState({ isOpen: false, type: null })} items={secondaries} selectedId={loadout.secondary} onSelect={(id) => onChange('secondary', id)} title="Secondary Weapon" isWeapon={true} />
+        )}
+        {modalState.isOpen && modalState.type === 'armor' && (
+          <ItemSelectionModal isOpen={true} onClose={() => setModalState({ isOpen: false, type: null })} items={RON_ARMOR_OPTIONS} selectedId={loadout.armor} preferredSkins={preferredSkins} onSelect={(id) => onChange('armor', id)} title="Plate / Armor" />
+        )}
+        {modalState.isOpen && modalState.type === 'long_tactical' && (
+          <ItemSelectionModal isOpen={true} onClose={() => setModalState({ isOpen: false, type: null })} items={longTacticals} selectedId={loadout.longTactical} onSelect={(id) => onChange('longTactical', id)} title="Long Tactical" />
+        )}
+      </AnimatePresence>
     </GlassCard>
   );
 };
 
-// --- NEW COMPONENT: SWAT OPERATOR UI (LOADOUT OVERVIEW) ---
+
+// --- SWAT OPERATOR UI (LOADOUT OVERVIEW) ---
 const SwatOperatorUI = ({ onSelectCategory }) => {
   return (
     <div className="flex flex-col items-center justify-center w-full py-8 md:py-12">
       <h2 className="text-4xl md:text-6xl font-black text-white italic uppercase tracking-tighter mb-2 text-center">Tactical Loadout</h2>
       <p className="text-white/40 font-mono text-xs uppercase tracking-widest mb-12 text-center">Operator Equipment Configuration</p>
 
-      {/* Spider/Cross Layout for Officer */}
-      <div className="relative w-full max-w-4xl mx-auto min-h-[450px] md:min-h-[500px] flex items-center justify-center">
-
-        {/* Hintergund/Skelett */}
+      <div className="relative w-full max-w-4xl mx-auto min-h-[450px] md:min-h-[500px] flex items-center justify-center mb-12">
         <div className="absolute inset-0 flex flex-col items-center justify-center opacity-[0.05] pointer-events-none z-0">
           <User size={350} strokeWidth={1} />
         </div>
 
-        {/* Slots Grid um den Operator herum */}
         <div className="relative z-10 w-full h-full flex flex-col items-center justify-between py-4">
-
-          {/* TOP: HELMET */}
           <div className="w-full flex justify-center mb-8 md:mb-12">
-            <GlassCard
-              onClick={() => onSelectCategory('headwear')}
-              className="w-48 p-4 flex flex-col items-center justify-center gap-2 cursor-pointer bg-black/60 hover:bg-white/10 hover:border-blue-500/50 hover:shadow-[0_0_30px_rgba(59,130,246,0.2)] transition-all group"
-            >
+            <GlassCard onClick={() => onSelectCategory('headwear')} className="w-48 p-4 flex flex-col items-center justify-center gap-2 cursor-pointer bg-black/60 hover:bg-white/10 hover:border-blue-500/50 hover:shadow-[0_0_30px_rgba(59,130,246,0.2)] transition-all group">
               <HardHat size={32} className="text-white/60 group-hover:text-blue-400 transition-colors" />
-              <div className="text-center">
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Slot</p>
-                <p className="text-sm font-bold uppercase text-white">Headwear</p>
-              </div>
+              <div className="text-center"><p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Slot</p><p className="text-sm font-bold uppercase text-white">Headwear</p></div>
             </GlassCard>
           </div>
 
-          {/* MIDDLE ROW: ARMORY & ARMOR */}
           <div className="w-full flex flex-col md:flex-row justify-between md:justify-center md:gap-40 lg:gap-64 px-4 items-center">
-
-            <GlassCard
-              onClick={() => onSelectCategory('armory')}
-              className="w-48 p-4 flex flex-col items-center justify-center gap-2 cursor-pointer bg-black/60 hover:bg-white/10 hover:border-red-500/50 hover:shadow-[0_0_30px_rgba(239,68,68,0.2)] transition-all group mb-8 md:mb-0"
-            >
+            <GlassCard onClick={() => onSelectCategory('armory')} className="w-48 p-4 flex flex-col items-center justify-center gap-2 cursor-pointer bg-black/60 hover:bg-white/10 hover:border-red-500/50 hover:shadow-[0_0_30px_rgba(239,68,68,0.2)] transition-all group mb-8 md:mb-0">
               <Target size={32} className="text-white/60 group-hover:text-red-500 transition-colors" />
-              <div className="text-center">
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Arsenal</p>
-                <p className="text-sm font-bold uppercase text-white">Armory</p>
-              </div>
+              <div className="text-center"><p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Arsenal</p><p className="text-sm font-bold uppercase text-white">Armory</p></div>
             </GlassCard>
 
-            <GlassCard
-              onClick={() => onSelectCategory('armor')}
-              className="w-48 p-4 flex flex-col items-center justify-center gap-2 cursor-pointer bg-black/60 hover:bg-white/10 hover:border-green-500/50 hover:shadow-[0_0_30px_rgba(34,197,94,0.2)] transition-all group mb-8 md:mb-0"
-            >
+            <GlassCard onClick={() => onSelectCategory('armor')} className="w-48 p-4 flex flex-col items-center justify-center gap-2 cursor-pointer bg-black/60 hover:bg-white/10 hover:border-green-500/50 hover:shadow-[0_0_30px_rgba(34,197,94,0.2)] transition-all group mb-8 md:mb-0">
               <ShieldCheck size={32} className="text-white/60 group-hover:text-green-500 transition-colors" />
-              <div className="text-center">
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Protection</p>
-                <p className="text-sm font-bold uppercase text-white">Plate / Armor</p>
-              </div>
+              <div className="text-center"><p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Protection</p><p className="text-sm font-bold uppercase text-white">Plate / Armor</p></div>
             </GlassCard>
-
           </div>
 
-          {/* BOTTOM: UTILS */}
           <div className="w-full flex justify-center mt-8 md:mt-12">
-            <GlassCard
-              onClick={() => onSelectCategory('utilities')}
-              className="w-48 p-4 flex flex-col items-center justify-center gap-2 cursor-pointer bg-black/60 hover:bg-white/10 hover:border-orange-500/50 hover:shadow-[0_0_30px_rgba(249,115,22,0.2)] transition-all group"
-            >
+            <GlassCard onClick={() => onSelectCategory('utilities')} className="w-48 p-4 flex flex-col items-center justify-center gap-2 cursor-pointer bg-black/60 hover:bg-white/10 hover:border-orange-500/50 hover:shadow-[0_0_30px_rgba(249,115,22,0.2)] transition-all group">
               <Layers size={32} className="text-white/60 group-hover:text-orange-500 transition-colors" />
-              <div className="text-center">
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Tactical</p>
-                <p className="text-sm font-bold uppercase text-white">Utilities</p>
-              </div>
+              <div className="text-center"><p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Tactical</p><p className="text-sm font-bold uppercase text-white">Utilities</p></div>
             </GlassCard>
           </div>
-
         </div>
       </div>
     </div>
   );
 };
 
-// --- NEW COMPONENT: WEAPON GUNSMITH ---
+// --- WEAPON GUNSMITH ---
 const WeaponGunsmith = ({ weaponId, equipped, setEquipped, activeSlot, setActiveSlot, dbUser }) => {
   const slots = [
     { id: 'Optics', icon: Crosshair, label: 'Optics' },
@@ -1480,6 +1530,7 @@ export default function App() {
   const [userMapLoadouts, setUserMapLoadouts] = useState({});
   const [userObjectives, setUserObjectives] = useState({});
   const [userBlueprints, setUserBlueprints] = useState({});
+  const [globalStandardLoadout, setGlobalStandardLoadout] = useState(DEFAULT_STANDARD_LOADOUT);
 
   const [activeTab, setActiveTab] = useState('home');
   const [ronSubTab, setRonSubTab] = useState('maps');
@@ -1496,6 +1547,7 @@ export default function App() {
   const [activeAttachmentSlot, setActiveAttachmentSlot] = useState(null);
 
   const [lightbox, setLightbox] = useState({ isOpen: false, images: [], currentIndex: 0 });
+  const [activeSkinModal, setActiveSkinModal] = useState({ isOpen: false, item: null, type: null });
 
   const [isRonSearchOpen, setIsRonSearchOpen] = useState(false);
   const [isScrollingDown, setIsScrollingDown] = useState(false);
@@ -1511,11 +1563,7 @@ export default function App() {
     if (!auth) return;
     const initAuth = async () => {
       try {
-        if (typeof null !== 'undefined' && null) {
-          await signInWithCustomToken(auth, null);
-        } else {
-          await signInAnonymously(auth);
-        }
+        const token = null;
       } catch (err) {
         console.error('Auth error', err);
       }
@@ -1530,14 +1578,14 @@ export default function App() {
     if (!db || !dbUser) return;
 
     const unsubs = [];
-    const collections = [
+    const collectionsList = [
       { name: 'attachments', setter: setUserAttachments },
       { name: 'mapLoadouts', setter: setUserMapLoadouts },
       { name: 'mapObjectives', setter: setUserObjectives },
       { name: 'blueprintMarkers', setter: setUserBlueprints }
     ];
 
-    collections.forEach(colInfo => {
+    collectionsList.forEach(colInfo => {
       const q = collection(db, 'artifacts', appId, 'users', dbUser.uid, colInfo.name);
       unsubs.push(
         onSnapshot(q, (snap) => {
@@ -1547,6 +1595,16 @@ export default function App() {
         }, console.error)
       );
     });
+
+    // Special listener for Global Standard Loadout
+    const standardDocRef = doc(db, 'artifacts', appId, 'users', dbUser.uid, 'globalLoadouts', 'standard');
+    unsubs.push(
+      onSnapshot(standardDocRef, (docSnap) => {
+        if (docSnap.exists()) {
+          setGlobalStandardLoadout(docSnap.data());
+        }
+      })
+    );
 
     return () => unsubs.forEach(u => u());
   }, [dbUser]);
@@ -1572,20 +1630,11 @@ export default function App() {
 
   // Live Feed Logic
   useEffect(() => {
-    const shuffled = [...NEWS_POOL].sort(() => 0.5 - Math.random());
-    setLiveFeed(shuffled.slice(0, 3).map(item => ({ ...item, timestamp: new Date() })));
-    const intervalId = setInterval(() => {
-      setLiveFeed(currentFeed => {
-        const currentIds = currentFeed.map(i => i.id);
-        const availablePool = NEWS_POOL.filter(i => !currentIds.includes(i.id));
-        if (availablePool.length === 0) return currentFeed;
-        return [{ ...availablePool[Math.floor(Math.random() * availablePool.length)], timestamp: new Date() }, ...currentFeed.slice(0, 2)];
-      });
-    }, 15 * 60 * 1000);
-    return () => clearInterval(intervalId);
+    const shuffled = [...NEWS_POOL].sort((a, b) => b.timestamp - a.timestamp);
+    setLiveFeed(shuffled);
   }, []);
 
-  // State Persistence Logic (Local Storage Fallback for Tab Navigation etc.)
+  // State Persistence Logic
   useEffect(() => {
     const lastActive = localStorage.getItem(STORAGE_KEY_TIME);
     const now = Date.now();
@@ -1734,6 +1783,63 @@ export default function App() {
     }
   };
 
+  const handleGlobalLoadoutChange = (field, value) => {
+    let newLoadout = { ...globalStandardLoadout };
+    if (field === 'throwables' || field === 'devices') {
+      newLoadout[field] = value;
+    } else {
+      newLoadout[field] = value;
+    }
+
+    if (field === 'armor') {
+      newLoadout = autoAdjustSlots(newLoadout, getArmorSlots(value));
+    }
+    setGlobalStandardLoadout(newLoadout);
+    if (db && dbUser) {
+      setDoc(doc(db, 'artifacts', appId, 'users', dbUser.uid, 'globalLoadouts', 'standard'), newLoadout).catch(console.error);
+    }
+  };
+
+  const handleSkinChange = (itemId, skinId) => {
+    let newLoadout = { ...globalStandardLoadout };
+    if (!newLoadout.preferredSkins) newLoadout.preferredSkins = {};
+    newLoadout.preferredSkins[itemId] = skinId;
+
+    setGlobalStandardLoadout(newLoadout);
+    if (db && dbUser) {
+      setDoc(doc(db, 'artifacts', appId, 'users', dbUser.uid, 'globalLoadouts', 'standard'), newLoadout).catch(console.error);
+    }
+  };
+
+  const handleMapLoadoutChange = (mapId, field, value, currentMapLoadout) => {
+    let newLoadout = { ...currentMapLoadout };
+    if (field === 'throwables' || field === 'devices') {
+      newLoadout[field] = value;
+    } else {
+      newLoadout[field] = value;
+    }
+
+    if (field === 'armor') {
+      newLoadout = autoAdjustSlots(newLoadout, getArmorSlots(value));
+    }
+    setUserMapLoadouts(prev => ({ ...prev, [mapId]: newLoadout }));
+    if (db && dbUser) {
+      setDoc(doc(db, 'artifacts', appId, 'users', dbUser.uid, 'mapLoadouts', mapId), newLoadout).catch(console.error);
+    }
+  };
+
+  const handleLoadMapRecommendation = (mapId, overrides) => {
+    let newLoadout = JSON.parse(JSON.stringify(globalStandardLoadout));
+    if (overrides) {
+      newLoadout = { ...newLoadout, ...overrides };
+    }
+    newLoadout = autoAdjustSlots(newLoadout, getArmorSlots(newLoadout.armor));
+    setUserMapLoadouts(prev => ({ ...prev, [mapId]: newLoadout }));
+    if (db && dbUser) {
+      setDoc(doc(db, 'artifacts', appId, 'users', dbUser.uid, 'mapLoadouts', mapId), newLoadout).catch(console.error);
+    }
+  };
+
   const getTypeColor = (type) => {
     switch (type) {
       case 'CRITICAL': return 'text-red-500 bg-red-500/10 border-red-500/20';
@@ -1746,12 +1852,19 @@ export default function App() {
   const renderSearchResults = () => {
     const query = searchQuery.toLowerCase();
     let resultsMaps = [], resultsWeapons = [], resultsNews = [];
+    let resultsArmor = [], resultsHeadwear = [], resultsUtils = [];
+
     if (activeTab === 'home' || activeTab === 'ron') {
-      resultsMaps = [...resultsMaps, ...RON_MAPS.filter(m => m.name.toLowerCase().includes(query) || (m.codename && m.codename.toLowerCase().includes(query)) || m.situation.toLowerCase().includes(query))];
-      resultsWeapons = [...resultsWeapons, ...RON_WEAPONS.filter(w => w.name.toLowerCase().includes(query) || w.type.toLowerCase().includes(query) || w.desc.toLowerCase().includes(query))];
+      resultsMaps = [...RON_MAPS.filter(m => m.name.toLowerCase().includes(query) || (m.codename && m.codename.toLowerCase().includes(query)) || m.situation.toLowerCase().includes(query))];
+      resultsWeapons = [...RON_WEAPONS.filter(w => w.name.toLowerCase().includes(query) || w.type.toLowerCase().includes(query) || w.desc.toLowerCase().includes(query))];
+      resultsArmor = RON_ARMOR_OPTIONS.filter(a => a.name.toLowerCase().includes(query) || a.desc.toLowerCase().includes(query));
+      resultsHeadwear = RON_HEADWEAR_OPTIONS.filter(h => h.name.toLowerCase().includes(query) || h.desc.toLowerCase().includes(query));
+      resultsUtils = RON_UTILITIES.filter(u => u.name.toLowerCase().includes(query) || u.desc.toLowerCase().includes(query));
     }
-    if (activeTab === 'home' || activeTab === 'pubg') resultsMaps = [...resultsMaps, ...PUBG_MAPS.filter(m => m.name.toLowerCase().includes(query) || m.info.toLowerCase().includes(query))];
+    if (activeTab === 'home' || activeTab === 'pubg') resultsMaps = [...PUBG_MAPS.filter(m => m.name.toLowerCase().includes(query) || m.info.toLowerCase().includes(query))];
     if (activeTab === 'home') resultsNews = NEWS_POOL.filter(n => n.headline.toLowerCase().includes(query) || n.fact.toLowerCase().includes(query) || n.content.toLowerCase().includes(query));
+
+    const totalResults = resultsMaps.length + resultsWeapons.length + resultsNews.length + resultsArmor.length + resultsHeadwear.length + resultsUtils.length;
 
     return (
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8 w-full max-w-7xl mx-auto pb-10 pt-4">
@@ -1805,7 +1918,38 @@ export default function App() {
             </div>
           </div>
         )}
-        {resultsMaps.length === 0 && resultsNews.length === 0 && resultsWeapons.length === 0 && (
+
+        {/* Loadout Search Results */}
+        {(resultsArmor.length > 0 || resultsHeadwear.length > 0 || resultsUtils.length > 0) && (
+          <div className="space-y-4">
+            <h3 className="text-xl font-bold text-white border-b border-white/10 pb-2">Loadout Equipment</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {resultsArmor.map(a => (
+                <GlassCard key={a.id} onClick={() => { handleRonSubTabSwitch('loadout'); setLoadoutSubTab('armor'); }} className="p-4 cursor-pointer hover:bg-white/10 border-green-500/20">
+                  <ShieldCheck size={20} className="text-green-500 mb-2" />
+                  <h4 className="font-bold text-white uppercase">{a.name}</h4>
+                  <p className="text-xs text-white/50 line-clamp-2">{a.desc}</p>
+                </GlassCard>
+              ))}
+              {resultsHeadwear.map(h => (
+                <GlassCard key={h.id} onClick={() => { handleRonSubTabSwitch('loadout'); setLoadoutSubTab('headwear'); }} className="p-4 cursor-pointer hover:bg-white/10 border-blue-500/20">
+                  <HardHat size={20} className="text-blue-500 mb-2" />
+                  <h4 className="font-bold text-white uppercase">{h.name}</h4>
+                  <p className="text-xs text-white/50 line-clamp-2">{h.desc}</p>
+                </GlassCard>
+              ))}
+              {resultsUtils.map(u => (
+                <GlassCard key={u.id} onClick={() => { handleRonSubTabSwitch('loadout'); setLoadoutSubTab('utilities'); }} className="p-4 cursor-pointer hover:bg-white/10 border-orange-500/20">
+                  <Layers size={20} className="text-orange-500 mb-2" />
+                  <h4 className="font-bold text-white uppercase">{u.name}</h4>
+                  <p className="text-xs text-white/50 line-clamp-2">{u.desc}</p>
+                </GlassCard>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {totalResults === 0 && (
           <div className="text-center py-12">
             <AlertTriangle size={48} className="mx-auto text-white/20 mb-4" />
             <p className="text-white/40 font-mono uppercase tracking-widest text-sm">Keine Einträge gefunden für "{searchQuery}"</p>
@@ -1926,73 +2070,82 @@ export default function App() {
     );
 
     // MAP DETAIL VIEW
-    if (selectedMap && selectedMap.game === 'ron') return (
-      <motion.div {...pageTransition} className="space-y-6 md:space-y-8 pt-20 md:pt-24 pb-32 md:pb-20">
-        <motion.button onClick={handleBackClick} className="flex items-center gap-2 text-white/70 hover:text-white bg-white/5 px-4 md:px-6 py-3 rounded-full backdrop-blur-xl border border-white/10 transition-all text-xs md:text-sm"><ChevronLeft size={18} /> Zurück zur Auswahl</motion.button>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-10">
-          <div className="lg:col-span-2 space-y-6 md:space-y-8">
-            <div className="relative h-[40vh] md:h-[50vh] rounded-[2rem] md:rounded-[3rem] overflow-hidden border border-white/20 shadow-2xl bg-black">
-              <img src={selectedMap.image} className="w-full h-full object-cover" alt={selectedMap.name} />
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent"></div>
-              <div className="absolute bottom-6 md:bottom-12 left-6 md:left-12 pr-6">
-                {selectedMap.codename && <span className="bg-red-600 text-white font-black px-3 md:px-4 py-1 rounded-md text-[8px] md:text-xs uppercase tracking-widest mb-2 md:mb-4 inline-block shadow-lg shadow-red-600/20">Operation: {selectedMap.codename}</span>}
-                <h1 className="text-4xl md:text-6xl lg:text-8xl font-black text-white italic uppercase tracking-tighter leading-tight md:leading-none">{selectedMap.name}</h1>
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-              <GlassCard className="p-6 md:p-10"><h3 className="text-red-500 font-black uppercase text-[10px] tracking-widest mb-3 md:mb-4">Missionsprofil</h3><p className="text-gray-200 text-sm md:text-lg leading-relaxed font-medium">{selectedMap.situation}</p></GlassCard>
-              <GlassCard className="p-6 md:p-10"><h3 className="text-red-500 font-black uppercase text-[10px] tracking-widest mb-3 md:mb-4">Feindlage</h3><p className="text-gray-200 text-sm md:text-lg leading-relaxed font-medium">{selectedMap.suspects}</p></GlassCard>
-            </div>
+    if (selectedMap && selectedMap.game === 'ron') {
+      const curMapLoadout = userMapLoadouts[selectedMap.id] || globalStandardLoadout;
 
-            <MissionObjectives mapId={selectedMap.id} objectives={selectedMap.objectives} dbUser={dbUser} userObjectives={userObjectives} />
-
-            <AudioLogViewer logs={selectedMap.audioLogs} />
-            <POIViewer poi={selectedMap.poi} />
-            <BlueprintViewer mapId={selectedMap.id} blueprints={selectedMap.blueprints} dbUser={dbUser} userBlueprints={userBlueprints} />
-          </div>
-          <div className="space-y-6 md:space-y-10">
-            {selectedMap.screenshots?.length > 0 && (
-              <div className="space-y-4">
-                <h3 className="text-xl md:text-2xl font-black uppercase italic tracking-tighter border-l-4 border-red-600 pl-4 mt-4 md:mt-0">Intel Footage</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
-                  {selectedMap.screenshots.map((img, i) => (
-                    <GlassCard key={i} onClick={() => setLightbox({ isOpen: true, images: selectedMap.screenshots, currentIndex: i })} className="aspect-video relative overflow-hidden group cursor-pointer">
-                      <img src={img} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="Intel" />
-                      <div className="absolute inset-0 border-[2px] border-white/0 group-hover:border-red-500/50 transition-colors pointer-events-none rounded-[1.5rem] md:rounded-[2rem]"></div>
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center pointer-events-none">
-                        <ZoomIn className="text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" size={32} />
-                      </div>
-                    </GlassCard>
-                  ))}
+      return (
+        <motion.div {...pageTransition} className="space-y-6 md:space-y-8 pt-20 md:pt-24 pb-32 md:pb-20">
+          <motion.button onClick={handleBackClick} className="flex items-center gap-2 text-white/70 hover:text-white bg-white/5 px-4 md:px-6 py-3 rounded-full backdrop-blur-xl border border-white/10 transition-all text-xs md:text-sm"><ChevronLeft size={18} /> Zurück zur Auswahl</motion.button>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-10">
+            <div className="lg:col-span-2 space-y-6 md:space-y-8">
+              <div className="relative h-[40vh] md:h-[50vh] rounded-[2rem] md:rounded-[3rem] overflow-hidden border border-white/20 shadow-2xl bg-black">
+                <img src={selectedMap.image} className="w-full h-full object-cover" alt={selectedMap.name} />
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent"></div>
+                <div className="absolute bottom-6 md:bottom-12 left-6 md:left-12 pr-6">
+                  {selectedMap.codename && <span className="bg-red-600 text-white font-black px-3 md:px-4 py-1 rounded-md text-[8px] md:text-xs uppercase tracking-widest mb-2 md:mb-4 inline-block shadow-lg shadow-red-600/20">Operation: {selectedMap.codename}</span>}
+                  <h1 className="text-4xl md:text-6xl lg:text-8xl font-black text-white italic uppercase tracking-tighter leading-tight md:leading-none">{selectedMap.name}</h1>
                 </div>
               </div>
-            )}
-            {selectedMap.media?.length > 0 && (
-              <div className="space-y-4">
-                <h3 className="text-xl md:text-2xl font-black uppercase italic tracking-tighter border-l-4 border-blue-500 pl-4 mt-4 md:mt-0">Media Coverage</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
-                  {selectedMap.media.map((img, i) => (
-                    <GlassCard key={i} onClick={() => setLightbox({ isOpen: true, images: selectedMap.media, currentIndex: i })} className="aspect-video relative overflow-hidden group cursor-pointer">
-                      <img src={img} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="Media" />
-                      <div className="absolute inset-0 border-[2px] border-white/0 group-hover:border-blue-500/50 transition-colors pointer-events-none rounded-[1.5rem] md:rounded-[2rem]"></div>
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center pointer-events-none">
-                        <ZoomIn className="text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" size={32} />
-                      </div>
-                    </GlassCard>
-                  ))}
-                </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+                <GlassCard className="p-6 md:p-10"><h3 className="text-red-500 font-black uppercase text-[10px] tracking-widest mb-3 md:mb-4">Missionsprofil</h3><p className="text-gray-200 text-sm md:text-lg leading-relaxed font-medium">{selectedMap.situation}</p></GlassCard>
+                <GlassCard className="p-6 md:p-10"><h3 className="text-red-500 font-black uppercase text-[10px] tracking-widest mb-3 md:mb-4">Feindlage</h3><p className="text-gray-200 text-sm md:text-lg leading-relaxed font-medium">{selectedMap.suspects}</p></GlassCard>
               </div>
-            )}
-          </div>
 
-          {/* LOADOUT EDITOR (FULL WIDTH AT BOTTOM) */}
-          <div className="lg:col-span-3 mt-4">
-            <MapLoadoutEditor map={selectedMap} dbUser={dbUser} userMapLoadouts={userMapLoadouts} />
-          </div>
+              <MissionObjectives mapId={selectedMap.id} objectives={selectedMap.objectives} dbUser={dbUser} userObjectives={userObjectives} />
 
-        </div>
-      </motion.div>
-    );
+              <AudioLogViewer logs={selectedMap.audioLogs} />
+              <POIViewer poi={selectedMap.poi} />
+              <BlueprintViewer mapId={selectedMap.id} blueprints={selectedMap.blueprints} dbUser={dbUser} userBlueprints={userBlueprints} />
+            </div>
+            <div className="space-y-6 md:space-y-10">
+              {selectedMap.screenshots?.length > 0 && (
+                <div className="space-y-4">
+                  <h3 className="text-xl md:text-2xl font-black uppercase italic tracking-tighter border-l-4 border-red-600 pl-4 mt-4 md:mt-0">Intel Footage</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
+                    {selectedMap.screenshots.map((img, i) => (
+                      <GlassCard key={i} onClick={() => setLightbox({ isOpen: true, images: selectedMap.screenshots, currentIndex: i })} className="aspect-video relative overflow-hidden group cursor-pointer">
+                        <img src={img} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="Intel" />
+                        <div className="absolute inset-0 border-[2px] border-white/0 group-hover:border-red-500/50 transition-colors pointer-events-none rounded-[1.5rem] md:rounded-[2rem]"></div>
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center pointer-events-none">
+                          <ZoomIn className="text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" size={32} />
+                        </div>
+                      </GlassCard>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {selectedMap.media?.length > 0 && (
+                <div className="space-y-4">
+                  <h3 className="text-xl md:text-2xl font-black uppercase italic tracking-tighter border-l-4 border-blue-500 pl-4 mt-4 md:mt-0">Media Coverage</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
+                    {selectedMap.media.map((img, i) => (
+                      <GlassCard key={i} onClick={() => setLightbox({ isOpen: true, images: selectedMap.media, currentIndex: i })} className="aspect-video relative overflow-hidden group cursor-pointer">
+                        <img src={img} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="Media" />
+                        <div className="absolute inset-0 border-[2px] border-white/0 group-hover:border-blue-500/50 transition-colors pointer-events-none rounded-[1.5rem] md:rounded-[2rem]"></div>
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center pointer-events-none">
+                          <ZoomIn className="text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" size={32} />
+                        </div>
+                      </GlassCard>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="lg:col-span-3 mt-4">
+              <UnifiedLoadoutEditor
+                loadout={curMapLoadout}
+                onChange={(field, val) => handleMapLoadoutChange(selectedMap.id, field, val, curMapLoadout)}
+                title={`Tactical Loadout // ${selectedMap.codename || selectedMap.name}`}
+                showRecommendationBtn={true}
+                onLoadRecommendation={() => handleLoadMapRecommendation(selectedMap.id, selectedMap.recommendedOverrides)}
+                preferredSkins={globalStandardLoadout.preferredSkins}
+              />
+            </div>
+          </div>
+        </motion.div>
+      );
+    }
 
     const currentMaps = RON_MAPS.filter(map => map.dlc === activeDlc);
     const currentWeapons = RON_WEAPONS.filter(w => w.type === activeWeaponCat);
@@ -2090,7 +2243,16 @@ export default function App() {
                 )) : (ronSubTab === 'loadout') ? (
                   <div className="lg:col-span-2 w-full pb-10">
                     {loadoutSubTab === 'overview' && (
-                      <SwatOperatorUI onSelectCategory={setLoadoutSubTab} />
+                      <div className="space-y-12">
+                        <SwatOperatorUI onSelectCategory={setLoadoutSubTab} />
+                        <UnifiedLoadoutEditor
+                          loadout={globalStandardLoadout}
+                          onChange={handleGlobalLoadoutChange}
+                          title="Global Standard Loadout"
+                          showRecommendationBtn={false}
+                          preferredSkins={globalStandardLoadout.preferredSkins}
+                        />
+                      </div>
                     )}
 
                     {loadoutSubTab === 'armory' && (
@@ -2116,28 +2278,45 @@ export default function App() {
                     {loadoutSubTab === 'armor' && (
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-4xl mx-auto">
                         <h3 className="sm:col-span-2 text-2xl font-black uppercase italic tracking-tighter border-l-4 border-green-500 pl-4 mb-4">Plate / Armor Database</h3>
-                        {RON_ARMOR_OPTIONS.map(a => (
-                          <GlassCard key={a.id} className="p-6 border-white/5 hover:border-green-500/30 transition-colors">
-                            <ShieldCheck size={32} className="text-green-500 mb-4" />
-                            <h4 className="text-xl font-bold uppercase text-white mb-2">{a.name}</h4>
-                            <p className="text-sm text-gray-400">{a.desc}</p>
-                          </GlassCard>
-                        ))}
+                        {RON_ARMOR_OPTIONS.map(a => {
+                          const currentSkinId = globalStandardLoadout.preferredSkins?.[a.id] || a.skins?.[0]?.id;
+                          const currentSkinImg = a.skins?.find(s => s.id === currentSkinId)?.image || a.image;
+                          return (
+                            <GlassCard key={a.id} onClick={() => setActiveSkinModal({ isOpen: true, item: a, type: 'armor' })} className="p-6 border-white/5 hover:border-green-500/30 transition-colors flex flex-col justify-between cursor-pointer">
+                              <div className="flex items-center justify-between mb-4">
+                                <ShieldCheck size={32} className="text-green-500" />
+                                {a.skins && <span className="text-[10px] bg-white/10 px-2 py-1 rounded text-white/60 uppercase font-bold">{a.skins.length} Skins</span>}
+                              </div>
+                              <div className="flex-1 flex justify-center py-4">
+                                <img src={currentSkinImg} className="h-32 object-contain" alt={a.name} style={{ filter: 'drop-shadow(0px 10px 15px rgba(0,0,0,0.6))' }} />
+                              </div>
+                              <h4 className="text-xl font-bold uppercase text-white mb-2 text-center">{a.name}</h4>
+                              <p className="text-sm text-gray-400 text-center">{a.desc}</p>
+                            </GlassCard>
+                          );
+                        })}
                       </div>
                     )}
 
                     {loadoutSubTab === 'headwear' && (
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-4xl mx-auto">
                         <h3 className="sm:col-span-2 text-2xl font-black uppercase italic tracking-tighter border-l-4 border-blue-500 pl-4 mb-4">Headwear Database</h3>
-                        {RON_HEADWEAR_OPTIONS.map(h => (
-                          <GlassCard key={h.id} className="p-6 border-white/5 hover:border-blue-500/30 transition-colors flex items-center gap-4">
-                            <HardHat size={32} className="text-blue-500 shrink-0" />
-                            <div>
-                              <p className="text-[10px] uppercase font-bold text-white/40 tracking-widest mb-1">{h.type}</p>
-                              <h4 className="text-lg font-bold uppercase text-white">{h.name}</h4>
-                            </div>
-                          </GlassCard>
-                        ))}
+                        {RON_HEADWEAR_OPTIONS.map(h => {
+                          const currentSkinId = globalStandardLoadout.preferredSkins?.[h.id] || h.skins?.[0]?.id;
+                          const currentSkinImg = h.skins?.find(s => s.id === currentSkinId)?.image || h.image;
+                          return (
+                            <GlassCard key={h.id} onClick={() => setActiveSkinModal({ isOpen: true, item: h, type: 'headwear' })} className="p-6 border-white/5 hover:border-blue-500/30 transition-colors flex items-center gap-4 cursor-pointer">
+                              <div className="w-16 h-16 shrink-0 bg-white/5 rounded-xl border border-white/10 p-2 flex items-center justify-center">
+                                <img src={currentSkinImg} className="max-w-full max-h-full object-contain" alt={h.name} />
+                              </div>
+                              <div className="flex-1">
+                                <p className="text-[10px] uppercase font-bold text-white/40 tracking-widest mb-1">{h.type}</p>
+                                <h4 className="text-lg font-bold uppercase text-white leading-tight">{h.name}</h4>
+                              </div>
+                              {h.skins && <span className="text-[10px] bg-white/10 px-2 py-1 rounded text-white/60 uppercase font-bold shrink-0">{h.skins.length} Skins</span>}
+                            </GlassCard>
+                          );
+                        })}
                       </div>
                     )}
 
@@ -2145,7 +2324,7 @@ export default function App() {
                       <div className="space-y-10 max-w-6xl mx-auto">
                         <h3 className="text-2xl font-black uppercase italic tracking-tighter border-l-4 border-orange-500 pl-4 mb-4">Tactical Utilities Database</h3>
 
-                        {['Throwable', 'Breaching', 'Long Tactical'].map(cat => (
+                        {['Throwable', 'Breaching', 'Long Tactical', 'Tactical Device'].map(cat => (
                           <div key={cat} className="space-y-4">
                             <h4 className="text-lg font-bold uppercase text-white/50 tracking-widest border-b border-white/10 pb-2">{cat}s</h4>
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -2155,6 +2334,7 @@ export default function App() {
                                     {cat === 'Throwable' && <Zap size={24} className="text-orange-500 shrink-0" />}
                                     {cat === 'Breaching' && <Target size={24} className="text-orange-500 shrink-0" />}
                                     {cat === 'Long Tactical' && <Eye size={24} className="text-orange-500 shrink-0" />}
+                                    {cat === 'Tactical Device' && <Settings size={24} className="text-orange-500 shrink-0" />}
                                     <h5 className="text-lg font-bold uppercase text-white leading-tight">{u.name}</h5>
                                   </div>
                                   <p className="text-sm text-gray-400 flex-1">{u.desc}</p>
@@ -2179,7 +2359,7 @@ export default function App() {
               initial={{ y: -50, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: -50, opacity: 0 }}
-              className="fixed top-4 left-4 right-4 z-[100] md:hidden"
+              className="fixed top-4 left-4 right-4 z-[9999] md:hidden"
             >
               <div className="flex items-center bg-zinc-900 border border-white/20 rounded-full px-4 py-3 shadow-2xl">
                 <Search size={18} className="text-white/40 mr-3 shrink-0" />
@@ -2328,7 +2508,7 @@ export default function App() {
         </main>
 
         <footer className="w-full py-8 md:py-10 text-center text-white/10 font-black text-[8px] md:text-[10px] tracking-[0.5em] md:tracking-[1em] uppercase mb-20 md:mb-0">
-          Tactical Repository // inTACTICS v4.0.0
+          Tactical Repository // inTACTICS v5.0.0
           <div className="w-full py-8 md:py-10 text-center text-white/10 text-[8px] copyright">
             <h3>© Copyright</h3>
             <p className="py-8 md:py-10">Ready or Not is a trademark of <a href="https://voidinteractive.net/" target="_blank" rel="noopener noreferrer">VOID Interactive</a>. This is a fan-made project.</p>
@@ -2342,6 +2522,16 @@ export default function App() {
 
         {/* LIGHTBOX MODAL */}
         <AnimatePresence>
+          {activeSkinModal.isOpen && (
+            <SkinSelectionModal
+              isOpen={true}
+              item={activeSkinModal.item}
+              preferredSkinId={globalStandardLoadout.preferredSkins?.[activeSkinModal.item.id]}
+              onSelectSkin={handleSkinChange}
+              onClose={() => setActiveSkinModal({ isOpen: false, item: null, type: null })}
+            />
+          )}
+
           {lightbox.isOpen && lightbox.images.length > 0 && (
             <motion.div
               initial={{ opacity: 0 }}
