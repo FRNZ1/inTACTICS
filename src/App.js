@@ -1,11 +1,15 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Home, Crosshair, Map as MapIcon, Shield, Eye, EyeOff, ChevronLeft, Target, Settings, Info, Lock, Menu, X, Activity, Zap, Clock, FileText, ExternalLink, AlertTriangle, Search, Play, Pause, ZoomIn, ZoomOut, Layers, CheckSquare, Square, MapPin, Skull, Undo, Redo, Maximize, Minimize, ChevronRight, Sun, AlignJustify, HardHat, User, ShieldCheck, Plus, Minus, Edit3 } from 'lucide-react';
+import { Home, Crosshair, Map as MapIcon, Shield, Eye, EyeOff, ChevronLeft, Target, Settings, Info, Lock, Menu, X, Activity, Zap, Clock, FileText, ExternalLink, AlertTriangle, Search, Play, Pause, ZoomIn, ZoomOut, Layers, CheckSquare, Square, MapPin, Skull, Hand, Undo, Redo, Maximize, Minimize, ChevronRight, Sun, AlignJustify, HardHat, User, ShieldCheck, Plus, Minus, Edit3 } from 'lucide-react';
 
 // --- FIREBASE INITIALIZATION ---
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 import { getFirestore, doc, setDoc, onSnapshot, collection } from 'firebase/firestore';
+
+// --- DATA MOCKS RoN-Maps ---
+
+import { RON_MAPS } from "./data/Maps/ron_maps.js"; 
 
 let app, auth, db, appId;
 try {
@@ -240,7 +244,7 @@ const RON_UTILITIES = [
 
 const DEFAULT_STANDARD_LOADOUT = {
   primary: 'w_m4a1',
-  primaryAttachments: { Optics: 'opt_holo', Muzzle: null, Underbarrel: 'ub_vert', Overbarrel: 'ob_flash' },
+  primaryAttachments: { Optics: 'opt_holo', Muzzle: null, Underbarrel: 'ub_vert', Overbarrel: ['ob_flash'] },
   primaryMagsAP: 3,
   primaryMagsJHP: 1,
   secondary: 'w_g19',
@@ -265,282 +269,26 @@ const DEFAULT_STANDARD_LOADOUT = {
   }
 };
 
-// --- DATA MOCKS ---
-
-const RON_MAPS = [
-  // ==========================================
-  // --- BASE GAME (READY OR NOT) ---
-  // ==========================================
-  {
-    id: 'ron_gas',
-    game: 'ron',
-    dlc: 'base',
-    name: '4U Gas Station',
-    codename: 'Thank You, Come Again',
-    imagePosition: '45%',
-    image: 'https://readyormaps.com/maps/1_4U_gas/4U_Gas_Station_preview.webp',
-    situation: 'Ein lokaler Drogenring überfällt eine Tankstelle und nimmt Zivilisten als Geiseln.',
-    suspects: 'Desorganisierte Kriminelle, meist bewaffnet mit Pistolen und Schrotflinten. Geringe Panzerung.',
-    objectives: [
-      'Bring Order to Chaos',
-      'Rescue all of the Civilians',
-      'Arrest 3 Suspects',
-      'Report Status to TOC'
-    ],
-    blueprints: [
-      { name: 'Ground Floor', url: 'https://static.wikia.nocookie.net/ready-or-not/images/2/28/4U_Gas_Station_Map.png/revision/latest?cb=20241012143721' },
-      { name: 'Roof', url: 'https://static.wikia.nocookie.net/ready-or-not/images/2/28/4U_Gas_Station_Map.png/revision/latest?cb=20241012143721' }
-    ],
-    audioLogs: [
-      {
-        title: "Sharla's 911 Call",
-        type: '911',
-        url: 'https://static.wikia.nocookie.net/ready-or-not/images/8/86/Sharla%27s_911_Call.wav/revision/latest?cb=20241012142358',
-        transcript: "Operator: 911, what is your emergency?\nSharla: There are men with guns! Please help! They just came in shooting, my daughter is in there somewhere! Please!"
-      },
-      {
-        title: "Mudasir's 911 Call",
-        type: '911',
-        url: 'https://static.wikia.nocookie.net/ready-or-not/images/d/d9/Mudasir%27s_911_Call.wav/revision/latest?cb=20241012142413',
-        transcript: "Operator: 911, what is your emergency?\nMudasir: Yes, hello, I am the manager at the 4U Gas Station. Some men have entered the store with weapons. They are robbing us!"
-      },
-      {
-        title: "Mission Brief",
-        type: 'briefing',
-        url: 'https://static.wikia.nocookie.net/ready-or-not/images/9/9c/Gas_Briefing_01.ogg/revision/latest?cb=20250708065448',
-        transcript: "Listen up. We've got a situation at the 4U Gas Station on rust belt. Multiple armed suspects have taken hostages. They are likely local meth heads, unorganized but dangerous. Move in, secure the perimeter, and bring order to chaos. Watch your corners."
-      }
-    ],
-    poi: {
-      civilians: [
-        {
-          name: 'Sharla Leighton',
-          image: 'https://static.wikia.nocookie.net/ready-or-not/images/2/2d/Sharla_Leighton.png/revision/latest/scale-to-width-down/350?cb=20241012142512',
-          sex: 'Female', height: "5'-6\"", weight: '130lb', build: 'Small', dob: '04/11/1998',
-          desc: "Sharla was our initial point of contact inside the building before police arrived on-scene. She found a hiding place and called 911 immediately after spotting one of the gunmen.\n\nRescue of this civilian is imperative. Specifically, her eyewitness account of the events that transpired before police arrival will help put the suspects behind bars for good."
-        }
-      ],
-      suspects: [
-        {
-          name: 'Andre Williams',
-          image: 'https://static.wikia.nocookie.net/ready-or-not/images/a/a4/Andre_Williams.png/revision/latest/scale-to-width-down/350?cb=20241012142502',
-          sex: 'Male', height: "6'-3\"", weight: '165lb', build: 'Medium', dob: '05/20/2005',
-          desc: "Attends 213 Mission High School in his final year. Following an incident at the school, Andre was placed under house arrest at his grandmothers house while an investigation took place."
-        }
-      ]
-    },
-    media: [
-      'https://static.wikia.nocookie.net/ready-or-not/images/5/56/Onlooker_Photograph.png/revision/latest/scale-to-width-down/1000?cb=20241012150241',
-      'https://static.wikia.nocookie.net/ready-or-not/images/8/82/Media_Coverage.png/revision/latest/scale-to-width-down/1000?cb=20241012150247'
-    ],
-    screenshots: ['https://images.steamusercontent.com/ugc/2523778827659601613/1C290698DF614012E3FCB7B8DDCB485652BE9376/'],
-    recommendedLoadout: {
-      primary: 'w_mp5a3',
-      primaryAttachments: { Optics: 'opt_micro', Muzzle: 'muz_socom', Underbarrel: 'ub_angled', Overbarrel: 'ob_flash' },
-      secondary: 'w_taser',
-      armor: 'light',
-      headwear: ['gasmask', 'ballistic'],
-      mags: 4,
-      throwable: 'cs_gas',
-      throwableCount: 3
-    }
-  },
-  {
-    id: 'ron_23mb', game: 'ron', dlc: 'base', name: 'San Uriel Condominiums', codename: '23 Megabytes a Second',
-    image: 'https://readyormaps.com/maps/2_23_mb/23_Megabytes_a_Second_preview.webp',
-    situation: 'Ein angebliches Swatting bei einem Streamer entpuppt sich als illegale Server-Operation (CP).',
-    suspects: 'Private Sicherheitskräfte und bewaffnete Bewohner. Unerwartet hoher Widerstand.'
-  },
-  {
-    id: 'ron_twisted', game: 'ron', dlc: 'base', name: '213 Park Homes', codename: 'Twisted Nerve',
-    image: 'https://readyormaps.com/maps/3_213_park/213_Park_preview.webp',
-    situation: 'Durchsuchungsbefehl bei einem vermuteten Meth-Labor in einem heruntergekommenen Vorort.',
-    suspects: 'Junkies und Dealer. Unberechenbar, oft unter Drogeneinfluss. Gefahr durch versteckte Sprengfallen.'
-  },
-  {
-    id: 'ron_spider', game: 'ron', dlc: 'base', name: 'Brixley Talent Time', codename: 'The Spider',
-    image: 'https://readyormaps.com/maps/4_brixley_talent/brixley_talent_preview.webp',
-    situation: 'Razzia in einer scheinbaren Talentagentur, die in die Produktion von illegalem Material verwickelt ist.',
-    suspects: 'Bewaffnete Wachleute. Gut organisiert, nutzen die verwinkelten Räumlichkeiten zu ihrem Vorteil.'
-  },
-  {
-    id: 'ron_lethal', game: 'ron', dlc: 'base', name: 'Sullivan\'s Slope', codename: 'A Lethal Obsession',
-    image: 'https://readyormaps.com/maps/5_sullivans_slope/Sullivans%20slope_preview.webp',
-    situation: 'Zugriff auf das abgelegene Grundstück eines flüchtigen Regierungsgegners und Bombenbauers.',
-    suspects: 'Einsamer Wolf, aber extrem gefährlich. Das gesamte Gelände ist massiv mit tödlichen Sprengfallen präpariert.'
-  },
-  {
-    id: 'ron_ides', game: 'ron', dlc: 'base', name: 'Brisa Cove', codename: 'Ides of March',
-    image: 'https://readyormaps.com/maps/6_brisa_cove/brisa_cove_preview.webp',
-    situation: 'Eine linksradikale Veteranen-Gruppierung (The Left Behind) hat sich in Luxusapartments verschanzt.',
-    suspects: 'Militärisch ausgebildet, schwere Körperpanzerung, automatische Waffen und tödliche Sprengfallen.'
-  },
-  {
-    id: 'ron_sinuous', game: 'ron', dlc: 'base', name: 'Mindjot Data Center', codename: 'Sinuous Trail',
-    image: 'https://readyormaps.com/maps/7_mindjot/mindjot_preview.webp',
-    situation: 'Stürmung eines Rechenzentrums, das illegale Inhalte (CP) für ein Kartell hostet.',
-    suspects: 'Söldner der privaten Sicherheitsfirma Mindjot. Hochgradig ausgerüstet und koordiniert.'
-  },
-  {
-    id: 'ron_ends', game: 'ron', dlc: 'base', name: 'Kawayu Beach', codename: 'Ends of the Earth',
-    image: 'https://readyormaps.com/maps/8_kawayu_beach/kawayu_beach_preview.webp',
-    situation: 'Zugriff auf ein Strandhaus, aus dem eine Familie illegalen Waffenhandel betreibt.',
-    suspects: 'Familienmitglieder und Käufer. Unberechenbar aufgrund von Verzweiflung, teilweise unbewaffnete Zivilisten im Haus.'
-  },
-  {
-    id: 'ron_greased', game: 'ron', dlc: 'base', name: 'Los Suenos Postal Service', codename: 'Greased Palms',
-    image: 'https://readyormaps.com/maps/9_los_suenos_postal/los_suenos_postal_preview.webp',
-    situation: 'Das Postverteilzentrum dient als Umschlagplatz für illegale Waffen durch korrupte FISA-Agenten.',
-    suspects: 'Abtrünnige Bundesagenten und Kartellmitglieder. Taktisch überlegen und schwer bewaffnet.'
-  },
-  {
-    id: 'ron_valley', game: 'ron', dlc: 'base', name: 'Voll Health House', codename: 'Valley of the Dolls',
-    image: 'https://readyormaps.com/maps/10_voll_health_house/voll_health_house_preview.webp',
-    situation: 'Infiltration der Luxusvilla von Amos Voll, dem mutmaßlichen Kopf eines gigantischen CP-Rings.',
-    suspects: 'Amos Volls private Sicherheitsfirma (Bolton Security). Sehr aufmerksam, bewaffnet mit Maschinenpistolen.'
-  },
-  {
-    id: 'ron_elephant', game: 'ron', dlc: 'base', name: 'Watt Community College', codename: 'Elephant',
-    imagePosition: '82%',
-    image: 'https://readyormaps.com/maps/11_watt_college/watt_college_previre.webp',
-    situation: 'Active Shooter (Amoklauf) an der örtlichen Universität. Massenpanik und tickende Sprengsätze.',
-    suspects: 'Mehrere jugendliche Täter. Keine Rüstung, aber unberechenbar und auf maximalen Schaden aus. Höchster Zeitdruck.'
-  },
-  {
-    id: 'ron_rust', game: 'ron', dlc: 'base', name: 'Costa Vino Border Reserve', codename: 'Rust Belt',
-    imagePosition: 'left',
-    image: 'https://readyormaps.com/maps/12_costa_vino/costa_vino_preview.webp',
-    situation: 'Razzia in einem unterirdischen Tunnelsystem an der Grenze, genutzt für Menschen- und Drogenschmuggel.',
-    suspects: 'Kartellmitglieder in extrem unübersichtlichen, dunklen Höhlen. Nachtsicht (NVG) dringend erforderlich.'
-  },
-  {
-    id: 'ron_sins', game: 'ron', dlc: 'base', name: 'Clemente Hotel', codename: 'Sins Of The Father',
-    image: 'https://readyormaps.com/maps/13_clemente_hotel/clemente_hotel_preview.webp',
-    situation: 'Attentat im Gange. Das Hotel wurde von gut organisierten Angreifern gestürmt, um eine Zielperson auszuschalten.',
-    suspects: 'Schwer bewaffnete Söldner in den oberen Stockwerken. Enge Hotelkorridore erschweren den Zugriff.'
-  },
-  {
-    id: 'ron_neon', game: 'ron', dlc: 'base', name: 'Neon Nightclub', codename: 'Neon Tomb',
-    imagePosition: '90%',
-    image: 'https://readyormaps.com/maps/14_neon_nightclub/neon_nightclub_preview.webp',
-    situation: 'Terroranschlag (Die Hand) in einem überfüllten Nachtclub. Katastrophale Opferzahlen.',
-    suspects: 'Terroristen mit Sturmgewehren und Sprengstoffwesten. Lärm und Stroboskoplicht behindern die Kommunikation massiv.'
-  },
-  {
-    id: 'ron_buy', game: 'ron', dlc: 'base', name: 'Ceasar\'s Cars Dealership', codename: 'Buy Cheap, Buy Twice',
-    image: 'https://readyormaps.com/maps/15_ceasars_cars_dealership/ceasars_cars_dealership_preview.webp',
-    situation: 'Ein vermeintliches Autohaus fungiert als Verteilerzentrum für den illegalen Waffenhandel.',
-    suspects: 'Syndikatsmitglieder. Große, offene Ausstellungsräume mit weiten Sichtlinien (Scharfschützengefahr).'
-  },
-  {
-    id: 'ron_carriers', game: 'ron', dlc: 'base', name: 'Cherryessa Farm', codename: 'Carriers of the vine',
-    image: 'https://readyormaps.com/maps/16_cherryessa_farm/cherryessa_farm_preview.webp',
-    situation: 'Untersuchung eines abgelegenen Kult-Anwesens nach Berichten über mehrfachen Mord und illegale Bestattungen.',
-    suspects: 'Fanatische Kultmitglieder. Tragen oft unbemerkt Körperpanzerung unter ihren Roben und sind extrem feindselig.'
-  },
-  {
-    id: 'ron_relapse', game: 'ron', dlc: 'base', name: 'Coastal Grove Medical Center', codename: 'Relapse',
-    image: 'https://readyormaps.com/maps/17_medical_center/medical_center_preview.webp',
-    situation: 'Die Terrorgruppe "Die Hand" hat ein Krankenhaus übernommen, um einen dort behandelten Anführer zu befreien.',
-    suspects: 'Schwerst bewaffnete Terroristen in einem Gebäude voller wehrloser Patienten und Ärzte.'
-  },
-  {
-    id: 'ron_hide', game: 'ron', dlc: 'base', name: 'Port Hokan', codename: 'Hide And Seek',
-    image: 'https://readyormaps.com/maps/18_port/port_preview.webp',
-    situation: 'Razzia im Hafen bei strömendem Regen. Zentrum eines massiven Menschenhandelsrings.',
-    suspects: 'Organisierte Kriminalität, Wachleute zwischen Container-Labyrinthen. Hohe Gefahr für Hinterhalte im Dunkeln.'
-  },
-
-  // ==========================================
-  // --- HOME INVASION DLC ---
-  // ==========================================
-  {
-    id: 'ron_dorms', game: 'ron', dlc: 'home_invasion', name: 'Greenside Dormitories', codename: 'Dorms',
-    image: 'https://readyormaps.com/maps/19_greenside_dormitories/greenside_dormitories_preview.webp',
-    situation: 'Razzia in Studentenwohnheimen nach Hinweisen auf illegale Drogen- und Waffenproduktion.',
-    suspects: 'Studentische Netzwerke vermischt mit lokalen Dealern. Unübersichtliche Gänge, viele Zimmertüren.'
-  },
-  {
-    id: 'ron_narcos', game: 'ron', dlc: 'home_invasion', name: '25 Hope Street 213 Park', codename: 'Narcos',
-    image: 'https://readyormaps.com/maps/20_25_hope_street/25_hope_street_preview.webp',
-    situation: 'Schwere Auseinandersetzung in einer abgeschotteten Nachbarschaft. Starkes Kartell-Aufkommen.',
-    suspects: 'Kartell-Vollstrecker. Extrem gewaltbereit, schwer bewaffnet, kennen das Gelände perfekt.'
-  },
-  {
-    id: 'ron_lawmaker', game: 'ron', dlc: 'home_invasion', name: '155 Playa Vista Lane', codename: 'Lawmaker',
-    image: 'https://readyormaps.com/maps/21_155_playa_vista_lane/155_playa_vista_lane_preview.webp',
-    situation: 'Einbruch und Geiselnahme in einer hochpreisigen Villa am Strand (Colina Beach).',
-    suspects: 'Professionelle Eindringlinge mit taktischer Ausrüstung. Gezielte Operation.'
-  },
-
-  // ==========================================
-  // --- DARK WATERS DLC ---
-  // ==========================================
-  {
-    id: 'ron_mirage', game: 'ron', dlc: 'dark_waters', name: 'The Seraglio', codename: 'Mirage at Sea',
-    image: 'https://readyormaps.com/maps/22_Seraglio/Seraglio_preview.webp',
-    situation: 'Maritime Operation auf einem verdächtigen Frachtschiff. Verdacht auf internationalen Schmuggel.',
-    suspects: 'Internationale Söldner, extrem enge Gänge (CQB), automatische Waffen.'
-  },
-  {
-    id: 'ron_leviathan', game: 'ron', dlc: 'dark_waters', name: 'HeavyWell A-101 Rig', codename: 'Leviathan',
-    image: 'https://readyormaps.com/maps/23_HeavyWell_Rig/HeavyWell_A-101_Rig_preview.webp',
-    situation: 'Zugriff auf eine abgelegene Ölbohrinsel bei extremen Wetterbedingungen.',
-    suspects: 'Hochgerüstete paramilitärische Kräfte. Nutzung von Nachtsicht und schweren Westen.'
-  },
-  {
-    id: 'ron_triad', game: 'ron', dlc: 'dark_waters', name: 'The Elysian', codename: '3 Letter Triad',
-    image: 'https://readyormaps.com/maps/24_elysian/elysian_preview.webp',
-    situation: 'Razzia in einem Luxuskomplex, der als Tarnung für Operationen der Triaden.',
-    suspects: 'Organisierte Kriminalität (Triaden). Skrupellos, Maschinenpistolen, zivile Präsenz wahrscheinlich.'
-  },
-
-  // ==========================================
-  // --- LOS SUENOS STORIES DLC ---
-  // ==========================================
-  {
-    id: 'ron_hunger', game: 'ron', dlc: 'ls_stories', name: 'Chico\'s Mexican Resturant', codename: 'Hunger Strike',
-    image: 'https://readyormaps.com/maps/25_chicos_mexican_resturant/chicos_mexican_resturant_preview.webp',
-    situation: 'Eskalierende Gewalt und Schusswechsel in einem belebten Restaurant.',
-    suspects: 'Gangmitglieder. Hitziges Gefecht auf engem Raum mit vielen unbeteiligten Zivilisten.'
-  },
-  {
-    id: 'ron_stolen_valor', game: 'ron', dlc: 'ls_stories', name: 'Edgeware Apartments', codename: 'Stolen Valor',
-    image: 'https://readyormaps.com/maps/26_edgeware_apartments/edgeware_apartments_preview.webp',
-    situation: 'Verdächtige haben sich nach einer Verfolgungsjagd in einem Apartmentkomplex verschanzt.',
-    suspects: 'Militante Verdächtige. Gefahr von Sprengfallen (IEDs) an Türen und in Fluren.'
-  },
-
-  // ==========================================
-  // --- BOILING POINT DLC ---
-  // ==========================================
-  {
-    id: 'ron_no_good', game: 'ron', dlc: 'boiling_point', name: 'Los Suenos Pier', codename: 'No Good Deed',
-    image: 'https://readyormaps.com/maps/27_pier/pier_preview.webp',
-    situation: 'Unterbrechung eines massiven Waffendeals am städtischen Pier bei Nacht.',
-    suspects: 'Schmuggler und Käufer. Weite Sichtlinien bedeuten akute Scharfschützen-Gefahr.'
-  },
-  {
-    id: 'ron_all_gods', game: 'ron', dlc: 'boiling_point', name: 'Unitytrust Bank', codename: 'All Gods Burn',
-    image: 'https://readyormaps.com/maps/28_bank/bank_preview.webp',
-    situation: 'Schwer bewaffneter Banküberfall mit laufender Geiselnahme. Der Tresorraum wird aufgeschweißt.',
-    suspects: 'Professionelle Bankräuber. Level IV Körperpanzerung, leichte Maschinengewehre (LMGs), Gasmasken.'
-  },
-  {
-    id: 'ron_new_america', game: 'ron', dlc: 'boiling_point', name: 'Los Suenos City Hall', codename: 'A New America',
-    image: 'https://readyormaps.com/maps/29_city_hall/city_hall_preview.webp',
-    situation: 'Großangelegter Terroranschlag auf das Rathaus und das Archivgebäude.',
-    suspects: 'Inländische Terrorzellen. Extrem hoch motiviert, Nutzung von Sprengstoff (C4), Geiseln als Schutzschilde.'
-  }
-];
-
 const PUBG_MAPS = [
   { id: 'pubg_erangel', game: 'pubg', name: 'Erangel', size: '8x8 km', image: 'https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&q=80&w=800', info: 'Die originale Battle Royale Karte.', secrets: 'Geheime Kellerräume befinden sich unter bestimmten Gebäuden.', locations: 'Typische Keller-Standorte: Rozhok, südlich von Yasnaya Polyana.' }
 ];
+
 // Fallback generator
 RON_MAPS.forEach(map => {
   if (!map.objectives) map.objectives = ['Bring Order to Chaos', 'Rescue all of the Civilians', 'Arrest Main Suspects', 'Secure Evidence', 'Report Status to TOC'];
-  if (!map.blueprints) map.blueprints = [{ name: 'Main Floor', url: 'https://placehold.co/1200x800/111/FFF?text=Classified+Blueprint' }];
+  if (!map.blueprints) {
+    map.blueprints = [{
+      name: 'Main Floor',
+      url: 'https://placehold.co/1200x800/111/FFF?text=Classified+Blueprint',
+      altUrl: 'https://placehold.co/1200x800/1e1e1e/FFF?text=Alternative+Plan'
+    }];
+  } else {
+    // Give existing maps an alternative plan placeholder if they don't have one
+    map.blueprints = map.blueprints.map(bp => ({
+      ...bp,
+      altUrl: bp.altUrl || 'https://placehold.co/1200x800/1e1e1e/FFF?text=Alternative+Plan'
+    }));
+  }
   if (!map.audioLogs) map.audioLogs = [];
   if (!map.poi) map.poi = { civilians: [], suspects: [] };
   if (!map.media) map.media = [];
@@ -655,8 +403,8 @@ const getRelativeTime = (date) => {
 
 // --- CONSTANTS ---
 const SESSION_TIMEOUT = 10 * 60 * 1000;
-const STORAGE_KEY_STATE = 'inTactics_app_state_v12';
-const STORAGE_KEY_TIME = 'inTactics_last_active_v12';
+const STORAGE_KEY_STATE = 'inTactics_app_state_v15';
+const STORAGE_KEY_TIME = 'inTactics_last_active_v15';
 
 // --- COMPONENTS ---
 
@@ -703,11 +451,20 @@ const GlobalSearchBar = ({ searchQuery, setSearchQuery, placeholder, className =
 const BlueprintViewer = ({ mapId, blueprints, dbUser, userBlueprints }) => {
   const [activeFloor, setActiveFloor] = useState(0);
   const [scale, setScale] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isFullscreen, setIsFullscreen] = useState(false);
+
   const [activePlan, setActivePlan] = useState('Plan A');
-  const [markerType, setMarkerType] = useState('move');
+  const [activeTeam, setActiveTeam] = useState('blue'); // 'blue' | 'red'
+  const [activeTool, setActiveTool] = useState('pan'); // 'pan' | 'move' | 'breach' | 'hold' | 'suspect'
+  const [useAltMap, setUseAltMap] = useState(false);
+
   const [markersData, setMarkersData] = useState({});
-  const dragStart = useRef(null);
+
+  const mapContainerRef = useRef(null);
+  const lastPanRef = useRef({ x: 0, y: 0 });
+  const [isPanning, setIsPanning] = useState(false);
+  const hasMovedRef = useRef(false);
 
   useEffect(() => {
     if (userBlueprints && userBlueprints[mapId]) {
@@ -720,12 +477,28 @@ const BlueprintViewer = ({ mapId, blueprints, dbUser, userBlueprints }) => {
     }
   }, [userBlueprints, mapId]);
 
-  
   const currentFloorKey = `${activePlan}_${activeFloor}`;
-  const floorData = markersData[currentFloorKey] || { past: [], present: [], future: [] };
-  const currentMarkers = floorData.present;
-  const canUndo = floorData.past.length > 0;
-  const canRedo = floorData.future.length > 0;
+
+  // Helper to ensure backward compatibility and extract team data safely
+  const getFloorData = (data) => {
+    const fd = data[currentFloorKey];
+    if (!fd) return { blue: { past: [], present: [], future: [] }, red: { past: [], present: [], future: [] } };
+
+    // Migration from old global structure
+    if (fd.present) {
+      return {
+        blue: { past: fd.past || [], present: fd.present || [], future: fd.future || [] },
+        red: { past: [], present: [], future: [] }
+      };
+    }
+    return fd;
+  };
+
+  const floorData = getFloorData(markersData);
+  const teamData = floorData[activeTeam] || { past: [], present: [], future: [] };
+
+  const canUndo = teamData.past.length > 0;
+  const canRedo = teamData.future.length > 0;
 
   const saveToDb = (newData) => {
     if (db && dbUser) {
@@ -733,29 +506,117 @@ const BlueprintViewer = ({ mapId, blueprints, dbUser, userBlueprints }) => {
     }
   };
 
-  const handlePointerDown = (e) => { dragStart.current = { x: e.clientX, y: e.clientY }; };
-  const handlePointerUp = (e) => {
-    if (!isFullscreen || !dragStart.current) return;
-    const dx = e.clientX - dragStart.current.x, dy = e.clientY - dragStart.current.y;
-    if (Math.sqrt(dx * dx + dy * dy) < 5) {
-      const rect = e.currentTarget.getBoundingClientRect();
-      const x = ((e.clientX - rect.left) / rect.width) * 100, y = ((e.clientY - rect.top) / rect.height) * 100;
-      setMarkersData(prev => {
-        const fd = prev[currentFloorKey] || { past: [], present: [], future: [] };
-        const newData = { ...prev, [currentFloorKey]: { past: [...fd.past, fd.present], present: [...fd.present, { x, y, type: markerType }], future: [] } };
-        saveToDb(newData);
-        return newData;
-      });
+  // --- INTERACTION LOGIC (PAN, ZOOM, DRAW) ---
+
+  useEffect(() => {
+    const el = mapContainerRef.current;
+    if (!el || !isFullscreen) return;
+
+    const onWheel = (e) => {
+      e.preventDefault();
+      const zoomSensitivity = 0.002;
+      setScale(s => Math.max(0.5, Math.min(s - e.deltaY * zoomSensitivity, 5)));
+    };
+
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => el.removeEventListener('wheel', onWheel);
+  }, [isFullscreen]);
+
+  const handlePointerDown = (e) => {
+    if (!isFullscreen) return;
+    hasMovedRef.current = false;
+
+    // Right click (2), Middle click (1), Pan Tool, or Multi-touch triggers Panning
+    if (e.button === 2 || e.button === 1 || activeTool === 'pan' || (e.touches && e.touches.length > 1)) {
+      setIsPanning(true);
+      lastPanRef.current = {
+        x: e.clientX || (e.touches && e.touches[0].clientX),
+        y: e.clientY || (e.touches && e.touches[0].clientY)
+      };
     }
-    dragStart.current = null;
+  };
+
+  const handlePointerMove = (e) => {
+    if (!isFullscreen || !isPanning) return;
+    hasMovedRef.current = true;
+
+    const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+    const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+    const dx = clientX - lastPanRef.current.x;
+    const dy = clientY - lastPanRef.current.y;
+
+    setPan(prev => ({ x: prev.x + dx, y: prev.y + dy }));
+    lastPanRef.current = { x: clientX, y: clientY };
+  };
+
+  const handlePointerUp = () => {
+    setIsPanning(false);
+  };
+
+  const handleMapClick = (e) => {
+    // Verhindere Platzierung bei: Nicht Fullscreen, Panning, Pan-Tool aktiv, es wurde bewegt, oder Rechtsklick
+    if (!isFullscreen || isPanning || activeTool === 'pan' || hasMovedRef.current || e.button === 2) return;
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+    const newMarker = { id: Date.now(), x, y, type: activeTool };
+
+    setMarkersData(prev => {
+      const fd = getFloorData(prev);
+      const td = fd[activeTeam] || { past: [], present: [], future: [] };
+      const newData = {
+        ...prev,
+        [currentFloorKey]: {
+          ...fd,
+          [activeTeam]: {
+            past: [...td.past, td.present],
+            present: [...td.present, newMarker],
+            future: []
+          }
+        }
+      };
+      saveToDb(newData);
+      return newData;
+    });
+  };
+
+  const handleMarkerDoubleClick = (e, mId, team) => {
+    e.stopPropagation();
+    setMarkersData(prev => {
+      const fd = getFloorData(prev);
+      const td = fd[team] || { past: [], present: [], future: [] };
+      const newData = {
+        ...prev,
+        [currentFloorKey]: {
+          ...fd,
+          [team]: {
+            past: [...td.past, td.present],
+            present: td.present.filter(m => m.id !== mId),
+            future: []
+          }
+        }
+      };
+      saveToDb(newData);
+      return newData;
+    });
   };
 
   const undo = () => {
     setMarkersData(prev => {
-      const fd = prev[currentFloorKey];
-      if (!fd || fd.past.length === 0) return prev;
-      const newPast = [...fd.past];
-      const newData = { ...prev, [currentFloorKey]: { past: newPast, present: newPast.pop(), future: [fd.present, ...fd.future] } };
+      const fd = getFloorData(prev);
+      const td = fd[activeTeam];
+      if (!td || td.past.length === 0) return prev;
+
+      const newPast = [...td.past];
+      const newData = {
+        ...prev,
+        [currentFloorKey]: {
+          ...fd,
+          [activeTeam]: { past: newPast, present: newPast.pop(), future: [td.present, ...td.future] }
+        }
+      };
       saveToDb(newData);
       return newData;
     });
@@ -763,10 +624,18 @@ const BlueprintViewer = ({ mapId, blueprints, dbUser, userBlueprints }) => {
 
   const redo = () => {
     setMarkersData(prev => {
-      const fd = prev[currentFloorKey];
-      if (!fd || fd.future.length === 0) return prev;
-      const newFuture = [...fd.future];
-      const newData = { ...prev, [currentFloorKey]: { past: [...fd.past, fd.present], present: newFuture.shift(), future: newFuture } };
+      const fd = getFloorData(prev);
+      const td = fd[activeTeam];
+      if (!td || td.future.length === 0) return prev;
+
+      const newFuture = [...td.future];
+      const newData = {
+        ...prev,
+        [currentFloorKey]: {
+          ...fd,
+          [activeTeam]: { past: [...td.past, td.present], present: newFuture.shift(), future: newFuture }
+        }
+      };
       saveToDb(newData);
       return newData;
     });
@@ -774,9 +643,17 @@ const BlueprintViewer = ({ mapId, blueprints, dbUser, userBlueprints }) => {
 
   const clearMarkers = () => {
     setMarkersData(prev => {
-      const fd = prev[currentFloorKey];
-      if (!fd || fd.present.length === 0) return prev;
-      const newData = { ...prev, [currentFloorKey]: { past: [...fd.past, fd.present], present: [], future: [] } };
+      const fd = getFloorData(prev);
+      const td = fd[activeTeam];
+      if (!td || td.present.length === 0) return prev;
+
+      const newData = {
+        ...prev,
+        [currentFloorKey]: {
+          ...fd,
+          [activeTeam]: { past: [...td.past, td.present], present: [], future: [] }
+        }
+      };
       saveToDb(newData);
       return newData;
     });
@@ -785,65 +662,147 @@ const BlueprintViewer = ({ mapId, blueprints, dbUser, userBlueprints }) => {
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (!isFullscreen) return;
-      if (e.ctrlKey && e.key.toLowerCase() === 'z') { e.preventDefault(); if (e.shiftKey) redo(); else undo(); }
+      if (e.ctrlKey && e.key.toLowerCase() === 'z') {
+        e.preventDefault();
+        if (e.shiftKey) redo(); else undo();
+      }
       if (e.key === 'Escape') setIsFullscreen(false);
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isFullscreen, currentFloorKey]);
+  }, [isFullscreen, currentFloorKey, activeTeam]);
 
   if (!blueprints || blueprints.length === 0) return null;
 
-  const renderMarkerIcon = (type) => {
+  // --- RENDERING HELPERS ---
+
+  const getTeamColor = (team) => team === 'red' ? 'text-red-500' : 'text-blue-500';
+  const getTeamHex = (team) => team === 'red' ? '#ef4444' : '#3b82f6';
+
+  const renderMarkerIcon = (type, team) => {
+    const colorClass = type === 'suspect' ? 'text-orange-500' : getTeamColor(team);
+
     switch (type) {
-      case 'breach': return <Target size={20} className="text-red-500 drop-shadow-md" />;
-      case 'suspect': return <Skull size={20} className="text-orange-500 drop-shadow-md" />;
-      case 'hold': return <Shield size={20} className="text-blue-500 drop-shadow-md" />;
-      case 'move': default: return <MapPin size={20} className="text-green-500 drop-shadow-md" />;
+      case 'breach': return <Target size={20} className={`${colorClass} drop-shadow-md`} />;
+      case 'suspect': return <Skull size={20} className={`${colorClass} drop-shadow-md`} />;
+      case 'hold': return <Shield size={20} className={`${colorClass} drop-shadow-md`} />;
+      case 'move': default: return <MapPin size={24} className={`${colorClass} drop-shadow-md`} />;
     }
   };
 
+  const getMarkerTransform = (type) => {
+    // MapPin points at bottom center, so we translate Y by -100% to put tip on click coord
+    if (type === 'move') return 'translate(-50%, -100%)';
+    return 'translate(-50%, -50%)'; // Center everything else
+  };
+
+  const renderTeamLines = (team, markers) => {
+    let lastNode = null;
+    return markers.map((m, i) => {
+      if (m.type === 'suspect') return null; // Break line sequence for suspects
+
+      const current = m;
+      const prev = lastNode;
+      lastNode = current;
+
+      if (!prev) return null;
+      return (
+        <line
+          key={`line-${team}-${i}`}
+          x1={`${prev.x}%`} y1={`${prev.y}%`}
+          x2={`${current.x}%`} y2={`${current.y}%`}
+          stroke={getTeamHex(team)}
+          strokeWidth={3}
+          strokeDasharray="6,6"
+          style={{ filter: 'drop-shadow(0px 2px 4px rgba(0,0,0,0.8))' }}
+        />
+      );
+    });
+  };
+
+  const renderMarkersForTeam = (team, markers) => {
+    return markers.map((m, i) => (
+      <motion.div
+        key={`marker-${team}-${m.id}`}
+        initial={{ scale: 0, opacity: 0, y: -10 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        onDoubleClick={(e) => handleMarkerDoubleClick(e, m.id, team)}
+        className="absolute z-20 cursor-pointer pointer-events-auto"
+        style={{ left: `${m.x}%`, top: `${m.y}%`, transform: getMarkerTransform(m.type) }}
+        title="Double Click to remove"
+      >
+        {renderMarkerIcon(m.type, team)}
+      </motion.div>
+    ));
+  };
+
+  const activeBlueprint = blueprints[activeFloor];
+  const displayImage = useAltMap && activeBlueprint.altUrl ? activeBlueprint.altUrl : activeBlueprint.url;
+
   const renderMapArea = (interactive) => (
-    <div className="absolute inset-0 overflow-auto no-scrollbar touch-pan-x touch-pan-y" style={{ WebkitOverflowScrolling: 'touch' }}>
-      <div className="min-w-full min-h-full flex items-center justify-center p-4">
-        <motion.div animate={{ scale: scale }} transition={{ type: "spring", stiffness: 300, damping: 30 }} className="relative origin-center max-w-4xl w-full select-none">
-          <img src={blueprints[activeFloor].url} className="w-full h-auto pointer-events-none" style={{ filter: 'invert(1) hue-rotate(180deg)' }} alt="Tactical Map" draggable={false} />
-          <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 15 }}>
-            {currentMarkers.map((m, i) => {
-              if (i === 0) return null;
-              const prev = currentMarkers[i - 1];
-              return (
-                <line key={`line-${i}`} x1={`${prev.x}%`} y1={`${prev.y}%`} x2={`${m.x}%`} y2={`${m.y}%`} stroke="rgba(255, 255, 255, 0.6)" strokeWidth="3" strokeDasharray="6,6" style={{ filter: 'drop-shadow(0px 2px 4px rgba(0,0,0,0.8))' }} />
-              );
-            })}
-          </svg>
-          {currentMarkers.map((m, i) => (
-            <motion.div key={i} initial={{ scale: 0, opacity: 0, y: -10 }} animate={{ scale: 1, opacity: 1, y: 0 }} className="absolute z-20 -translate-x-1/2 -translate-y-1/2 pointer-events-none" style={{ left: `${m.x}%`, top: `${m.y}%` }}>
-              {renderMarkerIcon(m.type)}
-            </motion.div>
-          ))}
+    <div
+      className="absolute inset-0 overflow-hidden touch-none"
+      ref={interactive ? mapContainerRef : null}
+      onContextMenu={(e) => e.preventDefault()}
+    >
+      <div
+        className="absolute inset-0"
+        style={{
+          transform: `translate(${pan.x}px, ${pan.y}px)`,
+          transition: isPanning ? 'none' : 'transform 0.1s ease-out'
+        }}
+      >
+        <div
+          className="w-full h-full relative flex items-center justify-center origin-center"
+          style={{ transform: `scale(${scale})` }}
+        >
+          <img
+            src={displayImage}
+            className="max-w-none w-full h-auto pointer-events-none select-none"
+            style={{ filter: 'invert(1) hue-rotate(180deg)' }}
+            alt="Tactical Map"
+            draggable={false}
+          />
+
+          <div className="absolute inset-0 z-10 w-full h-full pointer-events-none">
+            <svg className="absolute inset-0 w-full h-full" style={{ zIndex: 15, overflow: 'visible' }}>
+              {renderTeamLines('blue', floorData.blue?.present || [])}
+              {renderTeamLines('red', floorData.red?.present || [])}
+            </svg>
+            {renderMarkersForTeam('blue', floorData.blue?.present || [])}
+            {renderMarkersForTeam('red', floorData.red?.present || [])}
+          </div>
+
           {interactive && (
-            <div className="absolute inset-0 z-30 cursor-crosshair touch-none" onPointerDown={handlePointerDown} onPointerUp={handlePointerUp}></div>
+            <div
+              className={`absolute inset-0 z-30 touch-none ${activeTool === 'pan' ? 'cursor-grab' : 'cursor-crosshair'}`}
+              onPointerDown={handlePointerDown}
+              onPointerMove={handlePointerMove}
+              onPointerUp={handlePointerUp}
+              onPointerLeave={handlePointerUp}
+              onClick={handleMapClick}
+            />
           )}
-        </motion.div>
+        </div>
       </div>
     </div>
   );
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <h3 className="text-xl md:text-2xl font-black uppercase italic tracking-tighter border-l-4 border-red-600 pl-4">Tactical Blueprint</h3>
         {blueprints.length > 1 && (
           <div className="flex gap-2 bg-black/50 p-1 rounded-lg border border-white/10">
             {blueprints.map((bp, idx) => (
-              <button key={idx} onClick={() => { setActiveFloor(idx); setScale(1); }} className={`px-3 py-1.5 text-xs font-bold uppercase rounded ${activeFloor === idx ? 'bg-red-600 text-white' : 'text-white/40 hover:text-white'}`}>
+              <button key={idx} onClick={() => { setActiveFloor(idx); setScale(1); setPan({ x: 0, y: 0 }); }} className={`px-3 py-1.5 text-xs font-bold uppercase rounded ${activeFloor === idx ? 'bg-red-600 text-white' : 'text-white/40 hover:text-white'}`}>
                 {bp.name}
               </button>
             ))}
           </div>
         )}
       </div>
+
       <GlassCard className="relative bg-[#0a0a0a] border-red-500/20 overflow-hidden h-[400px] md:h-[600px] group">
         {renderMapArea(false)}
         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-40 pointer-events-none">
@@ -851,26 +810,38 @@ const BlueprintViewer = ({ mapId, blueprints, dbUser, userBlueprints }) => {
             <Maximize size={18} /> Route Planen
           </button>
         </div>
-        <div className="absolute bottom-4 right-4 flex flex-col gap-2 z-30">
-          <button onClick={() => setScale(s => Math.min(s + 0.5, 4))} className="p-3 bg-black/80 backdrop-blur border border-white/20 rounded-full text-white shadow-xl hover:bg-white/20"><ZoomIn size={20} /></button>
-          <button onClick={() => setScale(s => Math.max(s - 0.5, 0.5))} className="p-3 bg-black/80 backdrop-blur border border-white/20 rounded-full text-white shadow-xl hover:bg-white/20"><ZoomOut size={20} /></button>
-        </div>
       </GlassCard>
+
       <AnimatePresence>
         {isFullscreen && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-[#050505] flex flex-col">
-            <div className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-2 p-2 bg-black/80 backdrop-blur-xl border border-white/10 rounded-2xl z-[110] shadow-2xl overflow-x-auto max-w-[95vw]">
+
+            {/* Fullscreen Top Toolbar */}
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-2 p-2 bg-black/80 backdrop-blur-xl border border-white/10 rounded-2xl z-[110] shadow-2xl overflow-x-auto max-w-[95vw] pointer-events-auto">
+
+              {/* Custom Maps & Plans */}
               <select value={activePlan} onChange={(e) => setActivePlan(e.target.value)} className="bg-white/10 border border-white/10 text-white text-[10px] md:text-xs font-bold uppercase rounded px-2 md:px-3 py-1.5 outline-none hover:bg-white/20 cursor-pointer shrink-0">
                 <option className="bg-black text-white" value="Plan A">Plan A (Main)</option>
                 <option className="bg-black text-white" value="Plan B">Plan B (Alt)</option>
                 <option className="bg-black text-white" value="Plan C">Plan C (Dynamic)</option>
               </select>
+
               <div className="h-6 w-px bg-white/20 mx-1 shrink-0" />
+
+              {/* Team Toggle */}
+              <div className="flex bg-black/50 rounded-lg p-1 border border-white/10 shrink-0">
+                <button onClick={() => setActiveTeam('blue')} className={`px-2 py-1 text-[10px] font-black uppercase rounded ${activeTeam === 'blue' ? 'bg-blue-600 text-white' : 'text-white/40 hover:text-white'}`}>Blue</button>
+                <button onClick={() => setActiveTeam('red')} className={`px-2 py-1 text-[10px] font-black uppercase rounded ${activeTeam === 'red' ? 'bg-red-600 text-white' : 'text-white/40 hover:text-white'}`}>Red</button>
+              </div>
+
+              <div className="h-6 w-px bg-white/20 mx-1 shrink-0" />
+
+              {/* Floor Selector */}
               {blueprints.length > 1 && (
                 <>
                   <div className="flex gap-1 shrink-0">
                     {blueprints.map((bp, idx) => (
-                      <button key={idx} onClick={() => { setActiveFloor(idx); setScale(1); }} className={`px-2 md:px-3 py-1.5 text-[10px] md:text-xs font-bold uppercase rounded transition-colors ${activeFloor === idx ? 'bg-red-600 text-white shadow-inner' : 'text-white/40 hover:text-white hover:bg-white/10'}`}>
+                      <button key={idx} onClick={() => { setActiveFloor(idx); setScale(1); setPan({ x: 0, y: 0 }); }} className={`px-2 md:px-3 py-1.5 text-[10px] md:text-xs font-bold uppercase rounded transition-colors ${activeFloor === idx ? 'bg-white/20 text-white shadow-inner' : 'text-white/40 hover:text-white hover:bg-white/10'}`}>
                         {bp.name}
                       </button>
                     ))}
@@ -878,21 +849,52 @@ const BlueprintViewer = ({ mapId, blueprints, dbUser, userBlueprints }) => {
                   <div className="h-6 w-px bg-white/20 mx-1 shrink-0" />
                 </>
               )}
-              {[{ id: 'move', icon: MapPin, color: 'text-green-500' }, { id: 'breach', icon: Target, color: 'text-red-500' }, { id: 'hold', icon: Shield, color: 'text-blue-500' }, { id: 'suspect', icon: Skull, color: 'text-orange-500' }].map(m => (
-                <button key={m.id} onClick={() => setMarkerType(m.id)} className={`flex items-center shrink-0 p-2 rounded-lg transition-all ${markerType === m.id ? 'bg-white/20 shadow-inner' : 'hover:bg-white/10'}`} title={m.id.toUpperCase()}>
+
+              {/* Alt Map Toggle */}
+              {activeBlueprint.altUrl && (
+                <>
+                  <button onClick={() => setUseAltMap(!useAltMap)} className={`px-2 md:px-3 py-1.5 text-[10px] md:text-xs font-bold uppercase rounded transition-colors shrink-0 ${useAltMap ? 'bg-white/20 text-white' : 'text-white/40 hover:bg-white/10'}`}>
+                    {useAltMap ? 'Alt Map' : 'Game Map'}
+                  </button>
+                  <div className="h-6 w-px bg-white/20 mx-1 shrink-0" />
+                </>
+              )}
+
+              {/* Tools */}
+              {[
+                { id: 'pan', icon: Hand, color: 'text-white' },
+                { id: 'move', icon: MapPin, color: 'text-green-500' },
+                { id: 'breach', icon: Target, color: 'text-red-500' },
+                { id: 'hold', icon: Shield, color: 'text-blue-500' },
+                { id: 'suspect', icon: Skull, color: 'text-orange-500' }
+              ].map(m => (
+                <button
+                  key={m.id}
+                  onClick={() => setActiveTool(m.id)}
+                  className={`flex items-center shrink-0 p-2 rounded-lg transition-all ${activeTool === m.id ? 'bg-white/20 shadow-inner' : 'hover:bg-white/10'}`}
+                  title={m.id.toUpperCase()}
+                >
                   <m.icon size={16} className={m.color} />
                 </button>
               ))}
+
               <div className="h-6 w-px bg-white/20 mx-1 shrink-0" />
+
+              {/* History Actions */}
               <button onClick={undo} disabled={!canUndo} className={`p-2 rounded-lg transition-all shrink-0 ${canUndo ? 'text-white hover:bg-white/20' : 'text-white/20 cursor-not-allowed'}`} title="Rückgängig (Ctrl+Z)"><Undo size={16} /></button>
               <button onClick={redo} disabled={!canRedo} className={`p-2 rounded-lg transition-all shrink-0 ${canRedo ? 'text-white hover:bg-white/20' : 'text-white/20 cursor-not-allowed'}`} title="Wiederholen (Ctrl+Shift+Z)"><Redo size={16} /></button>
+
               <div className="h-6 w-px bg-white/20 mx-1 shrink-0" />
               <button onClick={clearMarkers} className="p-2 rounded-lg text-red-500 hover:bg-red-500/20 transition-all shrink-0" title="Route löschen"><X size={16} /></button>
             </div>
-            <button onClick={() => setIsFullscreen(false)} className="absolute top-4 right-4 p-3 bg-black/80 hover:bg-white/20 text-white rounded-full z-[110] transition-colors border border-white/10"><Minimize size={20} /></button>
+
+            <button onClick={() => setIsFullscreen(false)} className="absolute top-4 right-4 p-3 bg-black/80 hover:bg-white/20 text-white rounded-full z-[110] transition-colors border border-white/10 pointer-events-auto"><Minimize size={20} /></button>
+
             {renderMapArea(true)}
-            <div className="absolute bottom-6 right-6 flex flex-col gap-2 z-[110]">
-              <button onClick={() => setScale(s => Math.min(s + 0.5, 4))} className="p-4 bg-black/80 backdrop-blur border border-white/20 rounded-full text-white shadow-xl hover:bg-white/20"><ZoomIn size={24} /></button>
+
+            <div className="absolute bottom-6 right-6 flex flex-col gap-2 z-[110] pointer-events-auto">
+              <button onClick={() => { setScale(1); setPan({ x: 0, y: 0 }); }} className="p-4 bg-black/80 backdrop-blur border border-white/20 rounded-full text-white shadow-xl hover:bg-white/20 text-[10px] font-black uppercase">R</button>
+              <button onClick={() => setScale(s => Math.min(s + 0.5, 5))} className="p-4 bg-black/80 backdrop-blur border border-white/20 rounded-full text-white shadow-xl hover:bg-white/20"><ZoomIn size={24} /></button>
               <button onClick={() => setScale(s => Math.max(s - 0.5, 0.5))} className="p-4 bg-black/80 backdrop-blur border border-white/20 rounded-full text-white shadow-xl hover:bg-white/20"><ZoomOut size={24} /></button>
             </div>
           </motion.div>
@@ -936,6 +938,7 @@ const POIViewer = ({ poi }) => {
   );
 };
 
+// ... existing components till the end ...
 const AudioLogViewer = ({ logs }) => {
   const [activeTranscript, setActiveTranscript] = useState(null);
   if (!logs || logs.length === 0) return null;
@@ -1034,7 +1037,7 @@ const SkinSelectionModal = ({ isOpen, onClose, item, preferredSkinId, onSelectSk
   return (
     <motion.div
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[250] bg-black/90 backdrop-blur-xl flex flex-col"
+      className="fixed inset-0 z-[9999] bg-black/90 backdrop-blur-xl flex flex-col"
     >
       <div className="flex items-center justify-between p-6 border-b border-white/10 bg-black/50">
         <h2 className="text-xl md:text-2xl font-black uppercase italic tracking-tighter text-white">
@@ -1082,7 +1085,7 @@ const ItemSelectionModal = ({ isOpen, onClose, items, selectedId, onSelect, titl
   return (
     <motion.div
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[200] bg-black/90 backdrop-blur-xl flex flex-col"
+      className="fixed inset-0 z-[9999] bg-black/90 backdrop-blur-xl flex flex-col"
     >
       <div className="flex items-center justify-between p-6 border-b border-white/10 bg-black/50">
         <h2 className="text-2xl font-black uppercase italic tracking-tighter text-white flex items-center gap-3">
@@ -1140,7 +1143,7 @@ const ClickableItemCard = ({ label, item, onClick, displayImageOverride }) => (
 );
 
 const VisualMultiSelectGrid = ({ items, selectedIds, preferredSkins, onToggle, className = "" }) => (
-  <div className={`grid grid-cols-2 gap-3 ${className}`}>
+  <div className={`grid grid-cols-1 sm:grid-cols-2 gap-3 ${className}`}>
     {items.map(item => {
       const isChecked = selectedIds.includes(item.id);
       const activeSkinId = preferredSkins?.[item.id] || item.skins?.[0]?.id;
@@ -1149,13 +1152,17 @@ const VisualMultiSelectGrid = ({ items, selectedIds, preferredSkins, onToggle, c
         <div
           key={item.id}
           onClick={() => onToggle(item.id)}
-          className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${isChecked ? 'bg-blue-600/20 border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.3)]' : 'bg-black/40 border-white/5 hover:border-white/20 hover:bg-white/5'}`}
+          className={`flex items-center gap-4 p-3 rounded-xl border cursor-pointer transition-all ${isChecked ? 'bg-blue-900/30 border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.2)]' : 'bg-black/40 border-white/5 hover:border-white/20 hover:bg-white/5'}`}
         >
-          <div className="w-10 h-10 p-1.5 shrink-0 bg-white/5 rounded-lg flex items-center justify-center border border-white/5">
+          <div className="relative w-12 h-12 p-1.5 shrink-0 bg-black/40 rounded-lg flex items-center justify-center border border-white/10">
             <img src={displayImage} alt={item.name} className="max-h-full max-w-full object-contain" />
+            {isChecked && (
+              <div className="absolute -bottom-2 -left-2 bg-[#010101] rounded border border-blue-500">
+                <CheckSquare size={16} className="text-blue-500 bg-blue-500/10 rounded" />
+              </div>
+            )}
           </div>
-          <p className={`text-[10px] font-bold uppercase leading-tight flex-1 ${isChecked ? 'text-white' : 'text-white/60'}`}>{item.name}</p>
-          {isChecked && <CheckSquare size={16} className="text-blue-500 shrink-0" />}
+          <p className={`text-[10px] md:text-xs font-bold uppercase leading-snug flex-1 ${isChecked ? 'text-white' : 'text-white/60'}`}>{item.name}</p>
         </div>
       );
     })}
@@ -1187,12 +1194,12 @@ const VisualCounterGrid = ({ items, loadout, fieldObj, maxSlots, usedSlots, onCh
               <img src={item.image} alt={item.name} className="max-h-full max-w-full object-contain" style={{ filter: 'drop-shadow(0px 2px 4px rgba(0,0,0,0.5))' }} />
               {val > 0 && <div className="absolute top-1 right-1 bg-green-500 text-black text-[9px] font-black px-1.5 py-0.5 rounded shadow-lg">{val}x</div>}
             </div>
-            <div className="p-2 flex flex-col items-center gap-2">
-              <p className="text-[9px] font-bold uppercase text-white/60 truncate w-full text-center">{item.name}</p>
-              <div className="flex items-center justify-between w-full bg-black/60 rounded-lg p-1 border border-white/5">
-                <button onClick={() => handleDec(item.id)} className="p-1.5 hover:bg-white/20 rounded text-white/70 hover:text-white transition-colors"><Minus size={12} /></button>
-                <span className="text-xs font-mono font-bold text-white px-2">{val}</span>
-                <button onClick={() => handleInc(item.id)} className={`p-1.5 rounded transition-colors ${usedSlots < maxSlots ? 'hover:bg-white/20 text-white/70 hover:text-white' : 'text-white/10'}`}><Plus size={12} /></button>
+            <div className="p-2 md:p-3 flex flex-col items-center gap-2">
+              <p className="text-[9px] md:text-[10px] font-bold uppercase text-white/60 truncate w-full text-center">{item.name}</p>
+              <div className="flex items-center justify-between w-full bg-black/60 rounded-xl p-1 border border-white/5">
+                <button onClick={() => handleDec(item.id)} className="p-2 md:p-2.5 hover:bg-white/20 rounded-lg text-white/70 hover:text-white transition-colors"><Minus size={14} /></button>
+                <span className="text-sm font-mono font-bold text-white px-1 text-center min-w-[20px]">{val}</span>
+                <button onClick={() => handleInc(item.id)} className={`p-2 md:p-2.5 rounded-lg transition-colors ${usedSlots < maxSlots ? 'hover:bg-white/20 text-white/70 hover:text-white' : 'text-white/10'}`}><Plus size={14} /></button>
               </div>
             </div>
           </div>
@@ -1208,11 +1215,11 @@ const MagCounter = ({ label, type, val, onInc, onDec, disabled }) => (
       <div className={`w-2 h-3 rounded-t-full ${type === 'AP' ? 'bg-red-500' : 'bg-blue-400'}`}></div>
       <span className="text-[10px] font-black uppercase tracking-widest text-white/80">{label}</span>
     </div>
-    <div className="p-2">
-      <div className="flex items-center justify-between bg-black/60 rounded-lg p-1 border border-white/5">
-        <button onClick={onDec} className="p-1.5 hover:bg-white/20 rounded text-white/70 hover:text-white transition-colors"><Minus size={12} /></button>
-        <span className="text-xs font-mono font-bold text-white px-2">{val}</span>
-        <button onClick={onInc} className={`p-1.5 rounded transition-colors ${!disabled ? 'hover:bg-white/20 text-white/70 hover:text-white' : 'text-white/10'}`}><Plus size={12} /></button>
+    <div className="p-2 md:p-3">
+      <div className="flex items-center justify-between bg-black/60 rounded-xl p-1 border border-white/5">
+        <button onClick={onDec} className="p-2 md:p-2.5 hover:bg-white/20 rounded-lg text-white/70 hover:text-white transition-colors"><Minus size={14} /></button>
+        <span className="text-sm font-mono font-bold text-white px-1 text-center min-w-[20px]">{val}</span>
+        <button onClick={onInc} className={`p-2 md:p-2.5 rounded-lg transition-colors ${!disabled ? 'hover:bg-white/20 text-white/70 hover:text-white' : 'text-white/10'}`}><Plus size={14} /></button>
       </div>
     </div>
   </div>
@@ -1245,100 +1252,102 @@ const UnifiedLoadoutEditor = ({ loadout, onChange, title, showRecommendationBtn,
   const activeArmorImage = getSelectedItem(RON_ARMOR_OPTIONS, loadout.armor)?.skins?.find(s => s.id === activeArmorSkinId)?.image || getSelectedItem(RON_ARMOR_OPTIONS, loadout.armor)?.image;
 
   return (
-    <GlassCard className="p-6 md:p-10 bg-black/40 border-white/5 relative overflow-hidden">
-      {showRecommendationBtn && (
-        <div className="absolute top-0 right-0 p-4 md:p-6 z-10">
-          <button onClick={onLoadRecommendation} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-full text-[10px] md:text-xs font-black uppercase tracking-widest transition-all shadow-[0_0_20px_rgba(37,99,235,0.4)]">
-            <Zap size={14} /> Empfohlen
-          </button>
+    <>
+      <GlassCard className="p-6 md:p-10 bg-black/40 border-white/5 relative overflow-visible">
+        {showRecommendationBtn && (
+          <div className="absolute top-0 right-0 p-4 md:p-6 z-10">
+            <button onClick={onLoadRecommendation} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-full text-[10px] md:text-xs font-black uppercase tracking-widest transition-all shadow-[0_0_20px_rgba(37,99,235,0.4)]">
+              <Zap size={14} /> Empfohlen
+            </button>
+          </div>
+        )}
+
+        <h3 className="text-xl md:text-2xl font-black uppercase italic tracking-tighter border-l-4 border-green-500 pl-4 mb-8 mt-10 md:mt-0">{title}</h3>
+
+        <div className="mb-8 border border-white/10 pb-0 flex flex-col md:flex-row justify-between items-start md:items-center bg-black/30 p-4 md:p-6 rounded-2xl gap-4">
+          <div>
+            <p className="text-xs uppercase font-black tracking-[0.2em] text-white/50 mb-1">Equipment Capacity</p>
+            <p className="text-[10px] text-white/40 leading-relaxed max-w-sm">Basis-Slots werden durch die ausgerüstete Plate/Armor definiert. Headwear und Long Tacticals belegen keine Slots.</p>
+          </div>
+          <div className={`text-2xl md:text-3xl font-mono font-black px-6 py-3 rounded-2xl border flex items-center gap-3 ${usedSlots === maxSlots ? 'bg-orange-500/10 text-orange-500 border-orange-500/30 shadow-[0_0_20px_rgba(249,115,22,0.2)]' : 'bg-green-500/10 text-green-500 border-green-500/30 shadow-[0_0_20px_rgba(34,197,94,0.2)]'}`}>
+            <Layers size={24} /> {usedSlots} / {maxSlots}
+          </div>
         </div>
-      )}
 
-      <h3 className="text-xl md:text-2xl font-black uppercase italic tracking-tighter border-l-4 border-green-500 pl-4 mb-8 mt-10 md:mt-0">{title}</h3>
+        {/* NEW COLUMN LAYOUT */}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 md:gap-12">
 
-      <div className="mb-8 border border-white/10 pb-0 flex flex-col md:flex-row justify-between items-start md:items-center bg-black/30 p-4 md:p-6 rounded-2xl gap-4">
-        <div>
-          <p className="text-xs uppercase font-black tracking-[0.2em] text-white/50 mb-1">Equipment Capacity</p>
-          <p className="text-[10px] text-white/40 leading-relaxed max-w-sm">Basis-Slots werden durch die ausgerüstete Plate/Armor definiert. Headwear und Long Tacticals belegen keine Slots.</p>
-        </div>
-        <div className={`text-2xl md:text-3xl font-mono font-black px-6 py-3 rounded-2xl border flex items-center gap-3 ${usedSlots === maxSlots ? 'bg-orange-500/10 text-orange-500 border-orange-500/30 shadow-[0_0_20px_rgba(249,115,22,0.2)]' : 'bg-green-500/10 text-green-500 border-green-500/30 shadow-[0_0_20px_rgba(34,197,94,0.2)]'}`}>
-          <Layers size={24} /> {usedSlots} / {maxSlots}
-        </div>
-      </div>
+          {/* COL 1: WEAPONS */}
+          <div className="flex flex-col gap-8">
+            <div className="space-y-3">
+              <h4 className="text-[10px] uppercase font-black tracking-[0.2em] text-white/40 border-b border-white/10 pb-2">Primary Weapon</h4>
+              <ClickableItemCard
+                label="Select Primary"
+                item={getSelectedItem(primaries, loadout.primary)}
+                onClick={() => setModalState({ isOpen: true, type: 'primary' })}
+              />
+              <div className="flex gap-3">
+                <MagCounter label="AP Ammo" type="AP" val={loadout.primaryMagsAP} onDec={() => handleMagChange('primaryMagsAP', -1)} onInc={() => handleMagChange('primaryMagsAP', 1)} disabled={usedSlots >= maxSlots} />
+                <MagCounter label="JHP Ammo" type="JHP" val={loadout.primaryMagsJHP} onDec={() => handleMagChange('primaryMagsJHP', -1)} onInc={() => handleMagChange('primaryMagsJHP', 1)} disabled={usedSlots >= maxSlots} />
+              </div>
+            </div>
 
-      {/* NEW COLUMN LAYOUT */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 md:gap-12">
-
-        {/* COL 1: WEAPONS */}
-        <div className="flex flex-col gap-8">
-          <div className="space-y-3">
-            <h4 className="text-[10px] uppercase font-black tracking-[0.2em] text-white/40 border-b border-white/10 pb-2">Primary Weapon</h4>
-            <ClickableItemCard
-              label="Select Primary"
-              item={getSelectedItem(primaries, loadout.primary)}
-              onClick={() => setModalState({ isOpen: true, type: 'primary' })}
-            />
-            <div className="flex gap-3">
-              <MagCounter label="AP Ammo" type="AP" val={loadout.primaryMagsAP} onDec={() => handleMagChange('primaryMagsAP', -1)} onInc={() => handleMagChange('primaryMagsAP', 1)} disabled={usedSlots >= maxSlots} />
-              <MagCounter label="JHP Ammo" type="JHP" val={loadout.primaryMagsJHP} onDec={() => handleMagChange('primaryMagsJHP', -1)} onInc={() => handleMagChange('primaryMagsJHP', 1)} disabled={usedSlots >= maxSlots} />
+            <div className="space-y-3">
+              <h4 className="text-[10px] uppercase font-black tracking-[0.2em] text-white/40 border-b border-white/10 pb-2">Secondary Weapon</h4>
+              <ClickableItemCard
+                label="Select Secondary"
+                item={getSelectedItem(secondaries, loadout.secondary)}
+                onClick={() => setModalState({ isOpen: true, type: 'secondary' })}
+              />
+              <div className="flex gap-3">
+                <MagCounter label="AP Ammo" type="AP" val={loadout.secondaryMagsAP} onDec={() => handleMagChange('secondaryMagsAP', -1)} onInc={() => handleMagChange('secondaryMagsAP', 1)} disabled={usedSlots >= maxSlots} />
+                <MagCounter label="JHP Ammo" type="JHP" val={loadout.secondaryMagsJHP} onDec={() => handleMagChange('secondaryMagsJHP', -1)} onInc={() => handleMagChange('secondaryMagsJHP', 1)} disabled={usedSlots >= maxSlots} />
+              </div>
             </div>
           </div>
 
-          <div className="space-y-3">
-            <h4 className="text-[10px] uppercase font-black tracking-[0.2em] text-white/40 border-b border-white/10 pb-2">Secondary Weapon</h4>
-            <ClickableItemCard
-              label="Select Secondary"
-              item={getSelectedItem(secondaries, loadout.secondary)}
-              onClick={() => setModalState({ isOpen: true, type: 'secondary' })}
-            />
-            <div className="flex gap-3">
-              <MagCounter label="AP Ammo" type="AP" val={loadout.secondaryMagsAP} onDec={() => handleMagChange('secondaryMagsAP', -1)} onInc={() => handleMagChange('secondaryMagsAP', 1)} disabled={usedSlots >= maxSlots} />
-              <MagCounter label="JHP Ammo" type="JHP" val={loadout.secondaryMagsJHP} onDec={() => handleMagChange('secondaryMagsJHP', -1)} onInc={() => handleMagChange('secondaryMagsJHP', 1)} disabled={usedSlots >= maxSlots} />
+          {/* COL 2: ARMOR & THROWABLES */}
+          <div className="flex flex-col gap-8">
+            <div className="space-y-3">
+              <h4 className="text-[10px] uppercase font-black tracking-[0.2em] text-white/40 border-b border-white/10 pb-2">Plate / Armor</h4>
+              <ClickableItemCard
+                label="Select Armor"
+                item={getSelectedItem(RON_ARMOR_OPTIONS, loadout.armor)}
+                displayImageOverride={activeArmorImage}
+                onClick={() => setModalState({ isOpen: true, type: 'armor' })}
+              />
+            </div>
+
+            <div className="space-y-3">
+              <h4 className="text-[10px] uppercase font-black tracking-[0.2em] text-white/40 border-b border-white/10 pb-2">Throwables (Slots)</h4>
+              <VisualCounterGrid items={throwablesList} loadout={loadout} fieldObj="throwables" maxSlots={maxSlots} usedSlots={usedSlots} onChange={onChange} />
             </div>
           </div>
+
+          {/* COL 3: HEADWEAR, LONG TAC, DEVICES */}
+          <div className="flex flex-col gap-8">
+            <div className="space-y-3">
+              <h4 className="text-[10px] uppercase font-black tracking-[0.2em] text-white/40 border-b border-white/10 pb-2">Headwear (Kombinierbar)</h4>
+              <VisualMultiSelectGrid items={RON_HEADWEAR_OPTIONS} selectedIds={loadout.headwear} preferredSkins={preferredSkins} onToggle={(id) => onChange('headwear', validateHeadwear(loadout.headwear, id))} />
+            </div>
+
+            <div className="space-y-3">
+              <h4 className="text-[10px] uppercase font-black tracking-[0.2em] text-white/40 border-b border-white/10 pb-2">Long Tactical</h4>
+              <ClickableItemCard
+                label="Select Equipment"
+                item={getSelectedItem(longTacticals, loadout.longTactical)}
+                onClick={() => setModalState({ isOpen: true, type: 'long_tactical' })}
+              />
+            </div>
+
+            <div className="space-y-3">
+              <h4 className="text-[10px] uppercase font-black tracking-[0.2em] text-white/40 border-b border-white/10 pb-2">Devices (Slots)</h4>
+              <VisualCounterGrid items={devicesList} loadout={loadout} fieldObj="devices" maxSlots={maxSlots} usedSlots={usedSlots} onChange={onChange} />
+            </div>
+          </div>
+
         </div>
-
-        {/* COL 2: ARMOR & THROWABLES */}
-        <div className="flex flex-col gap-8">
-          <div className="space-y-3">
-            <h4 className="text-[10px] uppercase font-black tracking-[0.2em] text-white/40 border-b border-white/10 pb-2">Plate / Armor</h4>
-            <ClickableItemCard
-              label="Select Armor"
-              item={getSelectedItem(RON_ARMOR_OPTIONS, loadout.armor)}
-              displayImageOverride={activeArmorImage}
-              onClick={() => setModalState({ isOpen: true, type: 'armor' })}
-            />
-          </div>
-
-          <div className="space-y-3">
-            <h4 className="text-[10px] uppercase font-black tracking-[0.2em] text-white/40 border-b border-white/10 pb-2">Throwables (Slots)</h4>
-            <VisualCounterGrid items={throwablesList} loadout={loadout} fieldObj="throwables" maxSlots={maxSlots} usedSlots={usedSlots} onChange={onChange} />
-          </div>
-        </div>
-
-        {/* COL 3: HEADWEAR, LONG TAC, DEVICES */}
-        <div className="flex flex-col gap-8">
-          <div className="space-y-3">
-            <h4 className="text-[10px] uppercase font-black tracking-[0.2em] text-white/40 border-b border-white/10 pb-2">Headwear (Kombinierbar)</h4>
-            <VisualMultiSelectGrid items={RON_HEADWEAR_OPTIONS} selectedIds={loadout.headwear} preferredSkins={preferredSkins} onToggle={(id) => onChange('headwear', validateHeadwear(loadout.headwear, id))} />
-          </div>
-
-          <div className="space-y-3">
-            <h4 className="text-[10px] uppercase font-black tracking-[0.2em] text-white/40 border-b border-white/10 pb-2">Long Tactical</h4>
-            <ClickableItemCard
-              label="Select Equipment"
-              item={getSelectedItem(longTacticals, loadout.longTactical)}
-              onClick={() => setModalState({ isOpen: true, type: 'long_tactical' })}
-            />
-          </div>
-
-          <div className="space-y-3">
-            <h4 className="text-[10px] uppercase font-black tracking-[0.2em] text-white/40 border-b border-white/10 pb-2">Devices (Slots)</h4>
-            <VisualCounterGrid items={devicesList} loadout={loadout} fieldObj="devices" maxSlots={maxSlots} usedSlots={usedSlots} onChange={onChange} />
-          </div>
-        </div>
-
-      </div>
+      </GlassCard>
 
       {/* --- MODALS FOR SELECTION --- */}
       <AnimatePresence>
@@ -1355,7 +1364,7 @@ const UnifiedLoadoutEditor = ({ loadout, onChange, title, showRecommendationBtn,
           <ItemSelectionModal isOpen={true} onClose={() => setModalState({ isOpen: false, type: null })} items={longTacticals} selectedId={loadout.longTactical} onSelect={(id) => onChange('longTactical', id)} title="Long Tactical" />
         )}
       </AnimatePresence>
-    </GlassCard>
+    </>
   );
 };
 
@@ -1414,16 +1423,34 @@ const WeaponGunsmith = ({ weaponId, equipped, setEquipped, activeSlot, setActive
   ];
 
   const handleEquip = (slotId, attachment) => {
-    const newEquipped = { ...equipped, [slotId]: attachment };
+    let newEquipped = { ...equipped };
+    const isMulti = slotId === 'Overbarrel';
+
+    if (isMulti) {
+      if (attachment === null) {
+        newEquipped[slotId] = [];
+      } else {
+        const currentList = newEquipped[slotId] || [];
+        const exists = currentList.some(a => a.id === attachment.id);
+        if (exists) {
+          newEquipped[slotId] = currentList.filter(a => a.id !== attachment.id);
+        } else {
+          newEquipped[slotId] = [...currentList, attachment];
+        }
+      }
+    } else {
+      newEquipped[slotId] = attachment;
+      setActiveSlot(null);
+    }
+
     setEquipped(newEquipped);
-    setActiveSlot(null);
 
     if (db && dbUser) {
       const dataToSave = {
         Optics: newEquipped.Optics?.id || null,
         Muzzle: newEquipped.Muzzle?.id || null,
         Underbarrel: newEquipped.Underbarrel?.id || null,
-        Overbarrel: newEquipped.Overbarrel?.id || null
+        Overbarrel: (newEquipped.Overbarrel || []).map(a => a.id)
       };
       setDoc(doc(db, 'artifacts', appId, 'users', dbUser.uid, 'attachments', weaponId), dataToSave).catch(console.error);
     }
@@ -1437,23 +1464,31 @@ const WeaponGunsmith = ({ weaponId, equipped, setEquipped, activeSlot, setActive
         <div className="w-full md:w-1/3 space-y-2">
           {slots.map(s => {
             const isActive = activeSlot === s.id;
-            const hasAttachment = equipped[s.id];
+            const isMulti = s.id === 'Overbarrel';
+            const equippedItems = equipped[s.id];
+            const hasAttachment = isMulti ? (equippedItems && equippedItems.length > 0) : !!equippedItems;
+
+            let displayText = 'Kein Aufsatz';
+            if (hasAttachment) {
+              displayText = isMulti ? equippedItems.map(a => a.name).join(' + ') : equippedItems.name;
+            }
+
             return (
               <button
                 key={s.id}
                 onClick={() => setActiveSlot(isActive ? null : s.id)}
                 className={`w-full flex items-center justify-between p-3 md:p-4 rounded-xl border transition-all ${isActive ? 'bg-red-600/10 border-red-500/30' : 'bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/20'}`}
               >
-                <div className="flex items-center gap-3">
-                  <s.icon size={16} className={isActive ? 'text-red-500' : (hasAttachment ? 'text-white' : 'text-white/40')} />
-                  <div className="text-left">
+                <div className="flex items-center gap-3 overflow-hidden w-full pr-2">
+                  <s.icon size={16} className={`shrink-0 ${isActive ? 'text-red-500' : (hasAttachment ? 'text-white' : 'text-white/40')}`} />
+                  <div className="text-left overflow-hidden flex-1">
                     <p className="text-[10px] font-black uppercase tracking-widest text-white/40">{s.label}</p>
-                    <p className={`text-xs md:text-sm font-bold uppercase tracking-tight ${hasAttachment ? 'text-white' : 'text-white/20'}`}>
-                      {hasAttachment ? hasAttachment.name : 'Kein Aufsatz'}
+                    <p className={`text-xs md:text-sm font-bold uppercase tracking-tight truncate ${hasAttachment ? 'text-white' : 'text-white/20'}`}>
+                      {displayText}
                     </p>
                   </div>
                 </div>
-                <ChevronRight size={16} className={`transition-transform duration-300 ${isActive ? 'rotate-90 text-red-500' : 'text-white/20'}`} />
+                <ChevronRight size={16} className={`shrink-0 transition-transform duration-300 ${isActive ? 'rotate-90 text-red-500' : 'text-white/20'}`} />
               </button>
             );
           })}
@@ -1471,14 +1506,21 @@ const WeaponGunsmith = ({ weaponId, equipped, setEquipped, activeSlot, setActive
               >
                 <button
                   onClick={() => handleEquip(activeSlot, null)}
-                  className={`p-4 rounded-xl border text-left flex flex-col gap-1 transition-all ${!equipped[activeSlot] ? 'bg-white/10 border-white/30' : 'bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/20'}`}
+                  className={`p-4 rounded-xl border text-left flex flex-col gap-1 transition-all ${(activeSlot === 'Overbarrel' ? (!equipped[activeSlot] || equipped[activeSlot].length === 0) : !equipped[activeSlot])
+                      ? 'bg-white/10 border-white/30'
+                      : 'bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/20'
+                    }`}
                 >
                   <span className="font-bold text-sm text-white uppercase">Kein Aufsatz</span>
                   <span className="text-xs text-white/40">Standardkonfiguration</span>
                 </button>
 
                 {RON_ATTACHMENTS[activeSlot].map(att => {
-                  const isEquipped = equipped[activeSlot]?.id === att.id;
+                  const isMulti = activeSlot === 'Overbarrel';
+                  const isEquipped = isMulti
+                    ? (equipped[activeSlot] || []).some(a => a.id === att.id)
+                    : equipped[activeSlot]?.id === att.id;
+
                   return (
                     <button
                       key={att.id}
@@ -1491,12 +1533,12 @@ const WeaponGunsmith = ({ weaponId, equipped, setEquipped, activeSlot, setActive
                             <img src={att.image} alt={att.name} className="max-w-full max-h-full object-contain" style={{ filter: 'drop-shadow(0px 4px 6px rgba(0,0,0,0.5))' }} />
                           </div>
                         )}
-                        <div className="flex flex-col gap-1 w-full">
+                        <div className="flex flex-col gap-1 w-full overflow-hidden">
                           <div className="flex justify-between items-start">
-                            <span className="font-bold text-sm text-white uppercase">{att.name}</span>
-                            {isEquipped && <CheckSquare size={14} className="text-red-500 shrink-0" />}
+                            <span className="font-bold text-sm text-white uppercase truncate">{att.name}</span>
+                            {isEquipped && <CheckSquare size={14} className="text-red-500 shrink-0 ml-1" />}
                           </div>
-                          <span className="text-[10px] md:text-xs text-gray-400 leading-relaxed">{att.desc}</span>
+                          <span className="text-[10px] md:text-xs text-gray-400 leading-relaxed line-clamp-3">{att.desc}</span>
                         </div>
                       </div>
                     </button>
@@ -1539,11 +1581,17 @@ export default function App() {
   const [activeWeaponCat, setActiveWeaponCat] = useState('Assault Rifles');
 
   const [selectedMap, setSelectedMap] = useState(null);
+  const [lastViewedMap, setLastViewedMap] = useState(null);
   const [selectedWeapon, setSelectedWeapon] = useState(null);
   const [selectedArticle, setSelectedArticle] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const [equippedAttachments, setEquippedAttachments] = useState({ Optics: null, Muzzle: null, Underbarrel: null, Overbarrel: null });
+  // Merke dir immer die zuletzt geöffnete Karte
+  useEffect(() => {
+    if (selectedMap) setLastViewedMap(selectedMap);
+  }, [selectedMap]);
+
+  const [equippedAttachments, setEquippedAttachments] = useState({ Optics: null, Muzzle: null, Underbarrel: null, Overbarrel: [] });
   const [activeAttachmentSlot, setActiveAttachmentSlot] = useState(null);
 
   const [lightbox, setLightbox] = useState({ isOpen: false, images: [], currentIndex: 0 });
@@ -1563,7 +1611,7 @@ export default function App() {
     if (!auth) return;
     const initAuth = async () => {
       try {
-        const token = null;
+        const token = null; 
       } catch (err) {
         console.error('Auth error', err);
       }
@@ -1614,17 +1662,26 @@ export default function App() {
     if (selectedWeapon) {
       if (userAttachments[selectedWeapon.id]) {
         const saved = userAttachments[selectedWeapon.id];
-        const loadedEquip = { Optics: null, Muzzle: null, Underbarrel: null, Overbarrel: null };
+        const loadedEquip = { Optics: null, Muzzle: null, Underbarrel: null, Overbarrel: [] };
         Object.keys(saved).forEach(slot => {
-          if (saved[slot] && RON_ATTACHMENTS[slot]) {
-            loadedEquip[slot] = RON_ATTACHMENTS[slot].find(a => a.id === saved[slot]) || null;
+          if (slot === 'Overbarrel') {
+            if (Array.isArray(saved[slot])) {
+              loadedEquip[slot] = saved[slot].map(id => RON_ATTACHMENTS[slot]?.find(a => a.id === id)).filter(Boolean);
+            } else if (saved[slot] && typeof saved[slot] === 'string') {
+              const item = RON_ATTACHMENTS[slot]?.find(a => a.id === saved[slot]);
+              if (item) loadedEquip[slot] = [item];
+            }
+          } else {
+            if (saved[slot] && RON_ATTACHMENTS[slot]) {
+              loadedEquip[slot] = RON_ATTACHMENTS[slot].find(a => a.id === saved[slot]) || null;
+            }
           }
         });
         setEquippedAttachments(loadedEquip);
       } else {
-        setEquippedAttachments({ Optics: null, Muzzle: null, Underbarrel: null, Overbarrel: null });
+        setEquippedAttachments({ Optics: null, Muzzle: null, Underbarrel: null, Overbarrel: [] });
       }
-      setActiveAttachmentSlot(null);
+      // Wichtig: Schließt das Modal NICHT bei jedem Firebase-Update
     }
   }, [selectedWeapon, userAttachments]);
 
@@ -1634,7 +1691,7 @@ export default function App() {
     setLiveFeed(shuffled);
   }, []);
 
-  // State Persistence Logic
+  // State Persistence Logic (Local Storage Fallback for Tab Navigation etc.)
   useEffect(() => {
     const lastActive = localStorage.getItem(STORAGE_KEY_TIME);
     const now = Date.now();
@@ -1648,6 +1705,7 @@ export default function App() {
           setActiveWeaponCat(savedState.activeWeaponCat || 'Assault Rifles');
 
           if (savedState.selectedMapId) setSelectedMap([...RON_MAPS, ...PUBG_MAPS].find(m => m.id === savedState.selectedMapId) || null);
+          if (savedState.lastViewedMapId) setLastViewedMap([...RON_MAPS, ...PUBG_MAPS].find(m => m.id === savedState.lastViewedMapId) || null);
           if (savedState.selectedArticleId) setSelectedArticle(NEWS_POOL.find(n => n.id === savedState.selectedArticleId) || null);
           if (savedState.scrollPosition) setTimeout(() => window.scrollTo(0, savedState.scrollPosition), 150);
         }
@@ -1663,11 +1721,13 @@ export default function App() {
     if (!isRestored) return;
     localStorage.setItem(STORAGE_KEY_STATE, JSON.stringify({
       activeTab, ronSubTab, activeDlc, activeWeaponCat,
-      selectedMapId: selectedMap?.id || null, selectedArticleId: selectedArticle?.id || null,
+      selectedMapId: selectedMap?.id || null,
+      lastViewedMapId: lastViewedMap?.id || null,
+      selectedArticleId: selectedArticle?.id || null,
       scrollPosition: window.scrollY
     }));
     localStorage.setItem(STORAGE_KEY_TIME, Date.now().toString());
-  }, [activeTab, ronSubTab, activeDlc, activeWeaponCat, selectedMap, selectedArticle, isRestored]);
+  }, [activeTab, ronSubTab, activeDlc, activeWeaponCat, selectedMap, lastViewedMap, selectedArticle, isRestored]);
 
   // Window Scroll & Container Scroll Logic
   useEffect(() => {
@@ -2002,8 +2062,30 @@ export default function App() {
             <div className="space-y-6 md:space-y-8">
               <GlassCard className="p-6 md:p-8 bg-blue-600/5 border-blue-500/20">
                 <h3 className="text-[10px] md:text-sm font-black uppercase tracking-widest text-blue-400 mb-4 md:mb-6">Last Viewed Intel</h3>
-                {selectedMap ? (
-                  <div className="space-y-4 md:space-y-6"><div className="aspect-video rounded-xl md:rounded-2xl overflow-hidden border border-white/10"><img src={selectedMap.image} className="w-full h-full object-cover" /></div><div><h4 className="text-xl md:text-2xl font-black italic uppercase text-white leading-none">{selectedMap.name}</h4><p className="text-white/40 text-[10px] mt-2 font-mono uppercase tracking-tighter">{selectedMap.game === 'ron' ? 'Operation Area' : 'Combat Zone'}</p></div><button onClick={() => handleTabSwitch(selectedMap.game)} className="w-full py-3 md:py-4 bg-white text-black font-black uppercase italic tracking-tighter text-xs md:text-sm rounded-xl hover:bg-blue-400 transition-colors">Return to Intel</button></div>
+                {lastViewedMap ? (
+                  <div className="space-y-4 md:space-y-6">
+                    <div className="aspect-video rounded-xl md:rounded-2xl overflow-hidden border border-white/10">
+                      <img src={lastViewedMap.image} className="w-full h-full object-cover" />
+                    </div>
+                    <div>
+                      <h4 className="text-xl md:text-2xl font-black italic uppercase text-white leading-none">{lastViewedMap.name}</h4>
+                      <p className="text-white/40 text-[10px] mt-2 font-mono uppercase tracking-tighter">{lastViewedMap.game === 'ron' ? 'Operation Area' : 'Combat Zone'}</p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setActiveTab(lastViewedMap.game);
+                        setSelectedMap(lastViewedMap);
+                        if (lastViewedMap.game === 'ron') {
+                          setActiveDlc(lastViewedMap.dlc);
+                          setRonSubTab('maps');
+                        }
+                        window.scrollTo({ top: 0, behavior: 'instant' });
+                      }}
+                      className="w-full py-3 md:py-4 bg-white text-black font-black uppercase italic tracking-tighter text-xs md:text-sm rounded-xl hover:bg-blue-400 transition-colors"
+                    >
+                      Return to Intel
+                    </button>
+                  </div>
                 ) : (
                   <div className="py-8 md:py-12 flex flex-col items-center justify-center text-center opacity-20"><Clock size={40} className="mb-4" /><p className="text-[10px] font-black uppercase tracking-widest italic">No Recent Activity</p></div>
                 )}
@@ -2508,7 +2590,7 @@ export default function App() {
         </main>
 
         <footer className="w-full py-8 md:py-10 text-center text-white/10 font-black text-[8px] md:text-[10px] tracking-[0.5em] md:tracking-[1em] uppercase mb-20 md:mb-0">
-          Tactical Repository // inTACTICS v5.0.0
+          Tactical Repository // inTACTICS v4.0.0
           <div className="w-full py-8 md:py-10 text-center text-white/10 text-[8px] copyright">
             <h3>© Copyright</h3>
             <p className="py-8 md:py-10">Ready or Not is a trademark of <a href="https://voidinteractive.net/" target="_blank" rel="noopener noreferrer">VOID Interactive</a>. This is a fan-made project.</p>
