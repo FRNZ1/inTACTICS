@@ -1,6 +1,12 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Home, Crosshair, Map as MapIcon, Shield, Eye, EyeOff, ChevronLeft, Target, Settings, Info, Lock, Menu, X, Activity, Zap, Clock, FileText, ExternalLink, AlertTriangle, Search, Play, Pause, ZoomIn, ZoomOut, Layers, CheckSquare, Square, MapPin, Skull, Hand, Undo, Redo, Maximize, Minimize, ChevronRight, Sun, AlignJustify, HardHat, User, ShieldCheck, Plus, Minus, Edit3 } from 'lucide-react';
+import {
+  Home, Crosshair, Map as MapIcon, Shield, Eye, EyeOff, ChevronLeft, Target, Settings,
+  Info, Lock, Menu, X, Activity, Zap, Clock, FileText, ExternalLink, AlertTriangle,
+  Search, Play, Pause, ZoomIn, ZoomOut, Layers, CheckSquare, Square, MapPin, Skull,
+  Undo, Redo, Maximize, Minimize, ChevronRight, Sun, AlignJustify, HardHat, User,
+  ShieldCheck, Plus, Minus, Edit3, Hand, LogOut, Sparkles, Wand2, Save, ClipboardList, Flag
+} from 'lucide-react';
 
 // --- FIREBASE INITIALIZATION ---
 import { initializeApp } from 'firebase/app';
@@ -9,7 +15,9 @@ import { getFirestore, doc, setDoc, onSnapshot, collection } from 'firebase/fire
 
 // --- DATA MOCKS RoN-Maps ---
 
-import { RON_MAPS } from "./data/Maps/ron_maps.js"; 
+import { RON_MAPS } from "./data/Maps/ron_maps.js";
+import { RON_WEAPONS } from "./data/Armory/ron_weapons.js";
+import { TacticalBlueprint } from "./data/Maps/objects.js";
 
 let app, auth, db, appId;
 try {
@@ -23,123 +31,51 @@ try {
   console.warn("Firebase config not found or invalid. Persistence will be disabled.");
 }
 
+// --- CONSTANTS ---
+const DIFFICULTIES = ['Easy', 'Moderate', 'Hard'];
+const RANKS = ['S', 'A', 'B', 'C', 'D', 'E', 'F'];
+
 // --- DATA MOCKS ---
 
 const WEAPON_CATEGORIES = [
-  { id: 'Assault Rifles', label: 'Assault Rifles' },
-  { id: 'Submachine Guns', label: 'Submachine Guns' },
-  { id: 'Shotguns', label: 'Shotguns' },
-  { id: 'Pistols', label: 'Pistols' },
-  { id: 'Less-Than-Lethal', label: 'Less-Than-Lethal' }
-];
-
-const RON_WEAPONS = [
-  // --- ASSAULT RIFLES ---
-  {
-    id: 'w_m4a1', category: 'primary', name: 'M4A1', type: 'Assault Rifles', caliber: '5.56x45mm NATO', capacity: '30 Schuss',
-    image: 'https://readyornot.wiki.gg/images/thumb/7/7f/M4A1.png/320px-M4A1.png',
-    desc: 'Das M4A1 ist ein vollautomatisches Sturmgewehr, das sich durch hohe Modularität auszeichnet.',
-    tactical: 'Extrem vielseitig. Ideal für Einsätze mit gemischten Distanzen.'
-  },
-  {
-    id: 'w_mk18', category: 'primary', name: 'MK18', type: 'Assault Rifles', caliber: '5.56x45mm NATO', capacity: '30 Schuss',
-    image: 'https://readyornot.wiki.gg/images/thumb/4/4b/MK18.png/320px-MK18.png',
-    desc: 'Eine kompaktere Version des M4A1, entwickelt für den Nahkampf (CQB).',
-    tactical: 'Viel führiger in extrem engen Umgebungen als das Standard M4A1.'
-  },
-  {
-    id: 'w_arn180', category: 'primary', name: 'ARN-180', type: 'Assault Rifles', caliber: '.300 Blackout', capacity: '30 Schuss',
-    image: 'https://readyornot.wiki.gg/images/thumb/7/7b/ARN-180.png/320px-ARN-180.png?dc189c',
-    desc: 'Ein modernes, kompaktes Sturmgewehr für spezielle Ballistik optimiert.',
-    tactical: 'Die .300 Blackout Munition macht diese Waffe perfekt für Schalldämpfer-Einsätze.'
-  },
-  {
-    id: 'w_sa58', category: 'primary', name: 'SA-58 OSW', type: 'Assault Rifles', caliber: '7.62x51mm NATO', capacity: '20 Schuss',
-    image: 'https://readyornot.wiki.gg/images/thumb/b/ba/SA-58.png/320px-SA-58.png',
-    desc: 'Eine moderne, gekürzte Version des klassischen FAL. Sehr schwer und enorm kraftvoll.',
-    tactical: 'Zerstört Holztüren und durchschlägt schwere Deckungen mit Leichtigkeit.'
-  },
-  {
-    id: 'w_g36c', category: 'primary', name: 'G36C', type: 'Assault Rifles', caliber: '5.56x45mm NATO', capacity: '30 Schuss',
-    image: 'https://readyornot.wiki.gg/images/thumb/9/91/G36C.png/320px-G36C.png',
-    desc: 'Kompaktes deutsches Sturmgewehr aus Polymer, sehr leicht und zuverlässig.',
-    tactical: 'Gut kontrollierbarer Rückstoß, besonders bei Feuerstößen.'
-  },
-
-  // --- SUBMACHINE GUNS ---
-  {
-    id: 'w_mp5a3', category: 'primary', name: 'MP5A3', type: 'Submachine Guns', caliber: '9x19mm Parabellum', capacity: '30 Schuss',
-    image: 'https://readyornot.wiki.gg/images/thumb/2/23/MP5A3.png/320px-MP5A3.png',
-    desc: 'Die klassische SWAT-Maschinenpistole, berühmt für ihr Rollenverschluss-System.',
-    tactical: 'Die erste Wahl für Geiselsituationen ohne gepanzerte Feinde.'
-  },
-  {
-    id: 'w_mpx', category: 'primary', name: 'MPX', type: 'Submachine Guns', caliber: '9x19mm Parabellum', capacity: '30 Schuss',
-    image: 'https://readyornot.wiki.gg/images/thumb/e/ef/MPX.png/320px-MPX.png',
-    desc: 'Moderne Maschinenpistole mit AR-15 ähnlichen Bedienelementen.',
-    tactical: 'Sehr schnelle Feuerrate und extrem wenig Rückstoß.'
-  },
-  {
-    id: 'w_ump45', category: 'primary', name: 'UMP-45', type: 'Submachine Guns', caliber: '.45 ACP', capacity: '25 Schuss',
-    image: 'https://readyornot.wiki.gg/images/thumb/d/d7/UMP-45.png/320px-UMP-45.png',
-    desc: 'Eine leichte Maschinenpistole mit großem Kaliber.',
-    tactical: 'Hohe Stoppwirkung gegen ungeschützte Ziele.'
-  },
-
-  // --- SHOTGUNS ---
-  {
-    id: 'w_870cqb', category: 'primary', name: '870 CQB', type: 'Shotguns', caliber: '12 Gauge', capacity: '7 Schuss',
-    image: 'https://readyornot.wiki.gg/images/thumb/6/64/870_CQB.png/320px-870_CQB.png',
-    desc: 'Eine klassische, taktische Pump-Action Schrotflinte.',
-    tactical: 'Verheerend auf nächste Distanz. Nachladen dauert lange.'
-  },
-
-  // --- PISTOLS ---
-  {
-    id: 'w_g19', category: 'secondary', name: 'G19', type: 'Pistols', caliber: '9x19mm Parabellum', capacity: '15 Schuss',
-    image: 'https://readyornot.wiki.gg/images/thumb/7/77/G19.png/320px-G19.png',
-    desc: 'Eine kompakte, leichte und extrem zuverlässige Dienstpistole.',
-    tactical: 'Die beste Allround-Seitenwaffe im Spiel.'
-  },
-  {
-    id: 'w_m45a1', category: 'secondary', name: 'M45A1', type: 'Pistols', caliber: '.45 ACP', capacity: '7 Schuss',
-    image: 'https://readyornot.wiki.gg/images/thumb/6/6c/M45A1.png/320px-M45A1.png',
-    desc: 'Eine moderne, taktische Variante der legendären 1911er Plattform.',
-    tactical: 'Hoher Schaden pro Schuss. Geringe Kapazität.'
-  },
-  {
-    id: 'w_57usg', category: 'secondary', name: 'Five-seveN', type: 'Pistols', caliber: '5.7x28mm', capacity: '20 Schuss',
-    image: 'https://readyornot.wiki.gg/images/thumb/2/23/Five_seveN.png/320px-Five_seveN.png',
-    desc: 'Verschießt ein kleines, pfeilschnelles Kaliber.',
-    tactical: 'Waffe der Wahl gegen schwer gepanzerte Ziele.'
-  },
-
-  // --- LESS-THAN-LETHAL ---
-  {
-    id: 'w_beanbag', category: 'primary', name: 'Beanbag Shotgun', type: 'Less-Than-Lethal', caliber: '12 Gauge', capacity: '7 Schuss',
-    image: 'https://readyornot.wiki.gg/images/thumb/2/22/Beanbag_Shotgun.png/320px-Beanbag_Shotgun.png',
-    desc: 'Verschießt nicht-tödliche Beanbag-Geschosse.',
-    tactical: 'Achtung: Kopfschüsse sind tödlich! Auf Beine zielen.'
-  }
+  { id: 'Assault Rifle', label: 'Assault Rifle' },
+  { id: 'Battle Rifle', label: 'Battle Rifle' },
+  { id: 'PDW', label: 'PDW' },
+  { id: 'Submachine Gun', label: 'Submachine Gun' },
+  { id: 'Shotgun', label: 'Shotgun' },
+  { id: 'Launcher', label: 'Launcher' },
+  { id: 'Less-Lethal', label: 'Less-Lethal' },
+  { id: 'Pistol', label: 'Pistol' },
+  { id: 'Pistol-Less-Lethal', label: 'Pistol-Less-Lethal' }
 ];
 
 const RON_ATTACHMENTS = {
-  Optics: [
-    { id: 'opt_srs', name: 'SRS', image: 'https://readyornot.wiki.gg/images/thumb/8/87/SRS.png/120px-SRS.png', desc: 'Geschlossenes Red Dot Visier.' },
-    { id: 'opt_holo', name: 'Holo (EXPS3)', image: 'https://readyornot.wiki.gg/images/thumb/5/52/EXPS3.png/120px-EXPS3.png', desc: 'Holographisches Visier.' },
-    { id: 'opt_micro', name: 'Micro T2', image: 'https://readyornot.wiki.gg/images/thumb/0/07/Micro_T2.png/120px-Micro_T2.png', desc: 'Kompaktes Rotpunktvisier.' }
+  Optic: [
+    { id: 't1', name: 'Aimpoint T1' },
+    { id: 'srs', name: 'SRS' },
+    { id: 'holo_exps3', name: 'Holo (EXPS3)' },
+    { id: 'magnifier_3x', name: 'Sight W/ 3X Magnifier' },
+    { id: 'rmrdot', name: 'RMR Dot' }
   ],
   Muzzle: [
-    { id: 'muz_socom', name: 'SOCOM556', image: 'https://readyornot.wiki.gg/images/thumb/e/ef/Suppressor_%285.56%29.png/120px-Suppressor_%285.56%29.png', desc: 'Schalldämpfer.' },
-    { id: 'muz_comp', name: 'Compensator', image: 'https://readyornot.wiki.gg/images/thumb/b/b3/Compensator.png/120px-Compensator.png', desc: 'Reduziert vertikalen Rückstoß.' }
+    { id: 'socom', name: 'SOCOM Suppressor' },
+    { id: 'socom_pistol', name: 'Suppressor (Pistol)' },
+    { id: 'xfbrake', name: 'XF Brake' },
+    { id: 'choke', name: 'Shotgun Choke' }
   ],
   Underbarrel: [
-    { id: 'ub_vert', name: 'Vertical Grip', image: 'https://readyornot.wiki.gg/images/thumb/0/06/Control_Grip.png/120px-Control_Grip.png', desc: 'Sturmgriff.' },
-    { id: 'ub_angled', name: 'Angled Grip', image: 'https://readyornot.wiki.gg/images/thumb/5/5f/Speed_Grip.png/120px-Speed_Grip.png', desc: 'Abgewinkelter Griff.' }
+    { id: 'combat', name: 'Combat Grip' },
+    { id: 'angled', name: 'Angled Grip' },
+    { id: 'flashlight_sec', name: 'Flashlight (Pistol)' }
   ],
   Overbarrel: [
-    { id: 'ob_flash', name: 'Flashlight', image: 'https://readyornot.wiki.gg/images/thumb/2/22/Flashlight.png/120px-Flashlight.png', desc: 'Helle Taschenlampe.' },
-    { id: 'ob_laser', name: 'Laser Pointer', image: 'https://readyornot.wiki.gg/images/thumb/4/41/Laser_Pointer.png/120px-Laser_Pointer.png', desc: 'Roter Laser.' }
+    { id: 'laser', name: 'Laser Pointer' }
+  ],
+  Miscellaneous: [
+    { id: 'nomisc', name: 'No Miscellaneous' }
+  ],
+  Illuminator: [
+    { id: 'm600v', name: 'M600V Flashlight' }
   ]
 };
 
@@ -231,6 +167,7 @@ const RON_UTILITIES = [
   { id: 'util_c2', category: 'Breaching', slotType: 'device', image: 'https://static.wikia.nocookie.net/ready-or-not/images/6/62/C2_Explosive.png/revision/latest/scale-to-width-down/150', name: 'C2 Explosive', desc: 'Sprengt Türen mit enormer Wucht auf und betäubt Personen dahinter.' },
   { id: 'util_taser', category: 'Tactical Device', slotType: 'device', image: 'https://static.wikia.nocookie.net/ready-or-not/images/7/75/Taser.png/revision/latest/scale-to-width-down/150', name: 'Taser', desc: 'Neutralisiert Verdächtige sofort auf kurze Distanz durch Elektroschock.' },
   { id: 'util_lockpick', category: 'Tactical Device', slotType: 'device', image: 'https://static.wikia.nocookie.net/ready-or-not/images/4/4e/Lockpick_Gun.png/revision/latest/scale-to-width-down/150', name: 'Lockpick Gun', desc: 'Öffnet verschlossene Türen lautlos und doppelt so schnell.' },
+  { id: 'util_spray', category: 'Tactical Device', slotType: 'device', image: 'https://static.wikia.nocookie.net/ready-or-not/images/4/4e/Lockpick_Gun.png/revision/latest/scale-to-width-down/150', name: 'Spray', desc: 'Eine Dose damit Suspect aufgibt :c.' },
 
   // Long Tactical
   { id: 'util_ram', category: 'Breaching', slotType: 'long_tactical', image: 'https://static.wikia.nocookie.net/ready-or-not/images/2/23/Battering_Ram.png/revision/latest/scale-to-width-down/150', name: 'Battering Ram', desc: 'Schwere Ramme zum manuellen Aufbrechen von Türen mit einem Schlag.' },
@@ -243,7 +180,7 @@ const RON_UTILITIES = [
 ];
 
 const DEFAULT_STANDARD_LOADOUT = {
-  primary: 'w_m4a1',
+  primary: 'f90',
   primaryAttachments: { Optics: 'opt_holo', Muzzle: null, Underbarrel: 'ub_vert', Overbarrel: ['ob_flash'] },
   primaryMagsAP: 3,
   primaryMagsJHP: 1,
@@ -331,6 +268,7 @@ const autoAdjustSlots = (loadout, maxSlots) => {
     { obj: newLoadout.devices, key: 'util_lockpick' },
     { obj: newLoadout.devices, key: 'util_taser' },
     { obj: newLoadout.devices, key: 'util_c2' },
+    { obj: newLoadout.devices, key: 'util_spray' },
     { obj: newLoadout.throwables, key: 'util_stinger' },
     { obj: newLoadout.throwables, key: 'util_9bang' },
     { obj: newLoadout.throwables, key: 'util_cs' },
@@ -403,8 +341,8 @@ const getRelativeTime = (date) => {
 
 // --- CONSTANTS ---
 const SESSION_TIMEOUT = 10 * 60 * 1000;
-const STORAGE_KEY_STATE = 'inTactics_app_state_v15';
-const STORAGE_KEY_TIME = 'inTactics_last_active_v15';
+const STORAGE_KEY_STATE = 'inTactics_app_state_v16';
+const STORAGE_KEY_TIME = 'inTactics_last_active_v16';
 
 // --- COMPONENTS ---
 
@@ -418,6 +356,95 @@ const GlassCard = ({ children, className = '', onClick }) => (
     {children}
   </motion.div>
 );
+
+/*const ProfileModal = ({
+  isOpen, onClose, user, authMode, setAuthMode, handleAuth,
+  username, setUsername, password, setPassword, authError,
+  handleLogout, mapProgress, setActiveTab
+}) => {
+  if (!isOpen) return null;
+
+  const isLoggedIn = user && !user.isAnonymous;
+  const records = mapProgress || {};
+  const completedMissionsCount = Object.keys(records).length;
+  const rankCounts = Object.values(records).reduce((acc, curr) => {
+    acc[curr.rank] = (acc[curr.rank] || 0) + 1;
+    return acc;
+  }, {});
+
+  const displayUsername = user?.email ? user.email.split('@')[0] : 'Operator';
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: 300 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 300 }}
+      transition={{ type: "spring", damping: 25, stiffness: 300 }}
+      className="fixed top-0 right-0 bottom-0 w-full sm:w-[400px] z-[9999] bg-black/95 backdrop-blur-3xl border-l border-white/10 flex flex-col shadow-2xl"
+    >
+      <div className="flex items-center justify-between p-6 border-b border-white/10">
+        <h2 className="text-2xl font-black uppercase italic tracking-tighter text-white flex items-center gap-3">
+          <User size={24} className={isLoggedIn ? "text-blue-500" : "text-white/40"} /> {isLoggedIn ? 'Operator' : 'Identität'}
+        </h2>
+        <button onClick={onClose} className="p-2 hover:bg-red-500/20 text-white rounded-full transition-colors">
+          <X size={20} />
+        </button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        {!isLoggedIn ? (
+          <div className="space-y-6">
+            <form onSubmit={handleAuth} className="space-y-4">
+              <div>
+                <label className="block text-[10px] font-black uppercase text-white/60 mb-2">Rufname (Nutzername)</label>
+                <input type="text" required value={username} onChange={(e) => setUsername(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white font-mono text-sm focus:border-blue-500 outline-none" />
+              </div>
+              <div>
+                <label className="block text-[10px] font-black uppercase text-white/60 mb-2">Zugangscode (Passwort)</label>
+                <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white font-mono text-sm focus:border-blue-500 outline-none" />
+              </div>
+              {authError && <p className="text-red-400 text-[10px] font-bold">{authError}</p>}
+              <button type="submit" className="w-full bg-blue-600 hover:bg-blue-500 text-white font-black uppercase text-sm py-3 rounded-xl transition-all">
+                {authMode === 'login' ? 'Authentifizieren' : 'Registrieren'}
+              </button>
+            </form>
+            <button onClick={() => setAuthMode(authMode === 'login' ? 'register' : 'login')} className="w-full text-[10px] text-white/40 hover:text-white uppercase font-bold tracking-widest">
+              {authMode === 'login' ? 'Neu hier? Account erstellen' : 'Bereits registriert? Login'}
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-8">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 bg-blue-600/20 rounded-2xl border border-blue-500/50 flex items-center justify-center text-blue-500"><User size={32} /></div>
+              <div className="overflow-hidden">
+                <p className="text-[10px] text-white/40 font-black uppercase">Aktiver Operator</p>
+                <h3 className="text-2xl font-black italic uppercase truncate">{displayUsername}</h3>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <h4 className="text-[10px] uppercase font-black tracking-widest text-white/40 border-b border-white/10 pb-2">Dienstakte</h4>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
+                  <p className="text-[10px] font-bold text-white/40 uppercase">Einsätze</p>
+                  <p className="text-3xl font-black italic">{completedMissionsCount}</p>
+                </div>
+                <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
+                  <p className="text-[10px] font-bold text-white/40 uppercase">S-Ränge</p>
+                  <p className="text-3xl font-black italic text-blue-400">{rankCounts['S'] || 0}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-6 border-t border-white/10">
+              <button onClick={handleLogout} className="w-full flex items-center justify-center gap-2 p-4 bg-red-600/10 hover:bg-red-600/20 text-red-500 border border-red-500/30 rounded-xl font-black uppercase text-xs transition-all">
+                <LogOut size={16} /> Sitzung beenden
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </motion.div>
+  );
+};*/
 
 const DynamicNavItem = ({ id, icon: Icon, label, activeTab, setActiveTab }) => {
   const isActive = activeTab === id;
@@ -448,7 +475,9 @@ const GlobalSearchBar = ({ searchQuery, setSearchQuery, placeholder, className =
   </div>
 );
 
-const BlueprintViewer = ({ mapId, blueprints, dbUser, userBlueprints }) => {
+// --- BLUEPRINT VIEWER & MAP LOGIC ---
+
+const BlueprintViewer = ({ map, dbUser, userBlueprints }) => {
   const [activeFloor, setActiveFloor] = useState(0);
   const [scale, setScale] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
@@ -458,33 +487,34 @@ const BlueprintViewer = ({ mapId, blueprints, dbUser, userBlueprints }) => {
   const [activeTeam, setActiveTeam] = useState('blue'); // 'blue' | 'red'
   const [activeTool, setActiveTool] = useState('pan'); // 'pan' | 'move' | 'breach' | 'hold' | 'suspect'
   const [useAltMap, setUseAltMap] = useState(false);
+  const [showObjectives, setShowObjectives] = useState(false);
+  const [activeObjHighlight, setActiveObjHighlight] = useState(null);
 
   const [markersData, setMarkersData] = useState({});
-
   const mapContainerRef = useRef(null);
   const lastPanRef = useRef({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
   const hasMovedRef = useRef(false);
 
+  const blueprints = map.blueprints;
+  const objectivesData = map.mapObjectivesDetails || [];
+
   useEffect(() => {
-    if (userBlueprints && userBlueprints[mapId]) {
-      const docData = userBlueprints[mapId];
+    if (userBlueprints && userBlueprints[map.id]) {
+      const docData = userBlueprints[map.id];
       if (docData && docData.data) {
         try { setMarkersData(JSON.parse(docData.data)); } catch (e) { console.error("Error parsing blueprint markers", e); }
       } else {
         setMarkersData(docData);
       }
     }
-  }, [userBlueprints, mapId]);
+  }, [userBlueprints, map.id]);
 
   const currentFloorKey = `${activePlan}_${activeFloor}`;
 
-  // Helper to ensure backward compatibility and extract team data safely
   const getFloorData = (data) => {
     const fd = data[currentFloorKey];
     if (!fd) return { blue: { past: [], present: [], future: [] }, red: { past: [], present: [], future: [] } };
-
-    // Migration from old global structure
     if (fd.present) {
       return {
         blue: { past: fd.past || [], present: fd.present || [], future: fd.future || [] },
@@ -502,7 +532,7 @@ const BlueprintViewer = ({ mapId, blueprints, dbUser, userBlueprints }) => {
 
   const saveToDb = (newData) => {
     if (db && dbUser) {
-      setDoc(doc(db, 'artifacts', appId, 'users', dbUser.uid, 'blueprintMarkers', mapId), { data: JSON.stringify(newData) }).catch(console.error);
+      setDoc(doc(db, 'artifacts', appId, 'users', dbUser.uid, 'blueprintMarkers', map.id), { data: JSON.stringify(newData) }).catch(console.error);
     }
   };
 
@@ -526,7 +556,6 @@ const BlueprintViewer = ({ mapId, blueprints, dbUser, userBlueprints }) => {
     if (!isFullscreen) return;
     hasMovedRef.current = false;
 
-    // Right click (2), Middle click (1), Pan Tool, or Multi-touch triggers Panning
     if (e.button === 2 || e.button === 1 || activeTool === 'pan' || (e.touches && e.touches.length > 1)) {
       setIsPanning(true);
       lastPanRef.current = {
@@ -549,12 +578,9 @@ const BlueprintViewer = ({ mapId, blueprints, dbUser, userBlueprints }) => {
     lastPanRef.current = { x: clientX, y: clientY };
   };
 
-  const handlePointerUp = () => {
-    setIsPanning(false);
-  };
+  const handlePointerUp = () => { setIsPanning(false); };
 
   const handleMapClick = (e) => {
-    // Verhindere Platzierung bei: Nicht Fullscreen, Panning, Pan-Tool aktiv, es wurde bewegt, oder Rechtsklick
     if (!isFullscreen || isPanning || activeTool === 'pan' || hasMovedRef.current || e.button === 2) return;
 
     const rect = e.currentTarget.getBoundingClientRect();
@@ -610,13 +636,7 @@ const BlueprintViewer = ({ mapId, blueprints, dbUser, userBlueprints }) => {
       if (!td || td.past.length === 0) return prev;
 
       const newPast = [...td.past];
-      const newData = {
-        ...prev,
-        [currentFloorKey]: {
-          ...fd,
-          [activeTeam]: { past: newPast, present: newPast.pop(), future: [td.present, ...td.future] }
-        }
-      };
+      const newData = { ...prev, [currentFloorKey]: { ...fd, [activeTeam]: { past: newPast, present: newPast.pop(), future: [td.present, ...td.future] } } };
       saveToDb(newData);
       return newData;
     });
@@ -629,13 +649,7 @@ const BlueprintViewer = ({ mapId, blueprints, dbUser, userBlueprints }) => {
       if (!td || td.future.length === 0) return prev;
 
       const newFuture = [...td.future];
-      const newData = {
-        ...prev,
-        [currentFloorKey]: {
-          ...fd,
-          [activeTeam]: { past: [...td.past, td.present], present: newFuture.shift(), future: newFuture }
-        }
-      };
+      const newData = { ...prev, [currentFloorKey]: { ...fd, [activeTeam]: { past: [...td.past, td.present], present: newFuture.shift(), future: newFuture } } };
       saveToDb(newData);
       return newData;
     });
@@ -647,25 +661,22 @@ const BlueprintViewer = ({ mapId, blueprints, dbUser, userBlueprints }) => {
       const td = fd[activeTeam];
       if (!td || td.present.length === 0) return prev;
 
-      const newData = {
-        ...prev,
-        [currentFloorKey]: {
-          ...fd,
-          [activeTeam]: { past: [...td.past, td.present], present: [], future: [] }
-        }
-      };
+      const newData = { ...prev, [currentFloorKey]: { ...fd, [activeTeam]: { past: [...td.past, td.present], present: [], future: [] } } };
       saveToDb(newData);
       return newData;
     });
   };
 
+  const handleShowObjective = (obj) => {
+    if (activeFloor !== obj.floor) setActiveFloor(obj.floor);
+    setActiveObjHighlight(obj.id);
+    setTimeout(() => setActiveObjHighlight(null), 3000);
+  };
+
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (!isFullscreen) return;
-      if (e.ctrlKey && e.key.toLowerCase() === 'z') {
-        e.preventDefault();
-        if (e.shiftKey) redo(); else undo();
-      }
+      if (e.ctrlKey && e.key.toLowerCase() === 'z') { e.preventDefault(); if (e.shiftKey) redo(); else undo(); }
       if (e.key === 'Escape') setIsFullscreen(false);
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -681,7 +692,6 @@ const BlueprintViewer = ({ mapId, blueprints, dbUser, userBlueprints }) => {
 
   const renderMarkerIcon = (type, team) => {
     const colorClass = type === 'suspect' ? 'text-orange-500' : getTeamColor(team);
-
     switch (type) {
       case 'breach': return <Target size={20} className={`${colorClass} drop-shadow-md`} />;
       case 'suspect': return <Skull size={20} className={`${colorClass} drop-shadow-md`} />;
@@ -691,15 +701,14 @@ const BlueprintViewer = ({ mapId, blueprints, dbUser, userBlueprints }) => {
   };
 
   const getMarkerTransform = (type) => {
-    // MapPin points at bottom center, so we translate Y by -100% to put tip on click coord
     if (type === 'move') return 'translate(-50%, -100%)';
-    return 'translate(-50%, -50%)'; // Center everything else
+    return 'translate(-50%, -50%)';
   };
 
   const renderTeamLines = (team, markers) => {
     let lastNode = null;
     return markers.map((m, i) => {
-      if (m.type === 'suspect') return null; // Break line sequence for suspects
+      if (m.type === 'suspect') { lastNode = null; return null; }
 
       const current = m;
       const prev = lastNode;
@@ -739,6 +748,9 @@ const BlueprintViewer = ({ mapId, blueprints, dbUser, userBlueprints }) => {
   const activeBlueprint = blueprints[activeFloor];
   const displayImage = useAltMap && activeBlueprint.altUrl ? activeBlueprint.altUrl : activeBlueprint.url;
 
+  const mainObjectives = objectivesData.filter(o => o.type === 'main');
+  const softObjectives = objectivesData.filter(o => o.type === 'soft');
+
   const renderMapArea = (interactive) => (
     <div
       className="absolute inset-0 overflow-hidden touch-none"
@@ -769,6 +781,20 @@ const BlueprintViewer = ({ mapId, blueprints, dbUser, userBlueprints }) => {
               {renderTeamLines('blue', floorData.blue?.present || [])}
               {renderTeamLines('red', floorData.red?.present || [])}
             </svg>
+
+            {/* Dynamic Pre-defined Objective Markers */}
+            {showObjectives && interactive && objectivesData.filter(o => o.floor === activeFloor).map(obj => (
+              <div
+                key={obj.id}
+                className={`absolute z-[25] transform -translate-x-1/2 -translate-y-1/2 transition-transform duration-500`}
+                style={{ left: `${obj.x}%`, top: `${obj.y}%` }}
+              >
+                <div className={`relative flex items-center justify-center w-6 h-6 rounded-full border-2 border-white shadow-[0_0_10px_rgba(0,0,0,0.8)] ${obj.color} ${activeObjHighlight === obj.id ? 'animate-ping scale-150' : ''}`}>
+                  {obj.icon === 'search' ? <Search size={12} className="text-white" /> : <Flag size={12} className="text-white" />}
+                </div>
+              </div>
+            ))}
+
             {renderMarkersForTeam('blue', floorData.blue?.present || [])}
             {renderMarkersForTeam('red', floorData.red?.present || [])}
           </div>
@@ -819,7 +845,16 @@ const BlueprintViewer = ({ mapId, blueprints, dbUser, userBlueprints }) => {
             {/* Fullscreen Top Toolbar */}
             <div className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-2 p-2 bg-black/80 backdrop-blur-xl border border-white/10 rounded-2xl z-[110] shadow-2xl overflow-x-auto max-w-[95vw] pointer-events-auto">
 
-              {/* Custom Maps & Plans */}
+              {/* Objectives Toggle */}
+              {objectivesData.length > 0 && (
+                <>
+                  <button onClick={() => setShowObjectives(!showObjectives)} className={`flex items-center shrink-0 p-2 rounded-lg transition-all ${showObjectives ? 'bg-indigo-600 text-white shadow-inner' : 'hover:bg-white/10 text-white/60 hover:text-white'}`} title="Map Objectives">
+                    <ClipboardList size={16} />
+                  </button>
+                  <div className="h-6 w-px bg-white/20 mx-1 shrink-0" />
+                </>
+              )}
+
               <select value={activePlan} onChange={(e) => setActivePlan(e.target.value)} className="bg-white/10 border border-white/10 text-white text-[10px] md:text-xs font-bold uppercase rounded px-2 md:px-3 py-1.5 outline-none hover:bg-white/20 cursor-pointer shrink-0">
                 <option className="bg-black text-white" value="Plan A">Plan A (Main)</option>
                 <option className="bg-black text-white" value="Plan B">Plan B (Alt)</option>
@@ -828,7 +863,6 @@ const BlueprintViewer = ({ mapId, blueprints, dbUser, userBlueprints }) => {
 
               <div className="h-6 w-px bg-white/20 mx-1 shrink-0" />
 
-              {/* Team Toggle */}
               <div className="flex bg-black/50 rounded-lg p-1 border border-white/10 shrink-0">
                 <button onClick={() => setActiveTeam('blue')} className={`px-2 py-1 text-[10px] font-black uppercase rounded ${activeTeam === 'blue' ? 'bg-blue-600 text-white' : 'text-white/40 hover:text-white'}`}>Blue</button>
                 <button onClick={() => setActiveTeam('red')} className={`px-2 py-1 text-[10px] font-black uppercase rounded ${activeTeam === 'red' ? 'bg-red-600 text-white' : 'text-white/40 hover:text-white'}`}>Red</button>
@@ -836,7 +870,6 @@ const BlueprintViewer = ({ mapId, blueprints, dbUser, userBlueprints }) => {
 
               <div className="h-6 w-px bg-white/20 mx-1 shrink-0" />
 
-              {/* Floor Selector */}
               {blueprints.length > 1 && (
                 <>
                   <div className="flex gap-1 shrink-0">
@@ -850,7 +883,6 @@ const BlueprintViewer = ({ mapId, blueprints, dbUser, userBlueprints }) => {
                 </>
               )}
 
-              {/* Alt Map Toggle */}
               {activeBlueprint.altUrl && (
                 <>
                   <button onClick={() => setUseAltMap(!useAltMap)} className={`px-2 md:px-3 py-1.5 text-[10px] md:text-xs font-bold uppercase rounded transition-colors shrink-0 ${useAltMap ? 'bg-white/20 text-white' : 'text-white/40 hover:bg-white/10'}`}>
@@ -860,7 +892,6 @@ const BlueprintViewer = ({ mapId, blueprints, dbUser, userBlueprints }) => {
                 </>
               )}
 
-              {/* Tools */}
               {[
                 { id: 'pan', icon: Hand, color: 'text-white' },
                 { id: 'move', icon: MapPin, color: 'text-green-500' },
@@ -880,7 +911,6 @@ const BlueprintViewer = ({ mapId, blueprints, dbUser, userBlueprints }) => {
 
               <div className="h-6 w-px bg-white/20 mx-1 shrink-0" />
 
-              {/* History Actions */}
               <button onClick={undo} disabled={!canUndo} className={`p-2 rounded-lg transition-all shrink-0 ${canUndo ? 'text-white hover:bg-white/20' : 'text-white/20 cursor-not-allowed'}`} title="Rückgängig (Ctrl+Z)"><Undo size={16} /></button>
               <button onClick={redo} disabled={!canRedo} className={`p-2 rounded-lg transition-all shrink-0 ${canRedo ? 'text-white hover:bg-white/20' : 'text-white/20 cursor-not-allowed'}`} title="Wiederholen (Ctrl+Shift+Z)"><Redo size={16} /></button>
 
@@ -889,6 +919,69 @@ const BlueprintViewer = ({ mapId, blueprints, dbUser, userBlueprints }) => {
             </div>
 
             <button onClick={() => setIsFullscreen(false)} className="absolute top-4 right-4 p-3 bg-black/80 hover:bg-white/20 text-white rounded-full z-[110] transition-colors border border-white/10 pointer-events-auto"><Minimize size={20} /></button>
+
+            {/* Overlay Panel for Objectives */}
+            {showObjectives && objectivesData.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}
+                className="absolute top-20 right-4 w-80 lg:w-96 bg-[#0a0a0f]/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl flex flex-col z-[120] max-h-[70vh] pointer-events-auto"
+              >
+                {mainObjectives.length > 0 && (
+                  <>
+                    <div className="p-4 border-b border-white/10 bg-indigo-950/40 flex items-center justify-between rounded-t-xl">
+                      <div className="flex items-center gap-3">
+                        <ClipboardList className="text-indigo-400" size={20} />
+                        <h3 className="font-black text-sm uppercase tracking-wider text-white">Objectives <span className="text-white/40 text-xs ml-2">(0/{mainObjectives.length})</span></h3>
+                      </div>
+                    </div>
+                    <div className="overflow-y-auto p-2">
+                      {mainObjectives.map(obj => (
+                        <div key={obj.id} className="flex gap-3 p-3 hover:bg-white/5 rounded-lg border border-transparent transition-colors">
+                          <div className="mt-1 shrink-0"><div className="w-5 h-5 rounded-full border-2 border-white/20" /></div>
+                          <div className="flex-1">
+                            <h4 className="font-bold text-sm text-white mb-1">{obj.name}</h4>
+                            <p className="text-xs text-white/50 leading-relaxed">{obj.desc}</p>
+                          </div>
+                          <div className="flex flex-col items-end gap-2 shrink-0">
+                            <button onClick={() => handleShowObjective(obj)} className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-400 border border-indigo-500/30 rounded-lg text-[10px] font-black uppercase transition-colors">
+                              <Target size={12} /> Show
+                            </button>
+                            <span className="text-[9px] text-white/40 bg-white/5 px-2 py-1 rounded font-bold">{blueprints[obj.floor]?.name || 'Unknown'}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+                {softObjectives.length > 0 && (
+                  <>
+                    <div className="p-4 border-y border-white/10 bg-indigo-950/20 flex items-center justify-between mt-2">
+                      <div className="flex items-center gap-3">
+                        <Search className="text-fuchsia-400" size={18} />
+                        <h3 className="font-black text-xs uppercase tracking-wider text-white/80">Soft Objectives</h3>
+                      </div>
+                    </div>
+                    <div className="overflow-y-auto p-2 pb-4">
+                      {softObjectives.map(obj => (
+                        <div key={obj.id} className="flex gap-3 p-3 hover:bg-white/5 rounded-lg border border-transparent transition-colors">
+                          <div className="mt-1 shrink-0"><div className="w-5 h-5 rounded-full border-2 border-white/20" /></div>
+                          <div className="flex-1">
+                            <h4 className="font-bold text-sm text-white mb-1">{obj.name}</h4>
+                            <p className="text-xs text-white/50 leading-relaxed">{obj.desc}</p>
+                          </div>
+                          <div className="flex flex-col items-end gap-2 shrink-0">
+                            <button onClick={() => handleShowObjective(obj)} className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-400 border border-indigo-500/30 rounded-lg text-[10px] font-black uppercase transition-colors">
+                              <Target size={12} /> Show
+                            </button>
+                            <span className="text-[9px] text-white/40 bg-white/5 px-2 py-1 rounded font-bold">{blueprints[obj.floor]?.name || 'Unknown'}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </motion.div>
+            )}
 
             {renderMapArea(true)}
 
@@ -938,7 +1031,6 @@ const POIViewer = ({ poi }) => {
   );
 };
 
-// ... existing components till the end ...
 const AudioLogViewer = ({ logs }) => {
   const [activeTranscript, setActiveTranscript] = useState(null);
   if (!logs || logs.length === 0) return null;
@@ -1143,7 +1235,7 @@ const ClickableItemCard = ({ label, item, onClick, displayImageOverride }) => (
 );
 
 const VisualMultiSelectGrid = ({ items, selectedIds, preferredSkins, onToggle, className = "" }) => (
-  <div className={`grid grid-cols-1 sm:grid-cols-2 gap-3 ${className}`}>
+  <div className={`grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 ${className}`}>
     {items.map(item => {
       const isChecked = selectedIds.includes(item.id);
       const activeSkinId = preferredSkins?.[item.id] || item.skins?.[0]?.id;
@@ -1152,17 +1244,19 @@ const VisualMultiSelectGrid = ({ items, selectedIds, preferredSkins, onToggle, c
         <div
           key={item.id}
           onClick={() => onToggle(item.id)}
-          className={`flex items-center gap-4 p-3 rounded-xl border cursor-pointer transition-all ${isChecked ? 'bg-blue-900/30 border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.2)]' : 'bg-black/40 border-white/5 hover:border-white/20 hover:bg-white/5'}`}
+          className={`flex flex-col relative rounded-xl border cursor-pointer transition-all overflow-hidden ${isChecked ? 'bg-blue-600/10 border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.3)]' : 'bg-black/40 border-white/5 hover:border-white/20'}`}
         >
-          <div className="relative w-12 h-12 p-1.5 shrink-0 bg-black/40 rounded-lg flex items-center justify-center border border-white/10">
-            <img src={displayImage} alt={item.name} className="max-h-full max-w-full object-contain" />
+          <div className="h-16 md:h-20 p-2 flex items-center justify-center bg-white/5 border-b border-white/5 relative">
+            <img src={displayImage} alt={item.name} className="max-h-full max-w-full object-contain" style={{ filter: 'drop-shadow(0px 2px 4px rgba(0,0,0,0.5))' }} />
             {isChecked && (
-              <div className="absolute -bottom-2 -left-2 bg-[#010101] rounded border border-blue-500">
-                <CheckSquare size={16} className="text-blue-500 bg-blue-500/10 rounded" />
+              <div className="absolute top-2 right-2 bg-[#010101] rounded border border-blue-500 shadow-lg">
+                <CheckSquare size={14} className="text-blue-500 bg-blue-500/10 rounded" />
               </div>
             )}
           </div>
-          <p className={`text-[10px] md:text-xs font-bold uppercase leading-snug flex-1 ${isChecked ? 'text-white' : 'text-white/60'}`}>{item.name}</p>
+          <div className="p-2 md:p-3 flex items-center justify-center text-center min-h-[44px]">
+            <p className={`text-[9px] md:text-[10px] font-bold uppercase leading-tight ${isChecked ? 'text-white' : 'text-white/60'}`}>{item.name}</p>
+          </div>
         </div>
       );
     })}
@@ -1225,7 +1319,6 @@ const MagCounter = ({ label, type, val, onInc, onDec, disabled }) => (
   </div>
 );
 
-
 const UnifiedLoadoutEditor = ({ loadout, onChange, title, showRecommendationBtn, onLoadRecommendation, preferredSkins = {} }) => {
   const maxSlots = getArmorSlots(loadout.armor);
   const usedSlots = getUsedSlots(loadout);
@@ -1274,11 +1367,11 @@ const UnifiedLoadoutEditor = ({ loadout, onChange, title, showRecommendationBtn,
           </div>
         </div>
 
-        {/* NEW COLUMN LAYOUT */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 md:gap-12">
+        {/* COLUMN LAYOUT OPTIMIZED FOR LARGE SCREENS (lg:grid-cols-3) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
 
           {/* COL 1: WEAPONS */}
-          <div className="flex flex-col gap-8">
+          <div className="flex flex-col gap-6 md:gap-8">
             <div className="space-y-3">
               <h4 className="text-[10px] uppercase font-black tracking-[0.2em] text-white/40 border-b border-white/10 pb-2">Primary Weapon</h4>
               <ClickableItemCard
@@ -1307,7 +1400,7 @@ const UnifiedLoadoutEditor = ({ loadout, onChange, title, showRecommendationBtn,
           </div>
 
           {/* COL 2: ARMOR & THROWABLES */}
-          <div className="flex flex-col gap-8">
+          <div className="flex flex-col gap-6 md:gap-8">
             <div className="space-y-3">
               <h4 className="text-[10px] uppercase font-black tracking-[0.2em] text-white/40 border-b border-white/10 pb-2">Plate / Armor</h4>
               <ClickableItemCard
@@ -1325,7 +1418,7 @@ const UnifiedLoadoutEditor = ({ loadout, onChange, title, showRecommendationBtn,
           </div>
 
           {/* COL 3: HEADWEAR, LONG TAC, DEVICES */}
-          <div className="flex flex-col gap-8">
+          <div className="flex flex-col gap-6 md:gap-8 md:col-span-2 lg:col-span-1">
             <div className="space-y-3">
               <h4 className="text-[10px] uppercase font-black tracking-[0.2em] text-white/40 border-b border-white/10 pb-2">Headwear (Kombinierbar)</h4>
               <VisualMultiSelectGrid items={RON_HEADWEAR_OPTIONS} selectedIds={loadout.headwear} preferredSkins={preferredSkins} onToggle={(id) => onChange('headwear', validateHeadwear(loadout.headwear, id))} />
@@ -1368,8 +1461,6 @@ const UnifiedLoadoutEditor = ({ loadout, onChange, title, showRecommendationBtn,
   );
 };
 
-
-// --- SWAT OPERATOR UI (LOADOUT OVERVIEW) ---
 const SwatOperatorUI = ({ onSelectCategory }) => {
   return (
     <div className="flex flex-col items-center justify-center w-full py-8 md:py-12">
@@ -1413,7 +1504,6 @@ const SwatOperatorUI = ({ onSelectCategory }) => {
   );
 };
 
-// --- WEAPON GUNSMITH ---
 const WeaponGunsmith = ({ weaponId, equipped, setEquipped, activeSlot, setActiveSlot, dbUser }) => {
   const slots = [
     { id: 'Optics', icon: Crosshair, label: 'Optics' },
@@ -1562,8 +1652,6 @@ const WeaponGunsmith = ({ weaponId, equipped, setEquipped, activeSlot, setActive
   );
 };
 
-// --- MAIN APP ---
-
 export default function App() {
   const [dbUser, setDbUser] = useState(null);
 
@@ -1581,15 +1669,9 @@ export default function App() {
   const [activeWeaponCat, setActiveWeaponCat] = useState('Assault Rifles');
 
   const [selectedMap, setSelectedMap] = useState(null);
-  const [lastViewedMap, setLastViewedMap] = useState(null);
   const [selectedWeapon, setSelectedWeapon] = useState(null);
   const [selectedArticle, setSelectedArticle] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
-
-  // Merke dir immer die zuletzt geöffnete Karte
-  useEffect(() => {
-    if (selectedMap) setLastViewedMap(selectedMap);
-  }, [selectedMap]);
 
   const [equippedAttachments, setEquippedAttachments] = useState({ Optics: null, Muzzle: null, Underbarrel: null, Overbarrel: [] });
   const [activeAttachmentSlot, setActiveAttachmentSlot] = useState(null);
@@ -1606,12 +1688,33 @@ export default function App() {
   const ronListRef = useRef(null);
   const lastScrollY = useRef(0);
 
+  // Auth & Profile State
+  const [authMode, setAuthMode] = useState('login');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [authError, setAuthError] = useState('');
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+
+  // Progression State
+  const [mapProgress, setMapProgress] = useState({});
+  const [tempDiff, setTempDiff] = useState('Moderate');
+  const [tempRank, setTempRank] = useState('A');
+  const [lastViewedMap, setLastViewedMap] = useState(null);
+
+  // Gemini State
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiResponse, setAiResponse] = useState(null);
+
   // Initialisiere Firebase Auth
   useEffect(() => {
     if (!auth) return;
     const initAuth = async () => {
       try {
-        const token = null; 
+        /*if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+          await signInWithCustomToken(auth, __initial_auth_token);
+        } else {
+          await signInAnonymously(auth);
+        }*/
       } catch (err) {
         console.error('Auth error', err);
       }
@@ -1644,7 +1747,6 @@ export default function App() {
       );
     });
 
-    // Special listener for Global Standard Loadout
     const standardDocRef = doc(db, 'artifacts', appId, 'users', dbUser.uid, 'globalLoadouts', 'standard');
     unsubs.push(
       onSnapshot(standardDocRef, (docSnap) => {
@@ -1654,10 +1756,20 @@ export default function App() {
       })
     );
 
+    const progressDocRef = doc(db, 'artifacts', appId, 'users', dbUser.uid, 'progress', 'maps');
+    unsubs.push(
+      onSnapshot(progressDocRef, (docSnap) => {
+        if (docSnap.exists()) {
+          setMapProgress(docSnap.data().records || {});
+        } else {
+          setMapProgress({});
+        }
+      })
+    );
+
     return () => unsubs.forEach(u => u());
   }, [dbUser]);
 
-  // Lade spezifische Waffendaten aus Firebase in den lokalen State
   useEffect(() => {
     if (selectedWeapon) {
       if (userAttachments[selectedWeapon.id]) {
@@ -1681,17 +1793,15 @@ export default function App() {
       } else {
         setEquippedAttachments({ Optics: null, Muzzle: null, Underbarrel: null, Overbarrel: [] });
       }
-      // Wichtig: Schließt das Modal NICHT bei jedem Firebase-Update
+      setActiveAttachmentSlot(null);
     }
   }, [selectedWeapon, userAttachments]);
 
-  // Live Feed Logic
   useEffect(() => {
     const shuffled = [...NEWS_POOL].sort((a, b) => b.timestamp - a.timestamp);
     setLiveFeed(shuffled);
   }, []);
 
-  // State Persistence Logic (Local Storage Fallback for Tab Navigation etc.)
   useEffect(() => {
     const lastActive = localStorage.getItem(STORAGE_KEY_TIME);
     const now = Date.now();
@@ -1729,7 +1839,6 @@ export default function App() {
     localStorage.setItem(STORAGE_KEY_TIME, Date.now().toString());
   }, [activeTab, ronSubTab, activeDlc, activeWeaponCat, selectedMap, lastViewedMap, selectedArticle, isRestored]);
 
-  // Window Scroll & Container Scroll Logic
   useEffect(() => {
     if (!isRestored) return;
     let timeoutId = null;
@@ -1757,7 +1866,6 @@ export default function App() {
     return () => { window.removeEventListener('scroll', handleScroll); if (timeoutId) clearTimeout(timeoutId); };
   }, [isRestored, selectedMap, selectedArticle, selectedWeapon]);
 
-  // Lightbox Keyboard Navigation Logic
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (!lightbox.isOpen) return;
@@ -1799,7 +1907,6 @@ export default function App() {
     }
   };
 
-  // Handlers
   const handleMapClick = (map) => {
     scrollPosRef.current = { window: window.scrollY || document.documentElement.scrollTop, ronContainer: ronListRef.current ? ronListRef.current.scrollTop : 0 };
     setSelectedMap(map); setSearchQuery(''); setIsRonSearchOpen(false); setIsScrollingDown(false); window.scrollTo({ top: 0, behavior: 'instant' });
@@ -1900,6 +2007,48 @@ export default function App() {
     }
   };
 
+  /*const handleAuth = async (e) => {
+    e.preventDefault();
+    setAuthError('');
+    const fakeEmail = `${username.toLowerCase().trim()}@intactics.user`;
+    try {
+      if (authMode === 'register') {
+        await createUserWithEmailAndPassword(auth, fakeEmail, password);
+      } else {
+        await signInWithEmailAndPassword(auth, fakeEmail, password);
+      }
+      setUsername(''); setPassword('');
+    } catch (error) {
+      setAuthError('Authentifizierung fehlgeschlagen.');
+    }
+  };
+
+  const handleLogout = async () => {
+    await signOut(auth);
+    await signInAnonymously(auth);
+    setMapProgress({});
+    setIsProfileOpen(false);
+  };*/
+
+  const saveMapProgress = async () => {
+    if (!dbUser || !selectedMap) return;
+    const updatedProgress = {
+      ...mapProgress,
+      [selectedMap.id]: { difficulty: tempDiff, rank: tempRank }
+    };
+    setMapProgress(updatedProgress);
+    await setDoc(doc(db, 'artifacts', appId, 'users', dbUser.uid, 'progress', 'maps'), { records: updatedProgress }, { merge: true });
+  };
+
+  useEffect(() => {
+    if (selectedMap) {
+      if (mapProgress[selectedMap.id]) {
+        setTempDiff(mapProgress[selectedMap.id].difficulty);
+        setTempRank(mapProgress[selectedMap.id].rank);
+      }
+    }
+  }, [selectedMap, mapProgress]);
+
   const getTypeColor = (type) => {
     switch (type) {
       case 'CRITICAL': return 'text-red-500 bg-red-500/10 border-red-500/20';
@@ -1978,8 +2127,6 @@ export default function App() {
             </div>
           </div>
         )}
-
-        {/* Loadout Search Results */}
         {(resultsArmor.length > 0 || resultsHeadwear.length > 0 || resultsUtils.length > 0) && (
           <div className="space-y-4">
             <h3 className="text-xl font-bold text-white border-b border-white/10 pb-2">Loadout Equipment</h3>
@@ -2063,34 +2210,12 @@ export default function App() {
               <GlassCard className="p-6 md:p-8 bg-blue-600/5 border-blue-500/20">
                 <h3 className="text-[10px] md:text-sm font-black uppercase tracking-widest text-blue-400 mb-4 md:mb-6">Last Viewed Intel</h3>
                 {lastViewedMap ? (
-                  <div className="space-y-4 md:space-y-6">
-                    <div className="aspect-video rounded-xl md:rounded-2xl overflow-hidden border border-white/10">
-                      <img src={lastViewedMap.image} className="w-full h-full object-cover" />
-                    </div>
-                    <div>
-                      <h4 className="text-xl md:text-2xl font-black italic uppercase text-white leading-none">{lastViewedMap.name}</h4>
-                      <p className="text-white/40 text-[10px] mt-2 font-mono uppercase tracking-tighter">{lastViewedMap.game === 'ron' ? 'Operation Area' : 'Combat Zone'}</p>
-                    </div>
-                    <button
-                      onClick={() => {
-                        setActiveTab(lastViewedMap.game);
-                        setSelectedMap(lastViewedMap);
-                        if (lastViewedMap.game === 'ron') {
-                          setActiveDlc(lastViewedMap.dlc);
-                          setRonSubTab('maps');
-                        }
-                        window.scrollTo({ top: 0, behavior: 'instant' });
-                      }}
-                      className="w-full py-3 md:py-4 bg-white text-black font-black uppercase italic tracking-tighter text-xs md:text-sm rounded-xl hover:bg-blue-400 transition-colors"
-                    >
-                      Return to Intel
-                    </button>
-                  </div>
+                  <div className="space-y-4 md:space-y-6"><div className="aspect-video rounded-xl md:rounded-2xl overflow-hidden border border-white/10"><img src={lastViewedMap.image} className="w-full h-full object-cover" /></div><div><h4 className="text-xl md:text-2xl font-black italic uppercase text-white leading-none">{lastViewedMap.name}</h4><p className="text-white/40 text-[10px] mt-2 font-mono uppercase tracking-tighter">{lastViewedMap.game === 'ron' ? 'Operation Area' : 'Combat Zone'}</p></div><button onClick={() => handleTabSwitch(lastViewedMap.game)} className="w-full py-3 md:py-4 bg-white text-black font-black uppercase italic tracking-tighter text-xs md:text-sm rounded-xl hover:bg-blue-400 transition-colors">Return to Intel</button></div>
                 ) : (
                   <div className="py-8 md:py-12 flex flex-col items-center justify-center text-center opacity-20"><Clock size={40} className="mb-4" /><p className="text-[10px] font-black uppercase tracking-widest italic">No Recent Activity</p></div>
                 )}
               </GlassCard>
-              <GlassCard className="p-6 md:p-8"><h3 className="text-[10px] md:text-sm font-black uppercase tracking-widest text-white/40 mb-4 md:mb-6">Tactical Status</h3><div className="grid grid-cols-2 gap-3 md:gap-4"><div className="p-3 md:p-4 rounded-xl md:rounded-2xl bg-white/5 border border-white/5 text-center"><p className="text-[8px] md:text-[10px] font-black text-white/20 uppercase mb-1">Maps</p><p className="text-xl md:text-2xl font-black italic text-white">{RON_MAPS.length + PUBG_MAPS.length}</p></div><div className="p-3 md:p-4 rounded-xl md:rounded-2xl bg-white/5 border border-white/5 text-center"><p className="text-[8px] md:text-[10px] font-black text-white/20 uppercase mb-1">Intel</p><p className="text-xl md:text-2xl font-black italic text-white">{NEWS_POOL.length}</p></div></div></GlassCard>
+              <GlassCard className="p-6 md:p-8"><h3 className="text-[10px] md:text-sm font-black uppercase tracking-widest text-white/40 mb-4 md:mb-6">Tactical Status</h3><div className="grid grid-cols-2 gap-3 md:gap-4"><div className="p-3 md:p-4 rounded-xl md:rounded-2xl bg-white/5 border border-white/5 text-center"><p className="text-[8px] md:text-[10px] font-black text-white/20 uppercase mb-1">Missions</p><p className="text-xl md:text-2xl font-black italic text-white">{Object.keys(mapProgress).length} / {RON_MAPS.length}</p></div><div className="p-3 md:p-4 rounded-xl md:rounded-2xl bg-white/5 border border-white/5 text-center"><p className="text-[8px] md:text-[10px] font-black text-white/20 uppercase mb-1">Intel</p><p className="text-xl md:text-2xl font-black italic text-white">{NEWS_POOL.length}</p></div></div></GlassCard>
             </div>
           </div>
         )}
@@ -2173,11 +2298,52 @@ export default function App() {
                 <GlassCard className="p-6 md:p-10"><h3 className="text-red-500 font-black uppercase text-[10px] tracking-widest mb-3 md:mb-4">Feindlage</h3><p className="text-gray-200 text-sm md:text-lg leading-relaxed font-medium">{selectedMap.suspects}</p></GlassCard>
               </div>
 
+              <GlassCard className="p-6 md:p-10 border-blue-500/20 bg-blue-600/5">
+                <div className="flex items-center gap-3 mb-6">
+                  <Activity className="text-blue-400" size={20} />
+                  <h3 className="text-xl font-black italic uppercase">Mission Status</h3>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-[10px] font-black uppercase text-white/40 mb-3 tracking-widest">Difficulty</label>
+                    <div className="flex gap-2">
+                      {DIFFICULTIES.map(diff => (
+                        <button
+                          key={diff}
+                          onClick={() => setTempDiff(diff)}
+                          className={`flex-1 py-3 rounded-lg text-xs font-black uppercase border transition-colors ${tempDiff === diff ? 'bg-white text-black border-white' : 'bg-black/40 border-white/10 hover:bg-white/10 text-white/60'}`}
+                        >
+                          {diff}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black uppercase text-white/40 mb-3 tracking-widest">Rank Achieved</label>
+                    <div className="flex gap-2 flex-wrap">
+                      {RANKS.map(rank => (
+                        <button
+                          key={rank}
+                          onClick={() => setTempRank(rank)}
+                          className={`flex-1 min-w-[30px] py-3 rounded-lg text-sm font-black uppercase border transition-colors ${tempRank === rank ? 'bg-blue-600 text-white border-blue-400' : 'bg-black/40 border-white/10 hover:bg-white/10 text-white/60'}`}
+                        >
+                          {rank}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <button onClick={saveMapProgress} className="mt-6 w-full py-4 bg-white/10 hover:bg-blue-600 border border-white/10 hover:border-blue-400 rounded-xl font-black uppercase text-xs transition-all flex justify-center items-center gap-2">
+                  <Save size={16} /> Update Record
+                </button>
+              </GlassCard>
+
               <MissionObjectives mapId={selectedMap.id} objectives={selectedMap.objectives} dbUser={dbUser} userObjectives={userObjectives} />
 
               <AudioLogViewer logs={selectedMap.audioLogs} />
               <POIViewer poi={selectedMap.poi} />
-              <BlueprintViewer mapId={selectedMap.id} blueprints={selectedMap.blueprints} dbUser={dbUser} userBlueprints={userBlueprints} />
+              <BlueprintViewer map={selectedMap} dbUser={dbUser} userBlueprints={userBlueprints} />
             </div>
             <div className="space-y-6 md:space-y-10">
               {selectedMap.screenshots?.length > 0 && (
@@ -2261,7 +2427,7 @@ export default function App() {
                 </button>
               )}
 
-              {/* RESTORED DESKTOP SEARCH BAR */}
+              {/* DESKTOP SEARCH BAR */}
               <div className="hidden md:flex items-center shrink-0">
                 {isRonSearchOpen ? (
                   <motion.div initial={{ width: 0, opacity: 0 }} animate={{ width: 130, opacity: 1 }} className="flex items-center bg-white/10 rounded-full border border-white/20 px-2.5 py-1.5 mr-2">
@@ -2311,18 +2477,27 @@ export default function App() {
               <div className="w-full h-full overflow-y-auto pb-32 no-scrollbar">{renderSearchResults()}</div>
             ) : (
               <motion.div key={activeDlc + activeWeaponCat + ronSubTab + loadoutSubTab} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} ref={ronListRef} onScroll={handleContainerScroll} className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6 md:gap-10 max-md:flex max-md:flex-col max-md:overflow-y-scroll no-scrollbar ${ronSubTab === 'maps' ? 'max-md:gap-0 max-md:h-full max-md:snap-y max-md:snap-mandatory' : 'max-md:gap-4 max-md:p-4 max-md:h-full max-md:pb-32'}`}>
-                {ronSubTab === 'maps' ? currentMaps.map(map => (
-                  <div key={map.id} className="relative md:flex-1 md:hover:flex-[3] transition-all duration-700 ease-in-out overflow-hidden md:rounded-3xl group max-md:h-full max-md:w-full max-md:snap-start max-md:shrink-0">
-                    <GlassCard onClick={() => handleMapClick(map)} className="h-[350px] md:h-[480px] max-md:h-full max-md:w-full max-md:rounded-none max-md:border-none max-md:shadow-none bg-black">
-                      <img src={map.image} style={{ objectPosition: map.imagePosition || 'center' }} className="absolute inset-0 w-full h-full object-cover transition-all duration-700 scale-100 md:group-hover:scale-110" alt={map.name} />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent"></div>
-                      <div className="absolute max-md:bottom-[110px] md:bottom-0 left-0 p-6 md:p-12 w-full">
-                        <p className="text-red-600 font-mono text-[10px] md:text-[10px] font-black uppercase tracking-[0.4em] mb-2 md:mb-4 truncate">{map.codename}</p>
-                        <h3 className="text-3xl md:text-3xl lg:text-4xl font-black text-white italic uppercase leading-tight tracking-tighter drop-shadow-2xl">{map.name}</h3>
-                      </div>
-                    </GlassCard>
-                  </div>
-                )) : (ronSubTab === 'loadout') ? (
+                {ronSubTab === 'maps' ? currentMaps.map(map => {
+                  const progress = mapProgress[map.id];
+                  return (
+                    <div key={map.id} className="relative md:flex-1 md:hover:flex-[3] transition-all duration-700 ease-in-out overflow-hidden md:rounded-3xl group max-md:h-full max-md:w-full max-md:snap-start max-md:shrink-0">
+                      <GlassCard onClick={() => handleMapClick(map)} className="h-[350px] md:h-[480px] max-md:h-full max-md:w-full max-md:rounded-none max-md:border-none max-md:shadow-none bg-black">
+                        <img src={map.image} style={{ objectPosition: map.imagePosition || 'center' }} className="absolute inset-0 w-full h-full object-cover transition-all duration-700 scale-100 md:group-hover:scale-110" alt={map.name} />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent"></div>
+                        <div className="absolute max-md:bottom-[110px] md:bottom-0 left-0 p-6 md:p-12 w-full">
+                          <p className="text-red-600 font-mono text-[10px] md:text-[10px] font-black uppercase tracking-[0.4em] mb-2 md:mb-4 truncate">{map.codename}</p>
+                          <h3 className="text-3xl md:text-3xl lg:text-4xl font-black text-white italic uppercase leading-tight tracking-tighter drop-shadow-2xl">{map.name}</h3>
+                        </div>
+                        {progress && (
+                          <div className="absolute top-6 right-6 bg-blue-600/90 backdrop-blur-md border border-blue-400 text-white px-3 py-1.5 rounded-lg shadow-lg flex flex-col items-end z-20">
+                            <span className="text-[8px] font-black uppercase tracking-widest opacity-80">{progress.difficulty}</span>
+                            <span className="text-lg font-black leading-none">{progress.rank}</span>
+                          </div>
+                        )}
+                      </GlassCard>
+                    </div>
+                  );
+                }) : (ronSubTab === 'loadout') ? (
                   <div className="lg:col-span-2 w-full pb-10">
                     {loadoutSubTab === 'overview' && (
                       <div className="space-y-12">
@@ -2602,8 +2777,24 @@ export default function App() {
           </div>
         </footer>
 
-        {/* LIGHTBOX MODAL */}
+        {/* LIGHTBOX & PROFILE MODALS */}
         <AnimatePresence>
+          {/*{isProfileOpen && (
+            /<ProfileModal
+              isOpen={isProfileOpen}
+              onClose={() => setIsProfileOpen(false)}
+              user={dbUser}
+              authMode={authMode}
+              setAuthMode={setAuthMode}
+              //handleAuth={handleAuth}
+              username={username} setUsername={setUsername}
+              password={password} setPassword={setPassword}
+              authError={authError}
+              //handleLogout={handleLogout}
+              mapProgress={mapProgress}
+              setActiveTab={setActiveTab}
+            />
+          )}*/}
           {activeSkinModal.isOpen && (
             <SkinSelectionModal
               isOpen={true}
